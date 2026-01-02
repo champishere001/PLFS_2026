@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PLFS Pro - Master Dashboard</title>
+    <title>PLFS Pro - Premium Dashboard (Large Font)</title>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -10,116 +10,135 @@
     
     <style>
         :root { 
-            --primary: #0061a4; --bg: #f8fafc; --glass: rgba(255, 255, 255, 0.8);
-            --border: #e2e8f0; --text: #1e293b; --accent: #00bfa5; --danger: #ef4444;
+            --bg-glow: radial-gradient(circle at top right, #1e3a8a, #070b14);
+            --pane-cream: #fffefb; 
+            --primary: #2563eb;
+            --accent: #00f2fe;
+            --text-dark: #0f172a;
+            --text-light: #f8fafc;
+            --border: #e2e8f0;
         }
 
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg);
-            display: flex; height: 100vh; color: var(--text); overflow: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; 
+            background: var(--bg-glow);
+            background-attachment: fixed;
+            display: flex; height: 100vh; color: var(--text-dark); overflow: hidden;
+            font-size: 16px; /* Increased base size */
         }
 
         /* Month Rail */
-        .month-rail { width: 80px; background: #0f172a; display: flex; flex-direction: column; padding: 10px 0; z-index: 100; }
-        .month-tab { 
-            padding: 18px 0; color: #94a3b8; cursor: pointer; text-align: center; 
-            font-size: 10px; font-weight: 800; transition: 0.3s; border-left: 4px solid transparent;
+        .month-rail { 
+            width: 100px; background: rgba(15, 23, 42, 0.85); 
+            backdrop-filter: blur(15px);
+            display: flex; flex-direction: column; padding: 15px 0; z-index: 100;
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
-        .month-tab.active { color: white; background: rgba(255,255,255,0.1); border-left-color: var(--primary); }
+        .month-tab { 
+            padding: 22px 0; color: #94a3b8; cursor: pointer; text-align: center; 
+            font-size: 13px; font-weight: 800; transition: 0.3s;
+        }
+        .month-tab.active { 
+            color: var(--accent); background: rgba(255,255,255,0.05); 
+            box-shadow: inset 5px 0 0 var(--accent);
+        }
 
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         /* Top Bar */
         .top-bar {
-            height: 80px; background: var(--glass); backdrop-filter: blur(10px);
-            padding: 0 30px; display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--border); z-index: 50;
+            height: 100px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(25px);
+            padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 50;
         }
+        .top-bar h1 { color: white; font-size: 32px; margin:0; text-shadow: 0 0 20px rgba(0,242,254,0.3); }
 
+        /* Stats & Buttons */
         .stats-pill { 
-            background: #e0e7ff; color: #4338ca; padding: 6px 14px; 
-            border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; gap: 10px;
+            background: rgba(255, 255, 255, 0.1); color: var(--accent); padding: 10px 20px; 
+            border-radius: 30px; font-size: 15px; font-weight: 700; border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* Dashboard Layout */
-        .dashboard { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; }
-        .pane { 
-            background: white; border-radius: 20px; border: 1px solid var(--border);
-            display: flex; flex-direction: column; transition: transform 0.3s;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        .btn {
+            padding: 14px 24px; border-radius: 12px; border: none; cursor: pointer;
+            font-weight: 700; font-size: 15px; transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
-        .pane-fresh { width: 60%; }
-        .pane-rv { width: 40%; background: #fcfdfe; }
+        .btn-primary { background: var(--accent); color: #0f172a; box-shadow: 0 0 20px rgba(0,242,254,0.4); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
+
+        /* Dashboard & Creamy Panes */
+        .dashboard { display: flex; flex: 1; overflow: hidden; padding: 30px; gap: 30px; }
+        .pane { 
+            background: var(--pane-cream); border-radius: 28px; 
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .pane-fresh { width: 65%; }
+        .pane-rv { width: 35%; }
 
         .header-strip { 
-            padding: 16px 24px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
+            padding: 25px 30px; background: rgba(0,0,0,0.03);
+            border-bottom: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;
         }
-        .header-strip h3 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
+        .header-strip h3 { margin: 0; font-size: 18px; letter-spacing: 2px; color: #1e3a8a; font-weight: 800; }
 
         /* Tables */
         .table-wrap { flex: 1; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
         th { 
-            background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 11px; 
-            color: #64748b; font-weight: 700; position: sticky; top: 0; z-index: 5;
+            background: #f8fafc; padding: 20px; text-align: left; font-size: 13px; 
+            color: #475569; text-transform: uppercase; position: sticky; top: 0; z-index: 10;
+            border-bottom: 2px solid #e2e8f0;
         }
-        td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        td { padding: 20px; border-bottom: 1px solid #f1ece4; font-size: 16px; color: var(--text-dark); }
+        tr:hover { background: #fffcf0; }
 
-        /* Buttons & UI Elements */
-        .btn-group { display: flex; gap: 10px; }
-        .btn {
-            padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer;
-            font-weight: 700; font-size: 12px; transition: 0.2s; display: flex; align-items: center; gap: 8px;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: #64748b; color: white; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
-
+        /* Inputs - Large */
         input[type="date"], input[type="text"], select {
-            border: 1.5px solid var(--border); padding: 8px 12px; border-radius: 10px;
-            font-size: 12px; outline: none; transition: 0.2s;
+            border: 2px solid #e2e8f0; padding: 12px; border-radius: 10px;
+            font-size: 15px; background: white; width: 100%; font-family: inherit;
         }
-
-        .upload-zone {
-            border: 2px dashed var(--primary); background: #f0f7ff;
-            padding: 8px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px;
-        }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
         #loadingOverlay {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.8);
-            display: none; justify-content: center; align-items: center; z-index: 999;
-            font-weight: 700; color: var(--primary);
+            position: fixed; inset: 0; background: rgba(7, 11, 20, 0.95);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999;
+            color: var(--accent); font-size: 24px; gap: 25px;
         }
+        
+        .fsu-badge { font-weight: 800; color: var(--primary); font-size: 17px; }
     </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">Connecting to Server...</div>
+    <div id="loadingOverlay">
+        <div style="width: 70px; height: 70px; border: 6px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <span style="font-weight: 700; letter-spacing: 1px;">SYNCING SECURE DATA...</span>
+    </div>
+
     <div class="month-rail" id="monthRail"></div>
 
     <div class="main">
         <header class="top-bar">
             <div>
-                <h1 style="margin:0; font-size: 22px; font-weight: 800; color: #0f172a;">PLFS Master Hub</h1>
-                <div id="monthDisplay" style="color: var(--primary); font-weight: 600;">Loading...</div>
+                <h1>PLFS Master Hub</h1>
+                <div id="monthDisplay" style="color: var(--accent); font-weight: 700; font-size: 18px; margin-top: 6px; letter-spacing: 1px;">Loading...</div>
             </div>
 
-            <div class="btn-group">
+            <div style="display: flex; gap: 20px; align-items: center;">
                 <div class="stats-pill">
-                    <span id="totalCount">Units: 0</span>
-                    <span id="sroCount">SROs: 0</span>
+                    <span id="totalCount">Units: 0</span> • <span id="sroCount">SROs: 0</span>
                 </div>
                 
-                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-                    <span>📂</span>
-                    <span style="font-size: 11px; font-weight: 700;">Upload Files</span>
-                </div>
+                <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                    <span>📂</span> Upload
+                </button>
                 <input type="file" id="fileInput" multiple style="display:none" onchange="uploadFiles(this)">
                 
                 <button class="btn btn-secondary" id="fetchBtn" onclick="fetchFromServer()">
-                    <span>🔄</span> Fetch Data
+                    <span>🔄</span> Fetch
                 </button>
 
                 <button class="btn btn-primary" onclick="saveToCloud()">
@@ -131,15 +150,15 @@
         <div class="dashboard">
             <section class="pane pane-fresh">
                 <div class="header-strip">
-                    <h3>1st Visit (Fresh)</h3>
-                    <select id="sroFilter" onchange="applyFilters()">
+                    <h3>1ST VISIT (FRESH)</h3>
+                    <select id="sroFilter" onchange="applyFilters()" style="width: 250px;">
                         <option value="all">All SROs</option>
                     </select>
                 </div>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr><th>FSU</th><th>Village/Town</th><th>Enumerator</th><th>Start Date</th><th>End Date</th></tr>
+                            <tr><th>FSU</th><th>Village/Town</th><th>Enumerator Name</th><th>Start Date</th><th>End Date</th></tr>
                         </thead>
                         <tbody id="freshBody"></tbody>
                     </table>
@@ -148,13 +167,13 @@
 
             <section class="pane pane-rv">
                 <div class="header-strip">
-                    <h3>Revisits (V2-V4)</h3>
-                    <div id="rvStats" style="font-size: 11px; font-weight: 700; color: #64748b;">0 Units</div>
+                    <h3>REVISITS (V2-V4)</h3>
+                    <div id="rvStats" style="font-size: 14px; font-weight: 900; color: #94a3b8; background: #f1f5f9; padding: 5px 12px; border-radius: 10px;">0 UNITS</div>
                 </div>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr><th>UID</th><th>Enumerator</th><th>Collection Date</th></tr>
+                            <tr><th>UID (FSU-VISIT)</th><th>Enumerator</th><th>Collection Date</th></tr>
                         </thead>
                         <tbody id="rvBody"></tbody>
                     </table>
@@ -177,57 +196,39 @@
     let masterData = [];
     let selectedMonth = new Date().getMonth();
 
-    // Initialize UI
     window.onload = () => {
         const rail = document.getElementById('monthRail');
         months.forEach((m, i) => {
             rail.innerHTML += `<div class="month-tab ${i === selectedMonth ? 'active' : ''}" onclick="changeMonth(${i})">${m.substring(0,3).toUpperCase()}</div>`;
         });
-        fetchFromServer(); // Auto-fetch on load
+        fetchFromServer();
     };
 
     async function fetchFromServer() {
         const overlay = document.getElementById('loadingOverlay');
-        const fetchBtn = document.getElementById('fetchBtn');
         overlay.style.display = 'flex';
-        fetchBtn.disabled = true;
-
         try {
             const snapshot = await database.ref('plfs_roster/Himachal').once('value');
-            const data = snapshot.val();
-            
-            if (data) {
-                // Convert object to array if necessary
-                masterData = Array.isArray(data) ? data : Object.values(data);
+            if (snapshot.exists()) {
+                masterData = Object.values(snapshot.val());
                 updateSroDropdown();
                 applyFilters();
-            } else {
-                console.log("No remote data found.");
             }
-        } catch (e) {
-            alert("Fetch failed: " + e.message);
-        } finally {
-            overlay.style.display = 'none';
-            fetchBtn.disabled = false;
-        }
+        } catch (e) { console.error(e); }
+        overlay.style.display = 'none';
     }
 
     async function uploadFiles(input) {
         if (!input.files.length) return;
-        
         for (let file of input.files) {
             const buffer = await file.arrayBuffer();
-            const workbook = XLSX.read(buffer);
-            const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {range: 7});
-            
+            const raw = XLSX.utils.sheet_to_json(XLSX.read(buffer).Sheets[XLSX.read(buffer).SheetNames[0]], {range: 7});
             raw.forEach(r => {
                 if (!r.FSU) return;
                 const sro = String(r['SRO [Code]'] || 'N/A').replace(/\[.*?\]/g, "").trim();
                 const baseMonth = (parseInt(String(r['Month [Qtr]']).match(/\d+/)) - 1) % 12;
-
                 for (let v = 1; v <= 4; v++) {
                     const uid = `${r.FSU}-V${v}`;
-                    // Check if duplicate
                     if (!masterData.find(m => m.uid === uid)) {
                         masterData.push({
                             uid: uid, fsu: r.FSU, visit: v, sro: sro,
@@ -239,16 +240,15 @@
                 }
             });
         }
-        updateSroDropdown();
-        applyFilters();
+        updateSroDropdown(); applyFilters();
     }
 
     function updateSroDropdown() {
-        const allSros = [...new Set(masterData.map(d => d.sro))].sort();
-        const sroSelect = document.getElementById('sroFilter');
-        sroSelect.innerHTML = '<option value="all">All SROs</option>';
-        allSros.forEach(s => sroSelect.innerHTML += `<option value="${s}">${s}</option>`);
-        document.getElementById('sroCount').innerText = `SROs: ${allSros.length}`;
+        const sros = [...new Set(masterData.map(d => d.sro))].sort();
+        const select = document.getElementById('sroFilter');
+        select.innerHTML = '<option value="all">All SROs</option>';
+        sros.forEach(s => select.innerHTML += `<option value="${s}">${s}</option>`);
+        document.getElementById('sroCount').innerText = `SROs: ${sros.length}`;
     }
 
     function changeMonth(idx) {
@@ -258,7 +258,7 @@
     }
 
     function applyFilters() {
-        document.getElementById('monthDisplay').innerText = months[selectedMonth] + " Operations";
+        document.getElementById('monthDisplay').innerText = months[selectedMonth].toUpperCase() + " OPERATIONS";
         const sro = document.getElementById('sroFilter').value;
         const filtered = masterData.filter(d => d.monthIdx === selectedMonth && (sro === 'all' || d.sro === sro));
         render(filtered);
@@ -267,30 +267,28 @@
     function render(data) {
         const fBody = document.getElementById('freshBody');
         const rBody = document.getElementById('rvBody');
-        fBody.innerHTML = ""; rBody.innerHTML = "";
-
-        const fList = data.filter(d => d.visit === 1);
-        const rList = data.filter(d => d.visit > 1);
-
+        fBody.innerHTML = rBody.innerHTML = "";
+        
         document.getElementById('totalCount').innerText = `Units: ${data.length}`;
-        document.getElementById('rvStats').innerText = `${rList.length} Units`;
-
-        fList.forEach(d => {
-            fBody.innerHTML += `<tr>
-                <td><b>${d.fsu}</b></td><td>${d.village}</td>
-                <td><input type="text" value="${d.enumerator}" placeholder="Assign" onchange="autoFill('${d.fsu}', this.value)"></td>
-                <td><input type="date" value="${d.startDate}" onchange="smartDate('${d.uid}', this.value)"></td>
-                <td><input type="date" value="${d.endDate}" id="end-${d.uid}" onchange="updateVal('${d.uid}', 'endDate', this.value)"></td>
-            </tr>`;
+        
+        data.forEach(d => {
+            if (d.visit === 1) {
+                fBody.innerHTML += `<tr>
+                    <td><span class="fsu-badge">${d.fsu}</span></td>
+                    <td><div style="max-width:200px; font-weight:500">${d.village}</div></td>
+                    <td><input type="text" value="${d.enumerator}" placeholder="Assign Name" onchange="autoFill('${d.fsu}', this.value)"></td>
+                    <td><input type="date" value="${d.startDate}" onchange="smartDate('${d.uid}', this.value)"></td>
+                    <td><input type="date" value="${d.endDate}" id="end-${d.uid}" onchange="updateVal('${d.uid}', 'endDate', this.value)"></td>
+                </tr>`;
+            } else {
+                rBody.innerHTML += `<tr>
+                    <td style="font-weight:600">${d.uid}</td>
+                    <td id="e-${d.uid}" style="color:var(--primary); font-weight:800; font-size:15px">${d.enumerator || '--'}</td>
+                    <td><input type="date" value="${d.collectionDate}" onchange="updateVal('${d.uid}', 'collectionDate', this.value)"></td>
+                </tr>`;
+            }
         });
-
-        rList.forEach(d => {
-            rBody.innerHTML += `<tr>
-                <td>${d.uid}</td>
-                <td id="e-${d.uid}" style="font-weight:700; color:var(--primary);">${d.enumerator || '--'}</td>
-                <td><input type="date" value="${d.collectionDate}" onchange="updateVal('${d.uid}', 'collectionDate', this.value)"></td>
-            </tr>`;
-        });
+        document.getElementById('rvStats').innerText = `${data.filter(d=>d.visit>1).length} UNITS`;
     }
 
     function autoFill(fsu, name) {
@@ -305,27 +303,34 @@
 
     function smartDate(uid, start) {
         const item = masterData.find(d => d.uid === uid);
-        if (item) {
+        if (item && start) {
             item.startDate = start;
-            if (start) {
-                let d = new Date(start); d.setDate(d.getDate() + 5);
-                item.endDate = d.toISOString().split('T')[0];
-                const endInp = document.getElementById(`end-${uid}`); if (endInp) endInp.value = item.endDate;
-            }
+            let d = new Date(start); d.setDate(d.getDate() + 5);
+            item.endDate = d.toISOString().split('T')[0];
+            const endInp = document.getElementById(`end-${uid}`); if (endInp) endInp.value = item.endDate;
         }
     }
 
     function updateVal(uid, key, val) { const item = masterData.find(d => d.uid === uid); if (item) item[key] = val; }
 
     async function saveToCloud() {
-        if (!masterData.length) return alert("No data to sync.");
+        if (!masterData.length) return;
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
         try {
             await database.ref('plfs_roster/Himachal').set(masterData);
-            alert("Cloud Sync Successful!");
-        } catch (e) {
-            alert("Sync Failed: " + e.message);
-        }
+            alert("SUCCESS: All data synced to cloud.");
+        } catch (e) { alert("SYNC ERROR: Check connection."); }
+        overlay.style.display = 'none';
     }
 </script>
+
+<style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
 </body>
 </html>
