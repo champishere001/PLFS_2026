@@ -410,4 +410,7 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    function del(uid) { if(confirm("Delete record?")) { masterData = masterData.f
+    function del(uid) { if(confirm("Delete record?")) { masterData = masterData.filter(d => d.uid !== uid); applyFilters(); } }
+</script>
+</body>
+</html>
