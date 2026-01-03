@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLFS Unified - Premium View</title>
+    <title>PLFS Unified - Secure Premium Portal</title>
+    
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -12,73 +13,48 @@
     <style>
         :root { 
             --page-bg: #030712; --sidebar-bg: #0f172a; --accent-blue: #06b6d4;
-            --milky-white: #fdfaf6; 
-            /* THEME: Premium Brownish Ledger */
-            --row-bg: #fffbf7; 
-            --row-border: #eaddcf;
-            --text-dark: #3a352f;
-            --hover-bg: #f5ede4;
+            --milky-white: #fdfaf6; --row-bg: #fffbf7; --row-border: #eaddcf;
+            --text-dark: #3a352f; --hover-bg: #f5ede4; --danger: #ef4444;
         }
         
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background-color: var(--page-bg); display: flex; height: 100vh; color: white; overflow: hidden; }
 
-        /* --- UI COMPONENTS --- */
+        /* --- LOGIN SYSTEM --- */
         #loginOverlay { position: fixed; inset: 0; background: var(--page-bg); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         .login-card { background: #111827; padding: 40px; border-radius: 24px; width: 340px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
-        .login-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .login-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; margin-bottom: 12px; text-transform: uppercase; }
         
-        .sidebar { width: 260px; background: var(--sidebar-bg); display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.1); }
+        /* --- LAYOUT --- */
+        .sidebar { width: 280px; background: var(--sidebar-bg); display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.1); }
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        
-        /* --- HEADER & STATS --- */
         .header-container { height: 80px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; padding: 0 30px; justify-content: space-between; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; background: rgba(255,255,255,0.02); }
-        .stat-card { background: rgba(255,255,255,0.04); padding: 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); transition: transform 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.07); }
-        .stat-val { font-size: 26px; font-weight: 800; color: var(--accent-blue); }
-        .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-top: 6px; }
+        
+        /* --- SIDEBAR RESTRUCTURED --- */
+        .sidebar-scroll { overflow-y: auto; flex: 1; padding: 10px; }
+        .state-item { padding: 15px; margin-bottom: 5px; border-radius: 12px; cursor: pointer; font-weight: 800; color: #94a3b8; transition: 0.2s; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .state-item.active { background: rgba(6, 182, 212, 0.1); color: white; border-color: var(--accent-blue); }
+        
+        /* Month Grid View */
+        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; margin: 10px 0; }
+        .month-chip { font-size: 10px; padding: 8px 2px; text-align: center; border-radius: 6px; cursor: pointer; font-weight: 700; color: #64748b; background: rgba(255,255,255,0.05); }
+        .month-chip.active { background: var(--accent-blue); color: #083344; }
+        
+        .sro-list { padding-left: 10px; margin-bottom: 20px; }
+        .sro-item { padding: 8px 15px; font-size: 12px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 2px; }
+        .sro-item:hover { background: rgba(255,255,255,0.05); }
+        .sro-item.active { font-weight: 800; color: var(--accent-blue); }
 
-        /* --- DASHBOARD TABLES --- */
-        .dashboard-content { display: flex; flex: 1; overflow-y: auto; padding: 20px; gap: 20px; }
-        .pane { background: var(--milky-white); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #dcd3c9; }
-        .pane-header { padding: 14px 20px; background: #f1ebe4; font-size: 12px; font-weight: 800; color: #7c746d; letter-spacing: 1px; border-bottom: 2px solid var(--row-border); display: flex; justify-content: space-between; align-items: center; }
-
+        /* --- TABLE STYLING --- */
+        .dashboard-content { display: flex; flex: 1; overflow-y: auto; padding: 20px; gap: 20px; padding-bottom: 100px; }
+        .pane { background: var(--milky-white); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dcd3c9; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .pane-header { padding: 14px 20px; background: #f1ebe4; font-size: 11px; font-weight: 800; color: #7c746d; border-bottom: 2px solid var(--row-border); display: flex; justify-content: space-between; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #fdfaf7; padding: 15px; text-align: left; font-size: 12px; color: #a39b94; text-transform: uppercase; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--row-border); }
-        
-        /* DATA ENTRY STYLING */
-        td { 
-            padding: 18px 15px; 
-            border-bottom: 1px solid var(--row-border); 
-            font-size: 15px; /* LARGER TEXT SIZE */
-            background-color: var(--row-bg); 
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-        tr:hover td { background-color: var(--hover-bg); }
-        
-        input { 
-            border: 1px solid transparent; 
-            background: transparent; 
-            width: 100%; 
-            outline: none; 
-            font-size: 15px; 
-            color: #1a1817; 
-            padding: 6px; 
-            border-radius: 6px; 
-            transition: 0.2s;
-        }
-        input:focus { background: white; border-color: var(--accent-blue); box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+        th { background: #fdfaf7; padding: 15px; text-align: left; font-size: 11px; color: #a39b94; text-transform: uppercase; position: sticky; top:0; z-index:5; }
+        td { padding: 18px 15px; border-bottom: 1px solid var(--row-border); font-size: 16px; background-color: var(--row-bg); color: var(--text-dark); font-weight: 600; }
+        input { border: 1px solid transparent; background: rgba(0,0,0,0.03); width: 100%; outline: none; font-size: 16px; color: #1a1817; padding: 8px; border-radius: 6px; }
 
-        /* SIDEBAR NAV */
-        .level-month { padding: 18px 25px; font-weight: 800; font-size: 12px; cursor: pointer; color: #94a3b8; transition: 0.3s; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .active-sel { background: linear-gradient(90deg, rgba(6, 182, 212, 0.2), transparent) !important; color: white !important; border-left: 4px solid var(--accent-blue); }
-
-        .btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        .admin-only { display: none; } 
-
-        #loading { position: fixed; inset: 0; background: rgba(3, 7, 18, 0.95); display: none; z-index: 3000; justify-content: center; align-items: center; color: var(--accent-blue); font-weight: 800; letter-spacing: 2px; }
+        .btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-size: 12px; }
+        .admin-only { display: none; }
     </style>
 </head>
 <body>
@@ -89,62 +65,48 @@
         <button class="login-btn" style="background: var(--accent-blue); color: #083344;" onclick="showPassInput()">Administrator</button>
         <button class="login-btn" style="background: #374151; color: white;" onclick="loginAsState()">State Access</button>
         <div id="passArea" style="display:none; margin-top: 20px;">
-            <input type="password" id="adminPass" class="login-input" placeholder="Enter Secure Pin" style="background: #030712; border: 1px solid #374151; color: white; padding: 15px; width: 100%; border-radius: 10px; box-sizing: border-box;">
+            <input type="password" id="adminPass" placeholder="Enter Secure Pin" style="background: #030712; border: 1px solid #374151; color: white; padding: 15px; width: 100%; border-radius: 10px; box-sizing: border-box;">
             <button class="login-btn" style="background: #f59e0b; color: white; margin-top: 15px;" onclick="validateAdmin()">Verify & Enter</button>
         </div>
     </div>
 </div>
 
-<div id="loading">SYNCING DATA...</div>
-
 <aside class="sidebar">
-    <div style="padding: 35px 20px; text-align: center;"><span style="font-weight: 900; font-size: 22px; color: white; letter-spacing: 2px;">PLFS <span style="color: var(--accent-blue);">SYNC</span></span></div>
-    <div class="sidebar-scroll" id="sidebarContent" style="overflow-y:auto; flex:1;"></div>
+    <div style="padding: 30px 20px; text-align: left;"><span style="font-weight: 900; font-size: 20px; color: white;">PLFS <span style="color: var(--accent-blue);">SYNC</span></span></div>
+    <div class="sidebar-scroll" id="sidebarContent"></div>
 </aside>
 
 <div class="main">
     <header class="header-container">
         <div>
-            <div id="breadcrumb" style="font-size: 16px; font-weight: 700; color: white; letter-spacing: 0.5px;">Welcome to Dashboard</div>
-            <div id="userTag" style="font-size: 10px; color: var(--accent-blue); text-transform: uppercase; font-weight: 800; margin-top: 4px;">Session: Read-Only</div>
+            <div id="breadcrumb" style="font-size: 15px; font-weight: 700;">Select State & Month</div>
+            <div id="logicIndicator" style="font-size: 10px; color: var(--accent-blue); font-weight: 800; margin-top: 5px; text-transform: uppercase;">Logic: Standby</div>
         </div>
-        <div style="display:flex; gap:12px;">
-            <button class="btn admin-only" id="importBtn" style="background: #f59e0b; color: white;" onclick="document.getElementById('fileInput').click()">Import Excel</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn admin-only" style="background: var(--danger); color: white;" onclick="wipeStateData()">Wipe State</button>
+            <button class="btn admin-only" style="background: #f59e0b; color: white;" onclick="document.getElementById('fileInput').click()">Import Excel</button>
             <input type="file" id="fileInput" multiple style="display:none" onchange="uploadFiles(this)">
-            <button class="btn" style="background: var(--accent-blue); color: #083344;" onclick="saveToCloud()">Push to Cloud</button>
-            <button class="btn" style="background: #ef4444; color: white;" onclick="location.reload()">Logout</button>
+            <button class="btn" style="background: var(--accent-blue); color: #083344;" onclick="saveToCloud()">Push Cloud</button>
+            <button class="btn" style="background: #374151; color: white;" onclick="location.reload()">Logout</button>
         </div>
     </header>
 
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Allocated FSUs</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-fresh">0%</div><div class="stat-label">V1 Completion</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-rv">0%</div><div class="stat-label">Revisits Sync</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-overall">0%</div><div class="stat-label">Total Performance</div></div>
-    </div>
-
     <div class="dashboard-content">
         <section class="pane" style="flex: 1.6;">
-            <div class="pane-header">
-                <span>FRESH VISITS (ROUND 1)</span>
-                <span id="v1-count" style="opacity: 0.7;">0 Records</span>
-            </div>
+            <div class="pane-header"><span>FRESH VISITS (ROUND 1)</span><span id="v1-count">0 Records</span></div>
             <div style="flex:1; overflow:auto;">
                 <table>
-                    <thead><tr><th width="80">FSU ID</th><th>Location (V/B)</th><th width="160">Enumerator</th><th width="140">Expected FSU Completion Date</th></tr></thead>
+                    <thead><tr><th width="100">FSU ID</th><th>Town / Village (I+K)</th><th width="160">Enumerator</th><th width="140">Target Date</th></tr></thead>
                     <tbody id="freshBody"></tbody>
                 </table>
             </div>
         </section>
 
         <section class="pane" style="flex: 1;">
-            <div class="pane-header">
-                <span>REVISITS (R2-R4)</span>
-                <span id="rv-count" style="opacity: 0.7;">0 Records</span>
-            </div>
+            <div class="pane-header"><span>REVISITS (R2-R4)</span><span id="rv-count">0 Records</span></div>
             <div style="flex:1; overflow:auto;">
                 <table>
-                    <thead><tr><th width="140">Unique UID</th><th width="150">Assigned To</th><th width="140">Visit Date</th></tr></thead>
+                    <thead><tr><th width="130">UID</th><th width="140">Assignee</th><th width="130">Date</th></tr></thead>
                     <tbody id="rvBody"></tbody>
                 </table>
             </div>
@@ -164,136 +126,135 @@
 
     let masterData = []; 
     let isAdmin = false;
-    let expandedMonth = null, expandedState = null, selectedSro = null;
-    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    let selectedState = null, selectedMonth = null, selectedSro = null;
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     function showPassInput() { document.getElementById('passArea').style.display = 'block'; }
     function validateAdmin() {
         if(document.getElementById('adminPass').value === '12345') {
             isAdmin = true; document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-            document.getElementById('userTag').innerText = "MODE: SYSTEM ADMINISTRATOR";
-            document.getElementById('loginOverlay').style.display = 'none';
-            loadFromFirebase();
-        } else { alert("Access Denied: Invalid Pin"); }
+            document.getElementById('loginOverlay').style.display = 'none'; loadFromFirebase();
+        } else { alert("Wrong Pin"); }
     }
     function loginAsState() {
-        isAdmin = false; document.getElementById('userTag').innerText = "MODE: STATE LEVEL ACCESS";
-        document.getElementById('loginOverlay').style.display = 'none';
-        loadFromFirebase();
+        isAdmin = false; document.getElementById('loginOverlay').style.display = 'none'; loadFromFirebase();
     }
 
     async function loadFromFirebase() {
-        toggleLoad(true);
         const snap = await database.ref('plfs_roster').once('value');
         masterData = snap.exists() ? Object.values(snap.val()).flatMap(s => Object.values(s)) : [];
-        renderSidebar(); toggleLoad(false);
+        renderSidebar();
     }
 
     function renderSidebar() {
         const container = document.getElementById('sidebarContent'); container.innerHTML = "";
-        const hierarchy = {};
-        masterData.forEach(d => {
-            if(!hierarchy[d.monthIdx]) hierarchy[d.monthIdx] = {};
-            if(!hierarchy[d.monthIdx][d.state]) hierarchy[d.monthIdx][d.state] = new Set();
-            hierarchy[d.monthIdx][d.state].add(d.sro);
-        });
+        const states = [...new Set(masterData.map(d => d.state))].sort();
 
-        months.forEach((mName, mIdx) => {
-            if(!hierarchy[mIdx]) return;
-            const mDiv = document.createElement('div');
-            mDiv.className = `level-month ${expandedMonth === mIdx ? 'active-sel' : ''}`;
-            mDiv.innerText = mName.toUpperCase();
-            mDiv.onclick = () => { expandedMonth = (expandedMonth === mIdx) ? null : mIdx; expandedState = null; renderSidebar(); };
-            container.appendChild(mDiv);
+        states.forEach(st => {
+            const stDiv = document.createElement('div');
+            stDiv.className = `state-item ${selectedState === st ? 'active' : ''}`;
+            stDiv.innerText = `➤ ${st}`;
+            stDiv.onclick = () => { selectedState = st; selectedMonth = null; selectedSro = null; renderSidebar(); updateDisplay(); };
+            container.appendChild(stDiv);
 
-            if(expandedMonth === mIdx) {
-                Object.keys(hierarchy[mIdx]).sort().forEach(st => {
-                    const sDiv = document.createElement('div');
-                    sDiv.style.padding = "12px 35px";
-                    sDiv.style.fontSize = "12px";
-                    sDiv.style.color = "var(--accent-blue)";
-                    sDiv.style.cursor = "pointer";
-                    sDiv.style.fontWeight = "700";
-                    if(expandedState === st) sDiv.style.background = "rgba(255,255,255,0.05)";
-                    sDiv.innerText = `➤ ${st}`;
-                    sDiv.onclick = (e) => { e.stopPropagation(); expandedState = (expandedState === st) ? null : st; selectedSro = null; renderSidebar(); };
-                    container.appendChild(sDiv);
-
-                    if(expandedState === st) {
-                        ['ALL', ...Array.from(hierarchy[mIdx][st]).sort()].forEach(sr => {
-                            const sroDiv = document.createElement('div');
-                            sroDiv.style.padding = "10px 50px";
-                            sroDiv.style.fontSize = "11px";
-                            sroDiv.style.color = selectedSro === sr ? "white" : "#cbd5e1";
-                            sroDiv.style.cursor = "pointer";
-                            if(selectedSro === sr) sroDiv.style.fontWeight = "800";
-                            sroDiv.innerText = sr === 'ALL' ? '📊 ALL SROs' : `• ${sr}`;
-                            sroDiv.onclick = (e) => { e.stopPropagation(); selectedSro = sr; updateDisplay(); renderSidebar(); };
-                            container.appendChild(sroDiv);
-                        });
-                    }
+            if (selectedState === st) {
+                // Month Grid View
+                const grid = document.createElement('div');
+                grid.className = 'month-grid';
+                months.forEach((m, idx) => {
+                    const chip = document.createElement('div');
+                    chip.className = `month-chip ${selectedMonth === idx ? 'active' : ''}`;
+                    chip.innerText = m.toUpperCase();
+                    chip.onclick = (e) => { e.stopPropagation(); selectedMonth = idx; selectedSro = null; renderSidebar(); updateDisplay(); };
+                    grid.appendChild(chip);
                 });
+                container.appendChild(grid);
+
+                // SRO List
+                if (selectedMonth !== null) {
+                    const sroContainer = document.createElement('div');
+                    sroContainer.className = 'sro-list';
+                    const availableSros = [...new Set(masterData.filter(d => d.state === st && d.monthIdx === selectedMonth).map(d => d.sro))].sort();
+                    
+                    ['ALL SROs', ...availableSros].forEach(sr => {
+                        const srDiv = document.createElement('div');
+                        srDiv.className = `sro-item ${selectedSro === sr ? 'active' : ''}`;
+                        srDiv.innerText = sr === 'ALL SROs' ? `📊 ${sr}` : `• ${sr}`;
+                        srDiv.onclick = (e) => { e.stopPropagation(); selectedSro = sr; renderSidebar(); updateDisplay(); };
+                        sroContainer.appendChild(srDiv);
+                    });
+                    container.appendChild(sroContainer);
+                }
             }
         });
     }
 
     function updateDisplay() {
-        if (expandedMonth === null) return;
-        document.getElementById('breadcrumb').innerText = `${months[expandedMonth]} / ${expandedState} / ${selectedSro}`;
-        const filtered = masterData.filter(d => d.monthIdx === expandedMonth && d.state === expandedState && (selectedSro === 'ALL' ? true : d.sro === selectedSro));
+        if (selectedState === null || selectedMonth === null) return;
         
-        const fItems = filtered.filter(d => d.visit === 1);
-        const rItems = filtered.filter(d => d.visit > 1);
-        const fDone = fItems.filter(d => d.endDate).length;
-        const rDone = rItems.filter(d => d.collectionDate).length;
+        const mFull = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        document.getElementById('breadcrumb').innerText = `${selectedState} / ${mFull[selectedMonth]} ${selectedSro ? '/ ' + selectedSro : ''}`;
         
-        document.getElementById('stat-total').innerText = fItems.length;
-        const fPerc = fItems.length ? Math.round((fDone/fItems.length)*100) : 0;
-        const rPerc = rItems.length ? Math.round((rDone/rItems.length)*100) : 0;
-        document.getElementById('stat-fresh').innerText = fPerc + "%";
-        document.getElementById('stat-rv').innerText = rPerc + "%";
-        document.getElementById('stat-overall').innerText = Math.round((fPerc + rPerc) / 2) + "%";
+        const isQ1 = selectedMonth <= 2;
+        document.getElementById('logicIndicator').innerText = isQ1 ? "Logic: Rolling Q1" : "Logic: Old Pattern";
 
-        document.getElementById('v1-count').innerText = `${fItems.length} Records`;
-        document.getElementById('rv-count').innerText = `${rItems.length} Records`;
+        let filtered = [];
+        const stateSet = masterData.filter(d => d.state === selectedState && (selectedSro === 'ALL SROs' || !selectedSro ? true : d.sro === selectedSro));
 
-        const fBody = document.getElementById('freshBody'); const rBody = document.getElementById('rvBody');
-        fBody.innerHTML = rBody.innerHTML = "";
+        if (isQ1) {
+            stateSet.forEach(d => {
+                if (selectedMonth === 0 && d.monthIdx === 0 && d.visit === 1) filtered.push(d);
+                if (selectedMonth === 1) {
+                    if (d.monthIdx === 1 && d.visit === 1) filtered.push(d);
+                    if (d.monthIdx === 0 && d.visit === 1) filtered.push({...d, visit: 2, uid: d.fsu + '-V2-Roll'});
+                }
+                if (selectedMonth === 2) {
+                    if (d.monthIdx === 2 && d.visit === 1) filtered.push(d);
+                    if ((d.monthIdx === 0 || d.monthIdx === 1) && d.visit === 1) filtered.push({...d, visit: 2, uid: d.fsu + '-RV-Roll'});
+                }
+            });
+        } else {
+            filtered = stateSet.filter(d => d.monthIdx === selectedMonth);
+        }
+
+        const fBody = document.getElementById('freshBody'); fBody.innerHTML = "";
+        const rBody = document.getElementById('rvBody'); rBody.innerHTML = "";
         
         filtered.forEach(d => {
             if (d.visit === 1) {
-                fBody.innerHTML += `<tr><td><b style="color:#06b6d4">${d.fsu}</b></td><td>${d.village}</td><td><input type="text" value="${d.enumerator||''}" onchange="updateVal('${d.uid}','enumerator',this.value)" placeholder="---"></td><td><input type="date" value="${d.endDate||''}" onchange="updateVal('${d.uid}','endDate',this.value)"></td></tr>`;
+                fBody.innerHTML += `<tr><td><b style="color:#06b6d4">${d.fsu}</b></td><td>${d.village}</td><td><input type="text" value="${d.enumerator||''}" onchange="updateVal('${d.uid}','enumerator',this.value)"></td><td><input type="date" value="${d.endDate||''}" onchange="updateVal('${d.uid}','endDate',this.value)"></td></tr>`;
             } else {
                 rBody.innerHTML += `<tr><td><b>${d.uid}</b></td><td style="color:#0ea5e9;">${d.enumerator||'---'}</td><td><input type="date" value="${d.collectionDate||''}" onchange="updateVal('${d.uid}','collectionDate',this.value)"></td></tr>`;
             }
         });
+        document.getElementById('v1-count').innerText = fBody.children.length;
+        document.getElementById('rv-count').innerText = rBody.children.length;
     }
 
     function updateVal(uid, key, val) {
         const item = masterData.find(d => d.uid === uid);
-        if (item) {
-            item[key] = val;
-            if (key === 'enumerator' && item.visit === 1) {
-                masterData.filter(x => x.fsu === item.fsu).forEach(x => x.enumerator = val);
-            }
-            updateDisplay();
-        }
+        if (item) { item[key] = val; updateDisplay(); }
     }
 
     async function saveToCloud() {
-        if(!expandedState) return alert("Please select a state before pushing data.");
-        toggleLoad(true);
-        const stateData = masterData.filter(d => d.state === expandedState);
+        if(!selectedState) return alert("Select a state.");
+        const stateData = masterData.filter(d => d.state === selectedState);
         const dataObj = {}; stateData.forEach(item => dataObj[item.uid] = item);
-        await database.ref(`plfs_roster/${expandedState}`).set(dataObj);
-        toggleLoad(false); alert("Cloud Sync Successful!");
+        await database.ref(`plfs_roster/${selectedState}`).set(dataObj);
+        alert("Push Successful!");
     }
 
-    function toggleLoad(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+    async function wipeStateData() {
+        if (!isAdmin || !selectedState) return;
+        if (confirm(`Wipe data for ${selectedState}?`)) {
+            await database.ref(`plfs_roster/${selectedState}`).remove();
+            masterData = masterData.filter(d => d.state !== selectedState);
+            selectedState = null; renderSidebar(); updateDisplay();
+        }
+    }
 
     async function uploadFiles(input) {
         if(!isAdmin) return;
-        toggleLoad(true);
         for (let file of input.files) {
             let name = file.name.replace(/\.[^/.]+$/, ""); 
             let cleanState = name.split(/_|-/).pop().trim().toUpperCase();
@@ -302,15 +263,20 @@
             const raw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {range: 7});
             raw.forEach(r => {
                 if(!r.FSU) return;
+                let t1 = r['Town/Village Name'] || r['__EMPTY_8'] || "";
+                let t2 = r['Town/Village Name_1'] || r['__EMPTY_10'] || "";
+                let mergedTown = `${t1} ${t2}`.replace(/\[.*?\]/g, "").trim();
                 const sro = String(r['SRO [Code]'] || 'Unknown').replace(/\[.*?\]/g, "").trim();
                 const mIdx = (parseInt(String(r['Month [Qtr]']).match(/\d+/)) - 1) % 12;
                 for(let v=1; v<=4; v++){
                     const uid = `${r.FSU}-V${v}`;
-                    if(!masterData.find(m => m.uid === uid)) masterData.push({ uid, fsu: r.FSU, visit: v, sro, state: cleanState, monthIdx: (mIdx+(v-1))%12, village: String(r['Village[Code]']||'N/A'), enumerator: "", startDate: "", endDate: "", collectionDate: "" });
+                    if(!masterData.find(m => m.uid === uid)) {
+                        masterData.push({ uid, fsu: r.FSU, visit: v, sro, state: cleanState, monthIdx: (mIdx+(v-1))%12, village: mergedTown || 'N/A', enumerator: "", startDate: "", endDate: "", collectionDate: "" });
+                    }
                 }
             });
         }
-        renderSidebar(); toggleLoad(false);
+        renderSidebar(); alert("Import Complete.");
     }
 </script>
 </body>
