@@ -25,7 +25,6 @@
             display: flex; height: 100vh; color: var(--text-dark); overflow: hidden;
         }
 
-        /* Sidebar Months */
         .month-rail { 
             width: 80px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px);
             display: flex; flex-direction: column; padding: 15px 0; z-index: 100;
@@ -45,7 +44,6 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Dynamic SRO Filter Section */
         .filter-section {
             background: rgba(15, 23, 42, 0.4); padding: 12px 30px; 
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -59,22 +57,13 @@
         }
         .sro-pill-wrapper.active { background: var(--accent); border-color: var(--accent); }
         
-        .sro-pill {
-            padding: 6px 12px; color: #cbd5e1; cursor: pointer;
-            font-size: 11px; font-weight: 700; white-space: nowrap;
-        }
+        .sro-pill { padding: 6px 12px; color: #cbd5e1; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; }
         .active .sro-pill { color: #0f172a; }
         
-        .sro-del { 
-            padding-right: 10px; cursor: pointer; color: #94a3b8; font-size: 16px; 
-            font-weight: bold; transition: 0.2s; 
-        }
+        .sro-del { padding-right: 10px; cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; transition: 0.2s; }
         .sro-del:hover { color: var(--danger); }
 
-        .search-box { 
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); 
-            padding: 8px 15px; border-radius: 8px; color: white; width: 150px; font-size: 12px;
-        }
+        .search-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; color: white; width: 150px; font-size: 12px; }
 
         .mini-dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px 30px 0 30px; }
         .dash-card { background: rgba(255,255,255,0.07); padding: 12px; border-radius: 12px; color: white; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
@@ -201,10 +190,12 @@
         updateSroPills(); applyFilters();
     }
 
+    // Logic updated to ensure buttons are removed if data is empty
     function updateSroPills() {
         const sros = [...new Set(masterData.map(d => d.sro))].sort();
         const container = document.getElementById('sroContainer');
         container.innerHTML = `<div class="sro-pill-wrapper ${currentSro === 'ALL' ? 'active' : ''}"><div class="sro-pill" onclick="filterBySro('ALL')">ALL SROs</div></div>`;
+        
         sros.forEach(s => {
             container.innerHTML += `
                 <div class="sro-pill-wrapper ${currentSro === s ? 'active' : ''}">
@@ -215,12 +206,20 @@
     }
 
     function deleteSroBulk(sroName) {
-        if (confirm(`CRITICAL: Delete ALL data for SRO: ${sroName}? This clears all associated FSUs.`)) {
+        if (confirm(`Delete ALL data for SRO: ${sroName}? Button will be removed.`)) {
             masterData = masterData.filter(d => d.sro !== sroName);
             if (currentSro === sroName) currentSro = 'ALL';
-            updateSroPills();
+            updateSroPills(); // Refresh UI to remove button
             applyFilters();
         }
+    }
+
+    function del(uid) { 
+        if(confirm("Delete record?")) { 
+            masterData = masterData.filter(d => d.uid !== uid); 
+            updateSroPills(); // Also check if this was the last record for an SRO
+            applyFilters(); 
+        } 
     }
 
     function filterBySro(sro) { currentSro = sro; updateSroPills(); applyFilters(); }
@@ -255,7 +254,6 @@
     function autoFill(fsu, name) { masterData.forEach(item => { if (item.fsu === fsu) { item.enumerator = name; const cell = document.getElementById(`e-${item.uid}`); if (cell) cell.innerText = name; } }); }
     function smartDate(uid, start) { const item = masterData.find(d => d.uid === uid); if (item && start) { item.startDate = start; let d = new Date(start); d.setDate(d.getDate() + 5); item.endDate = d.toISOString().split('T')[0]; const endInp = document.getElementById(`end-${uid}`); if (endInp) endInp.value = item.endDate; } }
     function updateVal(uid, key, val) { const item = masterData.find(d => d.uid === uid); if (item) item[key] = val; }
-    function del(uid) { if(confirm("Delete record?")) { masterData = masterData.filter(d => d.uid !== uid); applyFilters(); } }
     async function saveToCloud() { const state = document.getElementById('stateFilter').value; try { await database.ref(`plfs_roster/${state}`).set(masterData); alert("Database Synced!"); } catch (e) { alert("Sync Failed"); } }
 </script>
 </body>
