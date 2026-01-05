@@ -19,7 +19,7 @@
         .st-item.active { color: #fff; background: rgba(255,255,255,0.05); }
         .sro-item { padding: 6px 15px 6px 40px; font-size: 12px; color: var(--text-dim); cursor: pointer; border-left: 2px solid var(--border); }
         .sro-item.active { color: var(--accent); border-left-color: var(--accent); }
-        .m-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 10px 10px 10px 40px; }
+        .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 10px 10px 10px 40px; }
         .m-chip { font-size: 10px; text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); cursor: pointer; }
         .m-chip.active { background: var(--accent); color: #000; font-weight: bold; }
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -29,7 +29,7 @@
         .v-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text-dim); cursor: pointer; font-weight: 800; font-size: 10px; text-transform: uppercase; }
         .v-btn.active.v1 { border-color: var(--v1); color: var(--v1); background: rgba(46, 160, 67, 0.1); }
         .v-btn.active.v2 { border-color: var(--rv); color: var(--rv); background: rgba(210, 153, 34, 0.1); }
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; margin-top: 10px;}
         th { text-align: left; padding: 12px; font-size: 11px; color: var(--text-dim); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.4; }
         input { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 13px; }
@@ -40,14 +40,16 @@
 
 <aside class="sidebar">
     <div class="sidebar-header" id="secretHeader">PLFS 2026</div>
-    <div class="nav-scroll" id="navScroll"></div>
+    <div class="nav-scroll" id="navScroll">
+        <div style="padding: 20px; color: var(--text-dim); font-size: 12px;">Loading Database...</div>
+    </div>
 </aside>
 
 <main class="main">
     <header class="top-bar">
-        <input type="text" id="searchBox" placeholder="Quick Search FSU..." oninput="debouncedSearch(this.value)">
-        <div id="syncBadge" class="sync-badge" style="color:var(--rv)">LOCAL MODE</div>
-        <button style="background:var(--v1); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="syncAllData()">SYNC</button>
+        <input type="text" id="searchBox" placeholder="Search FSU or Town..." oninput="debouncedSearch(this.value)">
+        <div id="syncBadge" class="sync-badge" style="color:var(--rv)">OFFLINE</div>
+        <button style="background:var(--v1); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="syncAllData()">PUSH TO CLOUD</button>
     </header>
 
     <div class="workspace">
@@ -64,96 +66,164 @@
                     <th style="width: 20%;">Target Date</th>
                 </tr>
             </thead>
-            <tbody id="dataBody"></tbody>
+            <tbody id="dataBody">
+                <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--text-dim);">Select a State and Month from Sidebar</td></tr>
+            </tbody>
         </table>
     </div>
 </main>
 
 <script>
-    const config = { apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", authDomain: "action-plan-62fae.firebaseapp.com", databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", projectId: "action-plan-62fae" };
+    // --- FIREBASE CONFIG ---
+    const config = { 
+        apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", 
+        authDomain: "action-plan-62fae.firebaseapp.com", 
+        databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", 
+        projectId: "action-plan-62fae" 
+    };
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    // --- SECRET LOGIN (AAA) ---
-    let aCount = 0;
-    let lastKeyTime = Date.now();
-    document.addEventListener('keydown', (e) => {
-        const currentTime = Date.now();
-        if (currentTime - lastKeyTime > 1500) aCount = 0;
-        lastKeyTime = currentTime;
-        if (e.key.toLowerCase() === 'a') {
-            aCount++;
-            if (aCount === 3) { window.location.href = './admin.html'; aCount = 0; }
-        } else { aCount = 0; }
-    }, true);
-
-    document.getElementById('secretHeader').onclick = () => {
-        aCount++;
-        if(aCount === 3) { window.location.href = './admin.html'; aCount = 0; }
-        setTimeout(() => aCount = 0, 2000);
-    };
-
     const zones = { "North Zone": ["Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Punjab", "Rajasthan", "Uttarakhand"], "South Zone": ["Andhra Pradesh", "Karnataka", "Kerala", "Lakshadweep", "Puducherry", "Tamil Nadu", "Telangana"], "East Zone": ["Andaman & Nicobar Islands", "Bihar", "Jharkhand", "Odisha", "Sikkim", "West Bengal"], "West Zone": ["Dadra & Nagar Haveli", "Daman & Diu", "Goa", "Gujarat", "Maharashtra"], "Central Zone": ["Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh"], "North-East Zone": ["Arunachal Pradesh", "Assam", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Tripura"] };
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    
     let master = JSON.parse(localStorage.getItem('plfs_master')) || [];
-    let selZo, selSt, selSro, selMo = null, selVis = 1, query = "";
+    let selZo = null, selSt = null, selSro = null, selMo = null, selVis = 1, query = "";
+
+    // --- DATA LOADING ---
+    function initData() {
+        db.ref(`plfs_roster`).on('value', (snap) => {
+            if(snap.exists()) {
+                let cloudData = [];
+                const val = snap.val();
+                
+                // Flexible parsing for nested or flat data
+                Object.keys(val).forEach(key => {
+                    const entry = val[key];
+                    if (entry.uid) { // Flat structure
+                        cloudData.push(entry);
+                    } else { // Nested by State
+                        Object.values(entry).forEach(item => cloudData.push(item));
+                    }
+                });
+
+                master = cloudData;
+                localStorage.setItem('plfs_master', JSON.stringify(master));
+                document.getElementById('syncBadge').innerText = "LIVE SYNC ON";
+                document.getElementById('syncBadge').style.color = "var(--v1)";
+                renderNav();
+                refresh();
+            }
+        });
+    }
 
     function renderNav() {
         const container = document.getElementById('navScroll');
         const activeStates = [...new Set(master.map(m => m.state))];
         let html = '';
+
         Object.keys(zones).forEach(zo => {
-            if(!zones[zo].some(s => activeStates.includes(s)) && master.length > 0) return;
-            html += `<div class="zo-item ${selZo===zo?'active':''}" onclick="selZo=(selZo==='${zo}'?null:'${zo}');selSt=null;renderNav();">${zo}</div>`;
+            const hasData = zones[zo].some(s => activeStates.includes(s));
+            if(!hasData && master.length > 0) return;
+
+            html += `<div class="zo-item ${selZo===zo?'active':''}" onclick="selZo=(selZo==='${zo}'?null:'${zo}'); renderNav();">${zo}</div>`;
+            
             if(selZo === zo) {
                 zones[zo].filter(s => activeStates.includes(s)).forEach(st => {
-                    html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}';selSro=null;renderNav();refresh();event.stopPropagation();">${st}</div>`;
+                    html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}'; selSro=null; renderNav(); refresh(); event.stopPropagation();">${st}</div>`;
+                    
                     if(selSt === st) {
                         const sros = ["ALL SROs", ...new Set(master.filter(x=>x.state===st).map(x=>x.sro))].sort();
-                        html += sros.map(s => `<div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}';selMo=null;renderNav();refresh();event.stopPropagation();">${s}</div>${selSro===s ? `<div class="m-grid" onclick="event.stopPropagation();">${months.map((m,i)=>`<div class="m-chip ${selMo===i?'active':''}" onclick="selMo=${i};renderNav();refresh();">${m}</div>`).join('')}</div>` : ''}`).join('');
+                        sros.forEach(s => {
+                            html += `<div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}'; renderNav(); refresh(); event.stopPropagation();">${s}</div>`;
+                            if(selSro === s) {
+                                html += `<div class="m-grid" onclick="event.stopPropagation();">`;
+                                months.forEach((m,i) => {
+                                    html += `<div class="m-chip ${selMo===i?'active':''}" onclick="selMo=${i}; renderNav(); refresh();">${m}</div>`;
+                                });
+                                html += `</div>`;
+                            }
+                        });
                     }
                 });
             }
         });
-        container.innerHTML = html;
+        container.innerHTML = html || '<div style="padding:20px; color:var(--rv)">No data found in Firebase.</div>';
     }
 
     function refresh() {
         const body = document.getElementById('dataBody');
-        if(!selSt || !selSro || selMo === null) { body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">Select filters.</td></tr>'; return; }
-        const filtered = master.filter(d => d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro) && d.monthIdx === selMo && (selVis === 1 ? d.visitNum === 1 : d.visitNum > 1) && d.fsu.toString().includes(query));
+        if(!selSt || !selSro || selMo === null) { 
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--text-dim);">Please select <b>State > SRO > Month</b> from sidebar.</td></tr>'; 
+            return; 
+        }
+
+        const filtered = master.filter(d => 
+            d.state === selSt && 
+            (selSro === "ALL SROs" || d.sro === selSro) && 
+            d.monthIdx === selMo && 
+            (selVis === 1 ? (d.visitNum === 1 || !d.visitNum) : d.visitNum > 1) &&
+            (d.fsu.toString().includes(query) || (d.location && d.location.toLowerCase().includes(query.toLowerCase())))
+        );
+
+        if(filtered.length === 0) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No matching records found.</td></tr>';
+            return;
+        }
+
         body.innerHTML = filtered.map(d => {
-            const v1 = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
-            // DISPLAYING FULL LOCATION DATA
-            return `<tr><td><b>${d.fsu}</b><br><small>${d.sector}</small></td><td>${v1.location || d.location}</td><td><input type="text" value="${d.enumerator || v1.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Name"></td><td><input type="date" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td></tr>`;
+            return `<tr>
+                <td><b>${d.fsu}</b><br><small style="color:var(--text-dim)">${d.sector || ''}</small></td>
+                <td><small>${d.location || 'N/A'}</small></td>
+                <td><input type="text" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Enter Name"></td>
+                <td><input type="date" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
+            </tr>`;
         }).join('');
     }
 
     function upd(id, k, v) { 
-        let item = master.find(x=>x.uid===id); if(!item) return;
-        if(k==='en') { item.enumerator = v; if(item.visitNum === 1) master.filter(x => x.fsu === item.fsu && x.state === item.state).forEach(s => s.enumerator = v); refresh(); } else { item.date = v; }
+        let item = master.find(x=>x.uid===id); 
+        if(!item) return;
+        if(k==='en') item.enumerator = v; 
+        else item.date = v;
         localStorage.setItem('plfs_master', JSON.stringify(master));
     }
 
     async function syncAllData() {
-        const grouped = {};
-        master.forEach(item => { if (!grouped[item.state]) grouped[item.state] = {}; grouped[item.state][item.uid] = item; });
-        await db.ref(`plfs_roster`).update(grouped);
-        document.getElementById('syncBadge').innerText = "SYNCED";
-        document.getElementById('syncBadge').style.color = "var(--v1)";
+        if(!confirm("Push all local changes to Cloud?")) return;
+        const btn = event.target;
+        btn.innerText = "UPDATING...";
+        
+        try {
+            const grouped = {};
+            master.forEach(item => { 
+                if (!grouped[item.state]) grouped[item.state] = {}; 
+                grouped[item.state][item.uid] = item; 
+            });
+            await db.ref(`plfs_roster`).update(grouped);
+            alert("Sync Successful!");
+        } catch (e) {
+            alert("Sync Failed: " + e.message);
+        } finally {
+            btn.innerText = "PUSH TO CLOUD";
+        }
     }
 
-    function setVisit(v) { selVis = v; document.getElementById('btnV1').classList.toggle('active', v===1); document.getElementById('btnV2').classList.toggle('active', v===2); refresh(); }
-    let timer; function debouncedSearch(v) { clearTimeout(timer); timer = setTimeout(() => { query = v; refresh(); }, 300); }
+    function setVisit(v) { 
+        selVis = v; 
+        document.getElementById('btnV1').classList.toggle('active', v===1); 
+        document.getElementById('btnV2').classList.toggle('active', v===2); 
+        refresh(); 
+    }
 
-    db.ref(`plfs_roster`).once('value', (snap) => {
-        if(snap.exists()) {
-            let cloudData = [];
-            snap.forEach(stSnap => { Object.values(stSnap.val()).forEach(r => cloudData.push(r)); });
-            master = cloudData; localStorage.setItem('plfs_master', JSON.stringify(master));
-            renderNav();
-        }
-    });
+    let timer; 
+    function debouncedSearch(v) { 
+        clearTimeout(timer); 
+        timer = setTimeout(() => { query = v; refresh(); }, 300); 
+    }
+
+    // Initialize
+    initData();
     renderNav();
 </script>
 </body>
