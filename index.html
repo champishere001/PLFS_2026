@@ -11,7 +11,7 @@
         :root { --bg: #0d1117; --sidebar: #161b22; --card: #21262d; --border: #30363d; --v1: #2ea043; --rv: #d29922; --accent: #58a6ff; --text: #c9d1d9; --text-dim: #8b949e; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         .sidebar { width: 280px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; cursor: default; }
+        .sidebar-header { padding: 20px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; cursor: pointer; user-select: none; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 10px; }
         .zo-item { padding: 12px; font-weight: 800; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.03); font-size: 13px; }
         .zo-item.active { background: rgba(88, 166, 255, 0.1); color: var(--accent); }
@@ -66,7 +66,7 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    // --- NO PASSWORD "AAA" LOGIC ---
+    // NO PASSWORD REDIRECT
     let aCount = 0;
     let lastKeyTime = Date.now();
 
@@ -77,23 +77,24 @@
 
         if (e.key.toLowerCase() === 'a') {
             aCount++;
+            console.log("Key 'A' count:", aCount); // View in F12 Console
             if (aCount === 3) {
                 e.preventDefault(); 
-                window.location.href = 'admin.html'; // Direct Jump - No Prompt
+                // Using relative path to find admin.html in the same directory
+                window.location.href = './admin.html'; 
                 aCount = 0;
             }
         } else { aCount = 0; }
     }, true); 
 
-    // Backup: 3-Click on Header
+    // Backup Click on Header
     let clickCount = 0;
     document.getElementById('secretHeader').onclick = () => {
         clickCount++;
-        if(clickCount === 3) { window.location.href = 'admin.html'; clickCount = 0; }
+        if(clickCount === 3) { window.location.href = './admin.html'; clickCount = 0; }
         setTimeout(() => clickCount = 0, 2000);
     };
 
-    // --- APP LOGIC ---
     const zones = { "North Zone": ["Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Punjab", "Rajasthan", "Uttarakhand"], "South Zone": ["Andhra Pradesh", "Karnataka", "Kerala", "Lakshadweep", "Puducherry", "Tamil Nadu", "Telangana"], "East Zone": ["Andaman & Nicobar Islands", "Bihar", "Jharkhand", "Odisha", "Sikkim", "West Bengal"], "West Zone": ["Dadra & Nagar Haveli", "Daman & Diu", "Goa", "Gujarat", "Maharashtra"], "Central Zone": ["Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh"], "North-East Zone": ["Arunachal Pradesh", "Assam", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Tripura"] };
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     let master = JSON.parse(localStorage.getItem('plfs_master')) || [];
