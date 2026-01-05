@@ -10,32 +10,38 @@
     <style>
         :root { --bg: #0d1117; --sidebar: #161b22; --card: #21262d; --border: #30363d; --v1: #2ea043; --rv: #d29922; --accent: #58a6ff; --text: #c9d1d9; --text-dim: #8b949e; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+        
         .sidebar { width: 280px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 20px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+        
         .zo-item { padding: 12px; font-weight: 800; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.03); font-size: 13px; }
-        .zo-item.active { background: rgba(88, 166, 255, 0.1); color: var(--accent); }
         .st-item { padding: 8px 15px 8px 25px; font-weight: 600; cursor: pointer; border-radius: 8px; font-size: 13px; color: var(--text-dim); }
         .st-item.active { color: #fff; background: rgba(255,255,255,0.05); }
         .sro-item { padding: 6px 15px 6px 40px; font-size: 12px; color: var(--text-dim); cursor: pointer; border-left: 2px solid var(--border); }
         .sro-item.active { color: var(--accent); border-left-color: var(--accent); }
+        
         .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 10px 10px 10px 40px; }
-        .m-chip { font-size: 10px; text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); cursor: pointer; }
-        .m-chip.active { background: var(--accent); color: #000; font-weight: bold; }
+        .m-chip { font-size: 10px; text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); }
+        .m-chip.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; background: var(--sidebar); align-items: center; }
         #searchBox { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
+        
         .workspace { flex: 1; padding: 15px; overflow-y: auto; }
         .v-toggle { display: flex; gap: 8px; margin-bottom: 15px; }
         .v-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text-dim); cursor: pointer; font-weight: 800; font-size: 10px; text-transform: uppercase; }
         .v-btn.active.v1 { border-color: var(--v1); color: var(--v1); background: rgba(46, 160, 67, 0.1); }
         .v-btn.active.v2 { border-color: var(--rv); color: var(--rv); background: rgba(210, 153, 34, 0.1); }
+
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
         th { text-align: left; padding: 12px; font-size: 11px; color: var(--text-dim); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.4; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
         input { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 13px; }
+        
         .sync-badge { font-size: 10px; font-weight: bold; margin-left: auto; padding-right: 10px; }
-        .push-btn { background: var(--v1); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .push-btn { background: var(--v1); color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -43,13 +49,13 @@
 <aside class="sidebar">
     <div class="sidebar-header">PLFS 2026</div>
     <div class="nav-scroll" id="navScroll">
-        <div style="padding: 20px; color: var(--text-dim); font-size: 12px;">Connecting...</div>
+        <div style="padding: 20px; color: var(--text-dim); font-size: 12px;">Initializing Data...</div>
     </div>
 </aside>
 
 <main class="main">
     <header class="top-bar">
-        <input type="text" id="searchBox" placeholder="Filter FSU..." oninput="debouncedSearch(this.value)">
+        <input type="text" id="searchBox" placeholder="Search FSU or Location..." oninput="debouncedSearch(this.value)">
         <div id="syncBadge" class="sync-badge" style="color:var(--rv)">OFFLINE</div>
         <button class="push-btn" onclick="syncAllData()">PUSH DATA</button>
     </header>
@@ -74,7 +80,12 @@
 </main>
 
 <script>
-    const config = { apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", authDomain: "action-plan-62fae.firebaseapp.com", databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", projectId: "action-plan-62fae" };
+    const config = { 
+        apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", 
+        authDomain: "action-plan-62fae.firebaseapp.com", 
+        databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", 
+        projectId: "action-plan-62fae" 
+    };
     firebase.initializeApp(config);
     const db = firebase.database();
 
@@ -102,15 +113,11 @@
         });
     }
 
-    // UPDATED: Simple update without mirroring (Instant reflection removed)
     function upd(id, k, v) { 
         let item = master.find(x => x.uid === id); 
         if(item) {
-            if(k === 'en') {
-                item.enumerator = v;
-            } else { 
-                item.date = v; 
-            }
+            if(k === 'en') item.enumerator = v;
+            else item.date = v;
             document.getElementById('syncBadge').innerText = "UNSAVED";
             document.getElementById('syncBadge').style.color = "var(--rv)";
         }
@@ -124,13 +131,13 @@
             if(!zones[zo].some(s => activeStates.includes(s))) return;
             html += `<div class="zo-item" onclick="this.classList.toggle('active')">${zo}</div>`;
             zones[zo].filter(s => activeStates.includes(s)).forEach(st => {
-                html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}'; selSro=null; refresh(); renderNav();">${st}</div>`;
+                html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}'; selSro=null; refresh(); renderNav(); event.stopPropagation();">${st}</div>`;
                 if(selSt === st) {
                     const sros = ["ALL SROs", ...new Set(master.filter(x=>x.state===st).map(x=>x.sro))].sort();
                     sros.forEach(s => {
-                        html += `<div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}'; refresh(); renderNav();">${s}</div>`;
+                        html += `<div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}'; refresh(); renderNav(); event.stopPropagation();">${s}</div>`;
                         if(selSro === s) {
-                            html += `<div class="m-grid">`;
+                            html += `<div class="m-grid" onclick="event.stopPropagation();">`;
                             months.forEach((m,i) => { html += `<div class="m-chip ${selMo===i?'active':''}" onclick="selMo=${i}; refresh(); renderNav();">${m}</div>`; });
                             html += `</div>`;
                         }
@@ -150,40 +157,75 @@
 
         let filtered = [];
         if (selVis === 1) {
-            // Fresh Visit V1
-            filtered = master.filter(d => d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro) && d.monthIdx === selMo && d.visitNum == 1);
+            // SHOW FRESH (V1)
+            filtered = master.filter(d => 
+                d.state === selSt && 
+                (selSro === "ALL SROs" || d.sro === selSro) && 
+                parseInt(d.monthIdx) === selMo && 
+                parseInt(d.visitNum) === 1
+            );
         } else {
-            // Revisit Cycle: Jan (0) appears in Feb(1), Mar(2), Apr(3)
+            // SHOW REVISITS (V2, V3, V4)
             filtered = master.filter(d => {
-                const sameLoc = d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro);
-                const isRV = d.visitNum > 1;
-                const nextThree = (selMo > d.monthIdx && selMo <= d.monthIdx + 3);
-                return sameLoc && isRV && nextThree;
+                const isCorrectLoc = d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro);
+                const isRevisit = parseInt(d.visitNum) > 1;
+                
+                // Gap between selected month and original upload month
+                const gap = selMo - parseInt(d.monthIdx);
+                
+                // Gap 1 = V2 (Feb if Jan V1), Gap 2 = V3, Gap 3 = V4
+                const isCorrectVisitMonth = (parseInt(d.visitNum) === gap + 1);
+                const withinThreeMonths = (gap >= 1 && gap <= 3);
+
+                return isCorrectLoc && isRevisit && withinThreeMonths && isCorrectVisitMonth;
             });
         }
 
+        // Search Filter
         filtered = filtered.filter(d => d.fsu.toString().includes(query) || (d.location && d.location.toLowerCase().includes(query.toLowerCase())));
 
-        body.innerHTML = filtered.map(d => `
-            <tr>
-                <td><b>${d.fsu}</b></td>
-                <td><div>${d.location || 'N/A'}</div><small style="color:var(--text-dim)">Visit ${d.visitNum}</small></td>
-                <td><input type="text" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Assigned Enumerator"></td>
-                <td><input type="date" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
-            </tr>`).join('');
+        if(filtered.length === 0) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--text-dim)">No entries found for this selection.</td></tr>';
+        } else {
+            body.innerHTML = filtered.map(d => `
+                <tr>
+                    <td><b>${d.fsu}</b></td>
+                    <td>
+                        <div>${d.location || 'N/A'}</div>
+                        <small style="color:${d.visitNum > 1 ? 'var(--rv)' : 'var(--v1)'}">
+                            ${d.visitNum > 1 ? 'REVISIT V'+d.visitNum : 'FRESH V1'} (Origin: ${months[d.monthIdx]})
+                        </small>
+                    </td>
+                    <td><input type="text" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Assign Enumerator"></td>
+                    <td><input type="date" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
+                </tr>`).join('');
+        }
     }
 
     async function syncAllData() {
         const grouped = {};
-        master.forEach(item => { if (!grouped[item.state]) grouped[item.state] = {}; grouped[item.state][item.uid] = item; });
+        master.forEach(item => { 
+            if (!grouped[item.state]) grouped[item.state] = {}; 
+            grouped[item.state][item.uid] = item; 
+        });
         await db.ref(`plfs_roster`).update(grouped);
         document.getElementById('syncBadge').innerText = "LIVE";
         document.getElementById('syncBadge').style.color = "var(--v1)";
-        alert("Pushed to Cloud");
+        alert("Data Pushed Successfully!");
     }
 
-    function setVisit(v) { selVis = v; document.getElementById('btnV1').classList.toggle('active', v===1); document.getElementById('btnV2').classList.toggle('active', v===2); refresh(); }
-    let timer; function debouncedSearch(v) { clearTimeout(timer); timer = setTimeout(() => { query = v; refresh(); }, 300); }
+    function setVisit(v) { 
+        selVis = v; 
+        document.getElementById('btnV1').classList.toggle('active', v===1); 
+        document.getElementById('btnV2').classList.toggle('active', v===2); 
+        refresh(); 
+    }
+
+    let timer; 
+    function debouncedSearch(v) { 
+        clearTimeout(timer); 
+        timer = setTimeout(() => { query = v; refresh(); }, 300); 
+    }
 
     initData();
 </script>
