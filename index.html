@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PLFS 2026 | Field Command Center</title>
+    <title>PLFS 2026 | Multi-Field Command</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,6 +12,7 @@
         :root { --bg: #0d1117; --sidebar: #161b22; --card: #21262d; --border: #30363d; --v1: #2ea043; --rv: #d29922; --accent: #58a6ff; --text: #c9d1d9; --text-dim: #8b949e; --urban: #1f6feb; --rural: #238636; --danger: #f85149; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
+        /* Sidebar Navigation */
         .sidebar { width: 280px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 25px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 10px; }
@@ -26,6 +27,7 @@
         .m-chip { font-size: 10px; text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); }
         .m-chip.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
 
+        /* Top Bar Controls */
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #090c10; }
         .top-bar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; background: var(--sidebar); align-items: center; }
         #searchBox { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; }
@@ -37,6 +39,7 @@
         .btn-wipe:hover { background: var(--danger); color: white; }
         .btn-sync { background: var(--v1); }
 
+        /* Workspace & Table */
         .workspace { flex: 1; padding: 25px; overflow-y: auto; }
         .v-toggle { display: flex; gap: 8px; margin-bottom: 20px; background: #161b22; padding: 5px; border-radius: 10px; width: fit-content; }
         .v-btn { padding: 10px 20px; border-radius: 8px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; font-weight: 800; font-size: 11px; text-transform: uppercase; }
@@ -69,19 +72,19 @@
     <header class="top-bar">
         <input type="text" id="searchBox" placeholder="Search FSU or Village..." oninput="debouncedSearch(this.value)">
         
-        <button class="btn btn-rural" onclick="triggerUpload('Rural')">Upload Rural</button>
-        <button class="btn btn-urban" onclick="triggerUpload('Urban')">Upload Urban</button>
+        <button class="btn btn-rural" onclick="triggerUpload('Rural')">Upload Rural (Multi)</button>
+        <button class="btn btn-urban" onclick="triggerUpload('Urban')">Upload Urban (Multi)</button>
         <button class="btn btn-sync" onclick="syncAllData()">Sync All</button>
         <button class="btn btn-wipe" onclick="wipeData()">Wipe Data</button>
         
-        <input type="file" id="xlInput" hidden accept=".xlsx, .xls" onchange="handleFile(this)">
+        <input type="file" id="xlInput" hidden multiple accept=".xlsx, .xls" onchange="handleFiles(this)">
         <div id="syncBadge" class="sync-badge" style="color:var(--rv)">OFFLINE</div>
     </header>
 
     <div class="workspace">
         <div class="v-toggle">
             <button id="btnV1" class="v-btn v1 active" onclick="setVisit(1)">Visit 1 (Fresh)</button>
-            <button id="btnV2" class="v-btn v2" onclick="setVisit(2)">Revisits (V2, V3, V4)</button>
+            <button id="btnV2" class="v-btn v2" onclick="setVisit(2)">Revisits (V2-V4)</button>
         </div>
 
         <div class="table-wrap">
@@ -129,8 +132,7 @@
                 setStatus("SYSTEM LIVE", "var(--v1)");
                 renderNav(); refresh();
             } else {
-                master = [];
-                renderNav(); refresh();
+                master = []; renderNav(); refresh();
             }
         });
     }
@@ -140,61 +142,69 @@
         document.getElementById('xlInput').click();
     }
 
-    function handleFile(input) {
-        const file = input.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
+    // Handle multiple files simultaneously
+    async function handleFiles(input) {
+        const files = Array.from(input.files);
+        if (files.length === 0) return;
+
+        setStatus(`READING ${files.length} FILES...`, "var(--accent)");
+        
+        let allNewEntries = [];
+
+        for (const file of files) {
+            const data = await file.arrayBuffer();
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            // Row 7 (index 6) for State name
             const stateCell = sheet[XLSX.utils.encode_cell({r:6, c:0})] || sheet[XLSX.utils.encode_cell({r:6, c:1})];
             const stateName = stateCell ? stateCell.v.toString().trim() : "Unknown State";
-            const rawData = XLSX.utils.sheet_to_json(sheet, { range: 7 });
-            processImport(rawData, stateName);
-        };
-        reader.readAsArrayBuffer(file);
-        input.value = '';
-    }
 
-    function processImport(data, state) {
-        const newEntries = data.map((row, i) => ({
-            uid: `fsu-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
-            fsu: row['FSU'] || row['FSU No'] || '0000',
-            location: row['Village/Town Name'] || row['Location'] || 'N/A',
-            sro: row['SRO'] || 'HQ',
-            state: state,
-            sector: uploadSector,
-            monthIdx: selMo,
-            visitNum: 1,
-            enumerator: '',
-            date: ''
-        }));
-        master = [...master, ...newEntries];
+            // Row 8 (index 7) for Headers
+            const rawData = XLSX.utils.sheet_to_json(sheet, { range: 7 });
+            
+            const entries = rawData.map((row, i) => ({
+                uid: `fsu-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
+                fsu: row['FSU'] || row['FSU No'] || '0000',
+                location: row['Village/Town Name'] || row['Location'] || 'N/A',
+                sro: row['SRO'] || 'HQ',
+                state: stateName,
+                sector: uploadSector,
+                monthIdx: selMo,
+                visitNum: 1,
+                enumerator: '',
+                date: ''
+            }));
+            allNewEntries = [...allNewEntries, ...entries];
+        }
+
+        master = [...master, ...allNewEntries];
         setStatus("UNSAVED CHANGES", "var(--rv)");
-        renderNav(); refresh();
+        input.value = '';
+        renderNav();
+        refresh();
+        alert(`Successfully imported ${allNewEntries.length} FSUs from ${files.length} files.`);
     }
 
     async function syncAllData() {
-        if(master.length === 0) return alert("No data to sync.");
-        setStatus("PUSHING...", "var(--accent)");
+        if(master.length === 0) return alert("Nothing to sync.");
+        setStatus("SYNCING TO CLOUD...", "var(--accent)");
         const grouped = {};
         master.forEach(item => { 
             if (!grouped[item.state]) grouped[item.state] = {}; 
             grouped[item.state][item.uid] = item; 
         });
-        await db.ref(`plfs_roster`).set(grouped); // Use .set to ensure clean overwrite with current master
+        await db.ref(`plfs_roster`).set(grouped);
         setStatus("SYSTEM LIVE", "var(--v1)");
-        alert("Cloud Sync Complete.");
+        alert("Bulk Cloud Sync Successful.");
     }
 
     async function wipeData() {
-        const confirm1 = confirm("⚠️ DANGER: This will delete the entire cloud database. Are you sure?");
-        if(confirm1) {
-            const confirm2 = confirm("FINAL WARNING: All enumerator assignments and FSUs will be lost. Proceed?");
-            if(confirm2) {
+        if(confirm("DANGER: Wipe entire database?")) {
+            if(confirm("This cannot be undone. Confirm wipe?")) {
                 await db.ref(`plfs_roster`).remove();
                 master = [];
-                setStatus("DATABASE WIPED", "var(--danger)");
+                setStatus("WIPED", "var(--danger)");
                 renderNav(); refresh();
             }
         }
@@ -202,8 +212,7 @@
 
     function setStatus(txt, col) {
         const b = document.getElementById('syncBadge');
-        b.innerText = txt;
-        b.style.color = col;
+        b.innerText = txt; b.style.color = col;
     }
 
     function upd(id, k, v) { 
@@ -217,7 +226,7 @@
 
     function renderNav() {
         const container = document.getElementById('navScroll');
-        const activeStates = [...new Set(master.map(m => m.state))];
+        const activeStates = [...new Set(master.map(m => m.state))].sort();
         let html = '';
         Object.keys(zones).forEach(zo => {
             if(!zones[zo].some(s => activeStates.includes(s))) return;
@@ -237,13 +246,13 @@
                 }
             });
         });
-        container.innerHTML = html || '<div style="padding:20px; color:var(--text-dim)">No data found. Upload Excel.</div>';
+        container.innerHTML = html || '<div style="padding:20px; color:var(--text-dim)">No data. Please upload.</div>';
     }
 
     function refresh() {
         const body = document.getElementById('dataBody');
         if(!selSt || !selSro) { 
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:100px; color:var(--text-dim)">Select State and SRO to view.</td></tr>'; 
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:100px; color:var(--text-dim)">Select State and SRO.</td></tr>'; 
             return; 
         }
         let displayData = [];
@@ -260,8 +269,8 @@
         body.innerHTML = displayData.map(d => `
             <tr>
                 <td><b style="color:#fff">${d.fsu}</b><br><span class="tag tag-${d.sector.toLowerCase()}">${d.sector}</span></td>
-                <td><div style="font-weight:600">${d.location}</div><span class="tag" style="background:rgba(255,255,255,0.05)">V${d.curVis}</span><small style="color:var(--text-dim)">Start: ${months[d.monthIdx]}</small></td>
-                <td><input type="text" class="table-input" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Name..."></td>
+                <td><div style="font-weight:600">${d.location}</div><span class="tag" style="background:rgba(255,255,255,0.05)">V${d.curVis}</span></td>
+                <td><input type="text" class="table-input" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Enter Name"></td>
                 <td><input type="date" class="table-input" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
             </tr>`).join('') || '<tr><td colspan="4" style="text-align:center; padding:40px;">No records.</td></tr>';
     }
