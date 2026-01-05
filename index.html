@@ -3,107 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PLFS 2026 | Multi-Field Command</title>
+    <title>PLFS 2026 | Zonal Command</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        :root { --bg: #0d1117; --sidebar: #161b22; --card: #21262d; --border: #30363d; --v1: #2ea043; --rv: #d29922; --accent: #58a6ff; --text: #c9d1d9; --text-dim: #8b949e; --urban: #1f6feb; --rural: #238636; --danger: #f85149; }
+        :root { 
+            --bg: #0d1117; --sidebar: #161b22; --card: #21262d; --border: #30363d;
+            --v1: #2ea043; --rv: #d29922; --accent: #58a6ff; --text: #c9d1d9; --text-dim: #8b949e; 
+        }
+        * { box-sizing: border-box; outline: none; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
         
-        /* Sidebar Navigation */
-        .sidebar { width: 280px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 25px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; }
+        /* Sidebar - Zonal Hierarchy */
+        .sidebar { width: 300px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: 0.3s; z-index: 100; }
+        .sidebar-header { padding: 20px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+
+        .zo-item { padding: 12px; font-weight: 800; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .zo-item.active { background: rgba(88, 166, 255, 0.1); color: var(--accent); border: 1px solid rgba(88, 166, 255, 0.2); }
         
-        .zo-item { padding: 12px; font-weight: 800; cursor: pointer; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.03); font-size: 13px; color: #fff; }
-        .st-item { padding: 8px 15px 8px 25px; font-weight: 600; cursor: pointer; border-radius: 8px; font-size: 13px; color: var(--text-dim); }
-        .st-item.active { color: #fff; background: rgba(88, 166, 255, 0.1); }
-        .sro-item { padding: 6px 15px 6px 40px; font-size: 12px; color: var(--text-dim); cursor: pointer; border-left: 2px solid var(--border); }
-        .sro-item.active { color: var(--accent); border-left-color: var(--accent); }
-        
-        .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 10px 10px 10px 40px; }
+        .st-item { padding: 10px 15px 10px 25px; font-weight: 600; cursor: pointer; border-radius: 8px; margin-bottom: 2px; font-size: 13px; color: var(--text-dim); transition: 0.2s; }
+        .st-item.active { color: #fff; background: rgba(255,255,255,0.05); }
+
+        .sro-item { padding: 8px 15px 8px 40px; font-size: 12px; color: var(--text-dim); cursor: pointer; border-left: 2px solid var(--border); }
+        .sro-item.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; background: rgba(88, 166, 255, 0.05); }
+
+        .m-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 10px 10px 10px 40px; }
         .m-chip { font-size: 10px; text-align: center; padding: 6px 2px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); }
-        .m-chip.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+        .m-chip.active { background: var(--accent); color: #000; font-weight: bold; }
 
-        /* Top Bar Controls */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #090c10; }
-        .top-bar { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; background: var(--sidebar); align-items: center; }
-        #searchBox { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; }
-        
-        .btn { padding: 8px 14px; border-radius: 6px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; color: white; text-transform: uppercase; transition: 0.2s; }
-        .btn-rural { background: var(--rural); }
-        .btn-urban { background: var(--urban); }
-        .btn-wipe { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
-        .btn-wipe:hover { background: var(--danger); color: white; }
-        .btn-sync { background: var(--v1); }
+        /* Main Workspace */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; background: var(--sidebar); align-items: center; }
+        #searchBox { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; }
+        .workspace { flex: 1; padding: 15px; overflow-y: auto; }
 
-        /* Workspace & Table */
-        .workspace { flex: 1; padding: 25px; overflow-y: auto; }
-        .v-toggle { display: flex; gap: 8px; margin-bottom: 20px; background: #161b22; padding: 5px; border-radius: 10px; width: fit-content; }
-        .v-btn { padding: 10px 20px; border-radius: 8px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; font-weight: 800; font-size: 11px; text-transform: uppercase; }
-        .v-btn.active.v1 { background: var(--v1); color: white; }
-        .v-btn.active.v2 { background: var(--rv); color: white; }
+        .visit-controls { display: flex; gap: 8px; margin-bottom: 15px; }
+        .v-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text-dim); cursor: pointer; font-weight: 800; font-size: 10px; text-transform: uppercase; }
+        .v-btn.active.v1 { border-color: var(--v1); color: var(--v1); background: rgba(46, 160, 67, 0.1); }
+        .v-btn.active.v2 { border-color: var(--rv); color: var(--rv); background: rgba(210, 153, 34, 0.1); }
 
-        .table-wrap { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; font-size: 11px; color: var(--text-dim); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        
-        .tag { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
-        .tag-rural { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid #2ea043; }
-        .tag-urban { background: rgba(56, 139, 253, 0.2); color: #58a6ff; border: 1px solid #388bfd; }
-        
-        input.table-input { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 4px; width: 100%; }
-        .sync-badge { font-size: 10px; font-weight: 900; margin-left: auto; }
+        /* Table Design */
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        th { text-align: left; padding: 12px; font-size: 11px; color: var(--text-dim); border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        input[type="text"], input[type="date"] { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 13px; }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -300px; height: 100%; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.open { left: 0; }
+            thead { display: none; }
+            tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); padding: 10px; background: var(--card); border-radius: 10px; }
+            td { display: block; width: 100%; border: none; padding: 4px 0; }
+            td::before { content: attr(data-label); font-size: 9px; color: var(--text-dim); display: block; font-weight: 800; margin-bottom: 2px; }
+            .menu-toggle { display: block !important; }
+        }
+
+        .btn { padding: 10px 15px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; font-size: 11px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .menu-toggle { display: none; background: var(--accent); color: #000; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 90; }
+        .sync-badge { font-size: 10px; color: var(--rv); margin-left: auto; font-weight: bold; padding-right: 10px; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
     <div class="sidebar-header">PLFS 2026</div>
-    <div id="navScroll" class="nav-scroll">
-        <div style="padding: 20px; color: var(--text-dim); font-size: 12px;">Initializing System...</div>
-    </div>
+    <div class="nav-scroll" id="navScroll"></div>
 </aside>
 
 <main class="main">
     <header class="top-bar">
-        <input type="text" id="searchBox" placeholder="Search FSU or Village..." oninput="debouncedSearch(this.value)">
-        
-        <button class="btn btn-rural" onclick="triggerUpload('Rural')">Upload Rural (Multi)</button>
-        <button class="btn btn-urban" onclick="triggerUpload('Urban')">Upload Urban (Multi)</button>
-        <button class="btn btn-sync" onclick="syncAllData()">Sync All</button>
-        <button class="btn btn-wipe" onclick="wipeData()">Wipe Data</button>
-        
-        <input type="file" id="xlInput" hidden multiple accept=".xlsx, .xls" onchange="handleFiles(this)">
-        <div id="syncBadge" class="sync-badge" style="color:var(--rv)">OFFLINE</div>
+        <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+        <input type="text" id="searchBox" placeholder="Quick Search FSU..." oninput="debouncedSearch(this.value)">
+        <div id="syncBadge" class="sync-badge">LOCAL MODE</div>
+        <button class="btn" style="background:#30363d; color:white;" onclick="unlockAdmin()">ADMIN</button>
+        <button id="syncAllBtn" class="btn" style="background:var(--v1); color:white" onclick="syncAllData()">SYNC ALL</button>
     </header>
 
     <div class="workspace">
-        <div class="v-toggle">
-            <button id="btnV1" class="v-btn v1 active" onclick="setVisit(1)">Visit 1 (Fresh)</button>
+        <div id="adminPanel" style="display:none; flex-direction:column; gap:10px; margin-bottom:15px; padding:15px; border:1px solid var(--accent); border-radius:10px; background: rgba(88, 166, 255, 0.05);">
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent);">UPLOAD EXCEL (RURAL/URBAN)</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="flex:1; background:var(--accent); color:#000" onclick="document.getElementById('xlRural').click()">+ Rural</button>
+                <button class="btn" style="flex:1; background:var(--accent); color:#000" onclick="document.getElementById('xlUrban').click()">+ Urban</button>
+            </div>
+            <input type="file" id="xlRural" hidden multiple onchange="handleExcel(this, 'Rural')">
+            <input type="file" id="xlUrban" hidden multiple onchange="handleExcel(this, 'Urban')">
+            <button class="btn" style="background:#f85149; color:white; margin-top: 5px;" onclick="wipeDB()">Wipe Local Database</button>
+        </div>
+
+        <div class="visit-controls">
+            <button id="btnV1" class="v-btn v1 active" onclick="setVisit(1)">Visit 1</button>
             <button id="btnV2" class="v-btn v2" onclick="setVisit(2)">Revisits (V2-V4)</button>
         </div>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">FSU / Sector</th>
-                        <th style="width: 35%;">Location Detail</th>
-                        <th style="width: 25%;">Enumerator</th>
-                        <th style="width: 25%;">Target Date</th>
-                    </tr>
-                </thead>
-                <tbody id="dataBody"></tbody>
-            </table>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">FSU Code</th>
+                    <th style="width: 35%;">Location Details</th>
+                    <th style="width: 25%;">Enumerator</th>
+                    <th style="width: 20%;">Date</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody"></tbody>
+        </table>
     </div>
 </main>
 
 <script>
+    // Initialize Firebase
     const config = { 
         apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", 
         authDomain: "action-plan-62fae.firebaseapp.com", 
@@ -113,172 +131,163 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    const zones = { "North Zone": ["Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Punjab", "Rajasthan", "Uttarakhand"], "South Zone": ["Andhra Pradesh", "Karnataka", "Kerala", "Lakshadweep", "Puducherry", "Tamil Nadu", "Telangana"], "East Zone": ["Andaman & Nicobar Islands", "Bihar", "Jharkhand", "Odisha", "Sikkim", "West Bengal"], "West Zone": ["Dadra & Nagar Haveli", "Daman & Diu", "Goa", "Gujarat", "Maharashtra"], "Central Zone": ["Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh"], "North-East Zone": ["Arunachal Pradesh", "Assam", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Tripura"] };
+    // Zonal Data Map
+    const zones = {
+        "North Zone (Delhi)": ["Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Punjab", "Rajasthan", "Uttarakhand"],
+        "South Zone (Bengaluru)": ["Andhra Pradesh", "Karnataka", "Kerala", "Lakshadweep", "Puducherry", "Tamil Nadu", "Telangana"],
+        "East Zone (Kolkata)": ["Andaman & Nicobar Islands", "Bihar", "Jharkhand", "Odisha", "Sikkim", "West Bengal"],
+        "West Zone (Mumbai)": ["Dadra & Nagar Haveli", "Daman & Diu", "Goa", "Gujarat", "Maharashtra"],
+        "Central Zone (Nagpur)": ["Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh"],
+        "North-East Zone (Guwahati)": ["Arunachal Pradesh", "Assam", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Tripura"]
+    };
+
+    let master = JSON.parse(localStorage.getItem('plfs_master')) || [];
+    let selZo = null, selSt = null, selSro = null, selMo = null, selVis = 1, query = "";
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    
-    let master = [];
-    let selSt = null, selSro = null, selMo = 0, selVis = 1, query = "";
-    let uploadSector = 'Rural';
 
-    function initData() {
-        db.ref(`plfs_roster`).on('value', (snap) => {
-            if(snap.exists()) {
-                let cloudData = [];
-                const val = snap.val();
-                Object.keys(val).forEach(stKey => {
-                    Object.values(val[stKey]).forEach(item => { if(item.uid) cloudData.push(item); });
-                });
-                master = cloudData;
-                setStatus("SYSTEM LIVE", "var(--v1)");
-                renderNav(); refresh();
-            } else {
-                master = []; renderNav(); refresh();
-            }
-        });
-    }
-
-    function triggerUpload(sector) {
-        uploadSector = sector;
-        document.getElementById('xlInput').click();
-    }
-
-    // Handle multiple files simultaneously
-    async function handleFiles(input) {
-        const files = Array.from(input.files);
-        if (files.length === 0) return;
-
-        setStatus(`READING ${files.length} FILES...`, "var(--accent)");
-        
-        let allNewEntries = [];
-
-        for (const file of files) {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
-            // Row 7 (index 6) for State name
-            const stateCell = sheet[XLSX.utils.encode_cell({r:6, c:0})] || sheet[XLSX.utils.encode_cell({r:6, c:1})];
-            const stateName = stateCell ? stateCell.v.toString().trim() : "Unknown State";
-
-            // Row 8 (index 7) for Headers
-            const rawData = XLSX.utils.sheet_to_json(sheet, { range: 7 });
-            
-            const entries = rawData.map((row, i) => ({
-                uid: `fsu-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
-                fsu: row['FSU'] || row['FSU No'] || '0000',
-                location: row['Village/Town Name'] || row['Location'] || 'N/A',
-                sro: row['SRO'] || 'HQ',
-                state: stateName,
-                sector: uploadSector,
-                monthIdx: selMo,
-                visitNum: 1,
-                enumerator: '',
-                date: ''
-            }));
-            allNewEntries = [...allNewEntries, ...entries];
-        }
-
-        master = [...master, ...allNewEntries];
-        setStatus("UNSAVED CHANGES", "var(--rv)");
-        input.value = '';
-        renderNav();
-        refresh();
-        alert(`Successfully imported ${allNewEntries.length} FSUs from ${files.length} files.`);
-    }
-
-    async function syncAllData() {
-        if(master.length === 0) return alert("Nothing to sync.");
-        setStatus("SYNCING TO CLOUD...", "var(--accent)");
-        const grouped = {};
-        master.forEach(item => { 
-            if (!grouped[item.state]) grouped[item.state] = {}; 
-            grouped[item.state][item.uid] = item; 
-        });
-        await db.ref(`plfs_roster`).set(grouped);
-        setStatus("SYSTEM LIVE", "var(--v1)");
-        alert("Bulk Cloud Sync Successful.");
-    }
-
-    async function wipeData() {
-        if(confirm("DANGER: Wipe entire database?")) {
-            if(confirm("This cannot be undone. Confirm wipe?")) {
-                await db.ref(`plfs_roster`).remove();
-                master = [];
-                setStatus("WIPED", "var(--danger)");
-                renderNav(); refresh();
-            }
-        }
-    }
-
-    function setStatus(txt, col) {
-        const b = document.getElementById('syncBadge');
-        b.innerText = txt; b.style.color = col;
-    }
-
-    function upd(id, k, v) { 
-        let item = master.find(x => x.uid === id); 
-        if(item) {
-            if(k === 'en') item.enumerator = v;
-            else item.date = v;
-            setStatus("UNSAVED CHANGES", "var(--rv)");
-        }
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('overlay');
+        sb.classList.toggle('open');
+        ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
     }
 
     function renderNav() {
         const container = document.getElementById('navScroll');
-        const activeStates = [...new Set(master.map(m => m.state))].sort();
+        const activeStates = [...new Set(master.map(m => m.state))];
         let html = '';
+
         Object.keys(zones).forEach(zo => {
-            if(!zones[zo].some(s => activeStates.includes(s))) return;
-            html += `<div class="zo-item">${zo}</div>`;
-            zones[zo].filter(s => activeStates.includes(s)).forEach(st => {
-                html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}'; selSro=null; refresh(); renderNav();">${st}</div>`;
-                if(selSt === st) {
-                    const sros = ["ALL SROs", ...new Set(master.filter(x=>x.state===st).map(x=>x.sro))].sort();
-                    sros.forEach(s => {
-                        html += `<div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}'; refresh(); renderNav(); event.stopPropagation();">${s}</div>`;
-                        if(selSro === s) {
-                            html += `<div class="m-grid">`;
-                            months.forEach((m,i) => { html += `<div class="m-chip ${selMo===i?'active':''}" onclick="selMo=${i}; refresh(); renderNav(); event.stopPropagation();">${m}</div>`; });
-                            html += `</div>`;
-                        }
-                    });
-                }
-            });
+            const hasData = zones[zo].some(s => activeStates.includes(s));
+            if(!hasData && master.length > 0) return;
+
+            html += `<div class="zo-item ${selZo===zo?'active':''}" onclick="selZo=(selZo==='${zo}'?null:'${zo}');selSt=null;renderNav();">
+                        ${zo} <span>${selZo===zo?'▼':'▶'}</span>
+                     </div>`;
+
+            if(selZo === zo) {
+                zones[zo].filter(s => activeStates.includes(s)).forEach(st => {
+                    html += `<div class="st-item ${selSt===st?'active':''}" onclick="selSt='${st}';selSro=null;renderNav();refresh();event.stopPropagation();">${st}</div>`;
+                    if(selSt === st) html += renderSros(st);
+                });
+            }
         });
-        container.innerHTML = html || '<div style="padding:20px; color:var(--text-dim)">No data. Please upload.</div>';
+        container.innerHTML = html;
+    }
+
+    function renderSros(st) {
+        const sros = ["ALL SROs", ...new Set(master.filter(x=>x.state===st).map(x=>x.sro))].sort();
+        return sros.map(s => `
+            <div class="sro-item ${selSro===s?'active':''}" onclick="selSro='${s}';selMo=null;renderNav();refresh();event.stopPropagation();">${s}</div>
+            ${selSro===s ? renderMonths() : ''}
+        `).join('');
+    }
+
+    function renderMonths() {
+        return `<div class="m-grid" onclick="event.stopPropagation();">${months.map((m,i)=>`<div class="m-chip ${selMo===i?'active':''}" onclick="selMo=${i};renderNav();refresh();toggleSidebar();">${m}</div>`).join('')}</div>`;
     }
 
     function refresh() {
         const body = document.getElementById('dataBody');
-        if(!selSt || !selSro) { 
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:100px; color:var(--text-dim)">Select State and SRO.</td></tr>'; 
+        if(!selSt || !selSro || selMo === null) { 
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:60px; color:var(--text-dim)">Please select a Zone, State, and Month from the Sidebar.</td></tr>'; 
             return; 
         }
-        let displayData = [];
-        const v1Samples = master.filter(d => d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro));
-        if (selVis === 1) {
-            displayData = v1Samples.filter(d => parseInt(d.monthIdx) === selMo).map(item => ({ ...item, curVis: 1 }));
-        } else {
-            v1Samples.forEach(sample => {
-                const gap = selMo - parseInt(sample.monthIdx);
-                if (gap >= 1 && gap <= 3) displayData.push({ ...sample, curVis: gap + 1 });
-            });
-        }
-        displayData = displayData.filter(d => d.fsu.toString().includes(query) || d.location.toLowerCase().includes(query.toLowerCase()));
-        body.innerHTML = displayData.map(d => `
-            <tr>
-                <td><b style="color:#fff">${d.fsu}</b><br><span class="tag tag-${d.sector.toLowerCase()}">${d.sector}</span></td>
-                <td><div style="font-weight:600">${d.location}</div><span class="tag" style="background:rgba(255,255,255,0.05)">V${d.curVis}</span></td>
-                <td><input type="text" class="table-input" value="${d.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Enter Name"></td>
-                <td><input type="date" class="table-input" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
-            </tr>`).join('') || '<tr><td colspan="4" style="text-align:center; padding:40px;">No records.</td></tr>';
+        
+        const filtered = master.filter(d => 
+            d.state === selSt && (selSro === "ALL SROs" || d.sro === selSro) && 
+            d.monthIdx === selMo && (selVis === 1 ? d.visitNum === 1 : d.visitNum > 1) &&
+            (d.fsu.toString().includes(query))
+        );
+
+        body.innerHTML = filtered.map(d => {
+            const v1 = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
+            return `
+                <tr style="border-left: 4px solid ${d.visitNum === 1 ? 'var(--v1)' : 'var(--rv)'}">
+                    <td data-label="FSU Code"><b>${d.fsu}</b><br><small style="opacity:0.6">${d.sector}</small></td>
+                    <td data-label="Details">${v1.location || d.location}<br><small style="color:var(--accent)">${d.sro} | Visit ${d.visitNum}</small></td>
+                    <td data-label="Enumerator"><input type="text" value="${d.enumerator || v1.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)" placeholder="Assign"></td>
+                    <td data-label="Target Date"><input type="date" value="${d.date || ''}" onchange="upd('${d.uid}','dt',this.value)"></td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    function setVisit(v) { selVis = v; document.getElementById('btnV1').classList.toggle('active', v===1); document.getElementById('btnV2').classList.toggle('active', v===2); refresh(); }
-    let timer; function debouncedSearch(v) { clearTimeout(timer); timer = setTimeout(() => { query = v; refresh(); }, 300); }
+    // Logic Functions
+    function upd(id, k, v) { 
+        let item = master.find(x=>x.uid===id); if(!item) return;
+        if(k==='en') {
+            item.enumerator = v;
+            if(item.visitNum === 1) master.filter(x => x.fsu === item.fsu && x.state === item.state).forEach(s => s.enumerator = v);
+            refresh();
+        } else { item.date = v; }
+        saveLocal();
+    }
 
-    initData();
+    function saveLocal() { 
+        localStorage.setItem('plfs_master', JSON.stringify(master)); 
+        document.getElementById('syncBadge').innerText = "UNSAVED CHANGES";
+        document.getElementById('syncBadge').style.color = "var(--rv)";
+    }
+
+    async function syncAllData() {
+        if (master.length === 0) return alert("Nothing to sync.");
+        const btn = document.getElementById('syncAllBtn');
+        btn.innerText = "..."; btn.disabled = true;
+
+        try {
+            const grouped = {};
+            master.forEach(item => {
+                if (!grouped[item.state]) grouped[item.state] = {};
+                grouped[item.state][item.uid] = item;
+            });
+            await db.ref(`plfs_roster`).update(grouped);
+            alert("Success: All states synced to cloud.");
+            document.getElementById('syncBadge').innerText = "CLOUD SYNCED";
+            document.getElementById('syncBadge').style.color = "var(--v1)";
+        } catch (e) { alert("Sync Failed: Check Internet"); }
+        finally { btn.innerText = "SYNC ALL"; btn.disabled = false; }
+    }
+
+    async function handleExcel(input, sector) {
+        const files = Array.from(input.files);
+        for(let file of files) {
+            let state = file.name.split('.')[0].split('_').pop().trim();
+            const data = new Uint8Array(await file.arrayBuffer());
+            const rows = XLSX.utils.sheet_to_json(XLSX.read(data, {type:'array'}).Sheets[XLSX.read(data, {type:'array'}).SheetNames[0]], {header:1, range:7});
+            rows.slice(1).forEach(cols => {
+                let fsu, mCode, sro, loc;
+                if(sector === 'Urban') { fsu=cols[3]; mCode=cols[4]; sro=cols[5]; loc=cols[8]; }
+                else { fsu=cols[4]; mCode=cols[5]; sro=cols[6]; loc=cols[10]; }
+                if(fsu) {
+                    const startMonth = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
+                    for(let i = 0; i < 4; i++) {
+                        let curMonth = (startMonth + i) % 12;
+                        let uid = `${state}_${fsu}_M${curMonth}_V${i+1}`;
+                        if(!master.find(m => m.uid === uid)) master.push({ uid, fsu, state, sector, sro: String(sro).toUpperCase(), monthIdx: curMonth, location: loc || "---", enumerator: "", visitNum: i+1 });
+                    }
+                }
+            });
+        }
+        saveLocal(); renderNav(); alert("Import Complete.");
+    }
+
+    async function autoFetch() { 
+        const snap = await db.ref(`plfs_roster`).once('value'); 
+        if(snap.exists()) { 
+            let cloudData = [];
+            snap.forEach(stSnap => { Object.values(stSnap.val()).forEach(r => cloudData.push(r)); }); 
+            if(cloudData.length > 0) { master = cloudData; localStorage.setItem('plfs_master', JSON.stringify(master)); renderNav(); }
+        } 
+    }
+
+    let timer; function debouncedSearch(v) { clearTimeout(timer); timer = setTimeout(() => { query = v; refresh(); }, 300); }
+    function unlockAdmin() { if(prompt("Password:") === "1234") document.getElementById('adminPanel').style.display = 'flex'; }
+    function wipeDB() { if(confirm("Wipe local data?")) { master = []; saveLocal(); renderNav(); refresh(); } }
+    function setVisit(v) { selVis = v; document.getElementById('btnV1').classList.toggle('active', v===1); document.getElementById('btnV2').classList.toggle('active', v===2); refresh(); }
+
+    autoFetch();
+    renderNav();
 </script>
 </body>
 </html>
