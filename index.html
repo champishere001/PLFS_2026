@@ -36,7 +36,6 @@
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; }
         th { text-align: left; padding: 12px; font-size: 11px; color: var(--text-dim); background: rgba(0,0,0,0.2); text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        tr:nth-child(4n) { border-bottom: 2px solid var(--accent); }
 
         /* UI Elements */
         .btn { padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; font-size: 11px; transition: 0.2s; }
@@ -92,9 +91,9 @@
 </main>
 
 <script>
-    // 1. UPDATED FIREBASE CONFIG
+    // 1. UPDATED FIREBASE CONFIG WITH NEW KODAI
     const dbConfig = { 
-        databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com/" 
+        databaseURL: "https://plfs-fsu-2026-default-rtdb.asia-southeast1.firebasedatabase.app/" 
     };
     firebase.initializeApp(dbConfig);
     const db = firebase.database();
@@ -115,7 +114,6 @@
         for (let file of files) {
             try {
                 const fileName = file.name.split('.')[0]; 
-                // Extract state from name (e.g., "List_BIHAR.xlsx" -> "BIHAR")
                 const rawState = fileName.includes('_') ? fileName.split('_').pop().toUpperCase() : "UNKNOWN";
                 const state = rawState.replace(/[.#$[\]/]/g, "_").trim();
 
@@ -162,15 +160,19 @@
     async function syncAll() {
         if(master.length === 0) return alert("No data to sync.");
         const btn = document.getElementById('syncBtn');
+        const badge = document.getElementById('syncBadge');
         btn.innerText = "UPDATING...";
         
         try {
             const updates = {};
             master.forEach(m => {
-                // Organize by State in Firebase for better performance
-                updates[`/plfs_roster/${m.state}/${m.uid}`] = m;
+                // Organizing by master node in the new database
+                updates[`/master/${m.state}/${m.uid}`] = m;
             });
             await db.ref().update(updates);
+            badge.innerText = "SYNCED";
+            badge.style.color = "var(--v1)";
+            badge.style.borderColor = "var(--v1)";
             alert("Cloud Sync Successful!");
         } catch(e) {
             console.error(e);
@@ -184,7 +186,7 @@
         const btn = document.getElementById('fetchBtn');
         btn.innerText = "FETCHING...";
         try {
-            const snap = await db.ref('plfs_roster').once('value');
+            const snap = await db.ref('master').once('value');
             const data = snap.val();
             if (data) {
                 let flattened = [];
@@ -194,11 +196,25 @@
                 master = flattened;
                 saveAndRefresh();
                 alert("Data Refreshed from Cloud!");
+            } else {
+                alert("Cloud database is empty.");
             }
         } catch(e) {
             alert("Fetch error: " + e.message);
         } finally {
             btn.innerText = "FETCH DATA";
+        }
+    }
+
+    function updateEntry(uid, field, value) {
+        const index = master.findIndex(m => m.uid === uid);
+        if (index !== -1) {
+            master[index][field] = value;
+            localStorage.setItem('plfs_v5', JSON.stringify(master));
+            const badge = document.getElementById('syncBadge');
+            badge.innerText = "UNSAVED CHANGES";
+            badge.style.color = "var(--rv)";
+            badge.style.borderColor = "var(--rv)";
         }
     }
 
@@ -218,4 +234,49 @@
                 <td><input type="text" placeholder="Assign..." value="${item.enumerator||''}" onchange="updateEntry('${item.uid}','enumerator',this.value)"></td>
                 <td><input type="date" value="${item.date||''}" onchange="updateEntry('${item.uid}','date',this.value)"></td>
             </tr>
-        `).join('') || '<tr><td colspan="5" style="text-
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:40px;">No records found.</td></tr>';
+        
+        renderStateSidebar();
+    }
+
+    function renderStateSidebar() {
+        const list = document.getElementById('stateList');
+        const states = [...new Set(master.map(m => m.state))].sort();
+        list.innerHTML = states.map(s => `
+            <div class="state-item ${selectedState === s ? 'active' : ''}" onclick="filterByState('${s}')">
+                ${s}
+            </div>
+        `).join('');
+    }
+
+    function filterByState(st) {
+        selectedState = st;
+        document.querySelectorAll('.state-item').forEach(el => el.classList.remove('active'));
+        if(st === 'ALL') document.getElementById('btn-ALL').classList.add('active');
+        renderTable();
+    }
+
+    function setSearch(val) {
+        query = val;
+        renderTable();
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('plfs_v5', JSON.stringify(master));
+        renderTable();
+    }
+
+    function wipeData() {
+        if(confirm("Wipe local data? (Cloud data stays until next sync)")) {
+            master = [];
+            saveAndRefresh();
+        }
+    }
+
+    window.onload = () => {
+        renderTable();
+        document.getElementById('syncBadge').innerText = "LOCAL READY";
+    };
+</script>
+</body>
+</html>
