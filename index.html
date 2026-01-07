@@ -138,7 +138,7 @@
         if(!selSt || selMo === null) { body.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:60px;'>Select State & Month</td></tr>"; return; }
 
         if(selVis === 1) {
-            head.innerHTML = `<th>FSU & Sector</th><th>Locality & SRO</th><th>Enumerator Name</th><th>Sample Start Date</th><th>Data Collection Day</th>`;
+            head.innerHTML = `<th>FSU & Sector</th><th>Locality & SRO</th><th>Enumerator Name</th><th>Sample Start Date</th><th>Sample End Date</th>`;
         } else {
             head.innerHTML = `<th>FSU & Sector</th><th>Locality</th><th>Enumerator Name</th><th>Data Collection Day (Next Visit)</th>`;
         }
