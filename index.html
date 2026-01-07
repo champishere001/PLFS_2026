@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLFS 2026 | NSO Dashboard</title>
+    <title>PLFS 2026 | NSO Dashboard v8</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -18,52 +18,36 @@
         }
         * { box-sizing: border-box; outline: none; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         .app-container { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Sidebar */
-        .sidebar { width: 320px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 310px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 20px; font-weight: 800; font-size: 16px; color: var(--accent); border-bottom: 1px solid var(--border); text-align: center; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 10px; }
-        
         .zone-box { margin-bottom: 12px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
         .zone-title { background: var(--card); padding: 8px 12px; font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        
         .st-item { padding: 10px 15px; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
         .st-item.active { background: var(--accent); color: #000; font-weight: 800; }
         .st-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); color: var(--text-dim); }
         .st-item.has-data .st-status { color: #fff; background: var(--v1); }
-
         .sro-group { background: rgba(0,0,0,0.4); padding: 8px; border-top: 1px solid var(--border); }
         .sro-item { padding: 8px; font-size: 12px; color: var(--text-dim); cursor: pointer; border-radius: 4px; }
         .sro-item.active { color: #fff; background: rgba(88, 166, 255, 0.15); font-weight: 700; }
-
         .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
         .m-chip { font-size: 9px; text-align: center; padding: 6px 0; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; }
         .m-chip.active { background: #fff; color: #000; font-weight: 800; }
-
-        /* Main Workspace */
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar { padding: 12px 20px; background: var(--sidebar); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
         .search-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 8px; max-width: 250px; }
-
         .workspace { flex: 1; padding: 20px; overflow-y: auto; }
         .table-wrap { background: var(--sidebar); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { text-align: left; padding: 12px; font-size: 11px; color: var(--text-dim); background: rgba(0,0,0,0.2); text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-
-        /* Buttons */
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
         .btn { padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-size: 11px; }
         .btn-sync { background: var(--v1); color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: #fff; }
-        .btn-danger { background: var(--danger); color: white; }
-        .input-field { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 13px; }
-
-        @media (max-width: 900px) {
-            .app-container { flex-direction: column; }
-            .sidebar { width: 100%; height: 40vh; }
-        }
+        .input-field { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; font-size: 12px; }
+        .locked-data { color: var(--accent); font-weight: 700; font-size: 13px; }
+        .revisit-date { color: var(--rv); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -77,29 +61,18 @@
     <main class="main">
         <header class="top-bar">
             <input type="text" class="search-input" placeholder="🔍 Search FSU..." onkeyup="doSearch(this.value)">
-            <button class="btn btn-outline" id="loginBtn" onclick="unlockAdmin()">Admin</button>
-            <div id="adminPanel" style="display:none; gap:5px;">
-                <button class="btn btn-outline" onclick="document.getElementById('xlRural').click()">+R</button>
-                <button class="btn btn-outline" onclick="document.getElementById('xlUrban').click()">+U</button>
-                <input type="file" id="xlRural" hidden multiple onchange="handleExcel(this, 'Rural')">
-                <input type="file" id="xlUrban" hidden multiple onchange="handleExcel(this, 'Urban')">
-                <button class="btn btn-danger" onclick="wipeDatabase()">🗑️ Wipe</button>
-            </div>
-            <button class="btn btn-outline" onclick="exportToCSV()">📄 Export</button>
-            <button class="btn btn-sync" onclick="syncToCloud()">☁️ Sync</button>
+            <button class="btn btn-outline" onclick="unlockAdmin()">Admin</button>
+            <button class="btn btn-sync" onclick="syncToCloud()">☁️ Sync to Cloud</button>
         </header>
 
         <div class="workspace">
-            <div id="statusInfo" style="margin-bottom:10px; font-size:12px; font-weight:600; color:var(--accent);"></div>
             <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button id="btnV1" class="btn btn-sync" style="flex:1" onclick="setVisit(1)">Visit 1</button>
-                <button id="btnV2" class="btn btn-outline" style="flex:1" onclick="setVisit(2)">Revisits</button>
+                <button id="btnV1" class="btn btn-sync" style="flex:1" onclick="setVisit(1)">Fresh Sample (Visit 1)</button>
+                <button id="btnV2" class="btn btn-outline" style="flex:1" onclick="setVisit(2)">Revisits (Auto-Calculation)</button>
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead>
-                        <tr><th>FSU & Sector</th><th>Locality</th><th>Enumerator</th><th>Target Date</th></tr>
-                    </thead>
+                    <thead><tr id="tableHeader"></tr></thead>
                     <tbody id="dataBody"></tbody>
                 </table>
             </div>
@@ -108,7 +81,6 @@
 </div>
 
 <script>
-    // Project Config
     const config = { 
         apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", 
         authDomain: "action-plan-62fae.firebaseapp.com", 
@@ -130,15 +102,76 @@
     let master = [], selSt = null, selSro = null, selMo = null, selVis = 1, query = "";
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-    function unlockAdmin() { if(prompt("Pass:") === "12345") { document.getElementById('adminPanel').style.display = 'flex'; document.getElementById('loginBtn').style.display = 'none'; } }
+    function unlockAdmin() { if(prompt("Pass:") === "12345") { /* Admin logic */ } }
 
+    function getRollingDate(baseDateStr, monthsToAdd) {
+        if(!baseDateStr) return "---";
+        let d = new Date(baseDateStr);
+        d.setMonth(d.getMonth() + monthsToAdd);
+        return d.toISOString().split('T')[0];
+    }
+
+    function upd(id, field, value) {
+        let item = master.find(x => x.uid === id);
+        if (!item) return;
+
+        if (field === 'en') item.enumerator = value;
+        if (field === 'sd') item.startDate = value;
+        if (field === 'ed') item.endDate = value;
+
+        // Auto-Sync Logic: If V1 is updated, propagate to all linked FSUs
+        if (item.visitNum === 1) {
+            master.forEach(other => {
+                if (other.fsu === item.fsu && other.state === item.state && other.visitNum > 1) {
+                    other.enumerator = item.enumerator;
+                    // Calculate rolling date for revisits based on V1 Data Collection Day
+                    other.endDate = getRollingDate(item.endDate, other.visitNum - 1);
+                }
+            });
+            refresh();
+        }
+    }
+
+    function refresh() {
+        const head = document.getElementById('tableHeader');
+        const body = document.getElementById('dataBody');
+        if(!selSt || selMo === null) { body.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:60px;'>Select State & Month</td></tr>"; return; }
+
+        if(selVis === 1) {
+            head.innerHTML = `<th>FSU & Sector</th><th>Locality & SRO</th><th>Enumerator Name</th><th>Sample Start Date</th><th>Data Collection Day</th>`;
+        } else {
+            head.innerHTML = `<th>FSU & Sector</th><th>Locality</th><th>Enumerator Name</th><th>Data Collection Day (Next Visit)</th>`;
+        }
+        
+        const filtered = master.filter(d => d.state === selSt && (selSro === "ALL SROs" || !selSro || d.sro === selSro) && d.monthIdx === selMo && (selVis === 1 ? d.visitNum === 1 : d.visitNum > 1) && (d.fsu.toString().includes(query)));
+        
+        body.innerHTML = filtered.map(d => {
+            if(selVis === 1) {
+                return `<tr>
+                    <td><b>${d.fsu}</b><br><small>${d.sector}</small></td>
+                    <td>${d.location}<br><small>${d.sro}</small></td>
+                    <td><input type="text" class="input-field" value="${d.enumerator}" onchange="upd('${d.uid}','en',this.value)"></td>
+                    <td><input type="date" class="input-field" value="${d.startDate}" onchange="upd('${d.uid}','sd',this.value)"></td>
+                    <td><input type="date" class="input-field" value="${d.endDate}" onchange="upd('${d.uid}','ed',this.value)"></td>
+                </tr>`;
+            } else {
+                return `<tr>
+                    <td><b>${d.fsu}</b><br><small>${d.sector}</small></td>
+                    <td>${d.location}<br><small>Visit No: ${d.visitNum}</small></td>
+                    <td class="locked-data">${d.enumerator || 'Pending...'}</td>
+                    <td class="revisit-date">${d.endDate || '---'}</td>
+                </tr>`;
+            }
+        }).join('');
+    }
+
+    // Standard Nav & DB Functions
     async function handleExcel(input, sector) {
         const files = Array.from(input.files);
         for(let file of files) {
             let state = file.name.split('.')[0].split('_').pop().trim().toUpperCase();
             const data = new Uint8Array(await file.arrayBuffer());
-            const workbook = XLSX.read(data, {type:'array'});
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header:1, range:7});
+            const rows = XLSX.utils.sheet_to_json(XLSX.read(data, {type:'array'}).Sheets[XLSX.read(data, {type:'array'}).SheetNames[0]], {header:1, range:7});
             rows.slice(1).forEach(cols => {
                 let fsu, mCode, sro, loc;
                 if(sector === 'Urban') { fsu=cols[3]; mCode=cols[4]; sro=cols[5]; loc=cols[8]; }
@@ -147,13 +180,12 @@
                     const startMonth = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
                     for(let i = 0; i < 4; i++) {
                         let curMonth = (startMonth + i) % 12;
-                        master.push({ uid: `${state}_${fsu}_M${curMonth}_V${i+1}`, fsu, state, sector, sro: String(sro).toUpperCase(), monthIdx: curMonth, location: loc || "---", enumerator: "", visitNum: i+1, date: "" });
+                        master.push({ uid: `${state}_${fsu}_M${curMonth}_V${i+1}`, fsu, state, sector, sro: String(sro).toUpperCase(), monthIdx: curMonth, location: loc || "---", enumerator: "", visitNum: i+1, startDate: "", endDate: "" });
                     }
                 }
             });
         }
         renderNav();
-        alert("Data processed locally. Select state and click 'Sync' to save.");
     }
 
     function renderNav() {
@@ -163,13 +195,8 @@
         for (const [zone, states] of Object.entries(nsoZones)) {
             html += `<div class="zone-box"><div class="zone-title">${zone} ZONE</div>`;
             states.sort().forEach(st => {
-                const hasData = dataStates.includes(st);
                 const isActive = selSt === st;
-                html += `
-                    <div class="st-item ${isActive ? 'active' : ''} ${hasData ? 'has-data' : ''}" onclick="selSt='${st}';selSro=null;renderNav();refresh();">
-                        <span>${st}</span>
-                        <span class="st-status">${hasData ? 'ACTIVE' : 'EMPTY'}</span>
-                    </div>`;
+                html += `<div class="st-item ${isActive ? 'active' : ''} ${dataStates.includes(st) ? 'has-data' : ''}" onclick="selSt='${st}';selSro=null;renderNav();refresh();"><span>${st}</span><span class="st-status">${dataStates.includes(st) ? 'ACTIVE' : 'EMPTY'}</span></div>`;
                 if (isActive) html += `<div class="sro-group">${renderSros(st)}</div>`;
             });
             html += `</div>`;
@@ -179,7 +206,6 @@
 
     function renderSros(st) {
         let sroList = [...new Set(master.filter(x => x.state === st).map(x => x.sro))].sort();
-        if (sroList.length === 0) return `<div style="padding:10px; font-size:11px; color:var(--rv)">⚠ No data. Upload Excel for ${st}.</div>`;
         sroList.unshift("ALL SROs");
         return sroList.map(s => `
             <div class="sro-item ${selSro === s ? 'active' : ''}" onclick="selSro='${s}';selMo=null;renderNav();refresh();">${s}</div>
@@ -187,64 +213,16 @@
         `).join('');
     }
 
-    function refresh() {
-        const body = document.getElementById('dataBody');
-        const status = document.getElementById('statusInfo');
-        if(!selSt || selMo === null) { 
-            body.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:60px; color:var(--text-dim)'>Select State and Month from Sidebar</td></tr>";
-            return;
-        }
-        const filtered = master.filter(d => d.state === selSt && (selSro === "ALL SROs" || !selSro || d.sro === selSro) && d.monthIdx === selMo && (selVis === 1 ? d.visitNum === 1 : d.visitNum > 1) && (d.fsu.toString().includes(query)));
-        status.innerText = `${selSt} > ${selSro || 'All'} > ${months[selMo]} [${filtered.length} FSUs]`;
-        body.innerHTML = filtered.map(d => `<tr>
-            <td><b>${d.fsu}</b><br><small>${d.sector}</small></td>
-            <td>${d.location}<br><small>${d.sro} (V${d.visitNum})</small></td>
-            <td><input type="text" class="input-field" value="${d.enumerator}" onchange="upd('${d.uid}','en',this.value)"></td>
-            <td><input type="date" class="input-field" value="${d.date}" onchange="upd('${d.uid}','dt',this.value)"></td>
-        </tr>`).join('');
-    }
-
-    function upd(id, k, v) { let item = master.find(x => x.uid === id); if(item) { k === 'en' ? item.enumerator = v : item.date = v; } }
-    
     async function syncToCloud() { 
-        if(!selSt) return alert("Please select a state first!");
-        const stateData = {}; 
-        master.filter(m => m.state === selSt).forEach(m => stateData[m.uid] = m);
-        try {
-            await db.ref(`plfs_roster/${selSt}`).set(stateData); 
-            alert(`✅ ${selSt} Database Updated!`); 
-        } catch(e) { alert("Sync Failed: Check Firebase Rules"); }
-    }
-
-    async function wipeDatabase() {
-        if(prompt("Type 'DELETE ALL' to confirm cloud wipe:") === "DELETE ALL") {
-            await db.ref('plfs_roster').remove();
-            master = []; renderNav(); refresh();
-            alert("Database Wiped.");
-        }
+        if(!selSt) return alert("Select state!");
+        const stateData = {}; master.filter(m => m.state === selSt).forEach(m => stateData[m.uid] = m);
+        await db.ref(`plfs_roster/${selSt}`).set(stateData); alert(`✅ Synced!`); 
     }
 
     async function autoFetch() {
-        try {
-            const snap = await db.ref(`plfs_roster`).once('value');
-            if(snap.exists()) {
-                master = [];
-                snap.forEach(stSnap => { Object.values(stSnap.val()).forEach(r => master.push(r)); });
-            }
-            renderNav();
-        } catch(e) { console.error("Fetch failed", e); renderNav(); }
-    }
-
-    function exportToCSV() {
-        if(!selSt || selMo === null) return alert("Select data first");
-        let csv = "FSU,Sector,SRO,Visit,Location,Enumerator,Date\n";
-        master.filter(d => d.state === selSt && d.monthIdx === selMo && (selVis === 1 ? d.visitNum === 1 : d.visitNum > 1))
-              .forEach(d => { csv += `${d.fsu},${d.sector},${d.sro},${d.visitNum},"${d.location}",${d.enumerator},${d.date}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `PLFS_${selSt}_${months[selMo]}.csv`;
-        a.click();
+        const snap = await db.ref(`plfs_roster`).once('value');
+        if(snap.exists()) { master = []; snap.forEach(stSnap => { Object.values(stSnap.val()).forEach(r => master.push(r)); }); }
+        renderNav();
     }
 
     function setVisit(v) { selVis = v; document.getElementById('btnV1').className = v === 1 ? 'btn btn-sync' : 'btn btn-outline'; document.getElementById('btnV2').className = v === 2 ? 'btn btn-sync' : 'btn btn-outline'; refresh(); }
