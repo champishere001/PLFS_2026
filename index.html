@@ -343,7 +343,7 @@
     function selectState(st) { selSt = st; selSro = null; renderNav(); refresh(); }
     function setVisit(v) { selVis = v; refresh(); }
     function doSearch(v) { query = v; refresh(); }
-    function verifyAdmin() { if(document.getElementById('passInput').value==='12345') { document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='block'); document.getElementById('adminBtn').style.display='none'; document.getElementById('loginModal').style.display='none'; } }
+    function verifyAdmin() { if(document.getElementById('passInput').value==='123') { document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='block'); document.getElementById('adminBtn').style.display='none'; document.getElementById('loginModal').style.display='none'; } }
     
     function exportCSV() { 
         const rows = Array.from(document.querySelectorAll("table tr"));
