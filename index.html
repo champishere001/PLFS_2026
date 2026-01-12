@@ -83,7 +83,6 @@
         
         #loginModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index: 10000; align-items:center; justify-content:center; backdrop-filter: blur(8px); }
 
-        /* Loader */
         #loadingOverlay {
             display: none;
             position: fixed;
@@ -201,7 +200,7 @@
     }
 
     function addDays(dateStr, days) {
-        if (!dateStr) return null;
+        if (!dateStr || dateStr === "" || dateStr === "V1 Pending") return null;
         const result = new Date(dateStr);
         result.setDate(result.getDate() + days);
         return result.toISOString().split('T')[0];
@@ -218,6 +217,7 @@
                 let fsu = cols[4], mCode = cols[5], sro = String(cols[6]||'NSO'), loc = cols[10];
                 if(fsu) {
                     const startM = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
+                    // FIXED: Only 3 revisits (Visit 1 to 4)
                     for(let i=0; i<4; i++) master.push({ uid: `${stName}_${fsu}_V${i+1}`, fsu, state: stName, sro, monthIdx: (startM + i)%12, location: loc||"---", visitNum: i+1 });
                 }
             }); renderNav(); alert("Data Processed.");
@@ -246,37 +246,39 @@
         const total = filtered.length, done = filtered.filter(d => d.endDate && d.endDate <= systemDateString).length, perc = total>0?(done/total)*100:0;
         document.getElementById('progFill').style.width = perc+'%';
 
-        // Updated Dynamic Header: "Completed Date" removed from Revisit view
         if (selVis === 1) {
             document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Field Worker</th><th>Start Date</th><th>End Date</th>`;
         } else {
+            // REMOVED: Completed Date Header
             document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Field Worker</th><th>Type</th><th>Suggested (+30d)</th>`;
         }
 
         body.innerHTML = filtered.map(d => {
-            const v1 = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
+            const v1Item = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
             let displayStatus = ""; let suggestDateStr = "V1 Pending";
 
             if (selVis === 1) {
                 displayStatus = getStatus(d.endDate, (d.endDate && d.endDate <= systemDateString), systemDateString);
             } else {
-                if (v1.endDate) suggestDateStr = addDays(v1.endDate, 30);
+                if (v1Item.endDate) {
+                   const offsetDays = (d.visitNum - 1) * 30;
+                   suggestDateStr = addDays(v1Item.endDate, offsetDays);
+                }
                 displayStatus = getStatus(suggestDateStr, (d.endDate && d.endDate <= systemDateString), systemDateString);
             }
 
-            // Updated Mapping: "Completed Date" input removed from Revisit view
             return `<tr>
                 <td>${displayStatus}</td>
                 <td><span class="fsu-badge">${d.fsu}</span></td>
                 <td style="font-size:11px">${d.location}</td>
-                <td><input class="input-field" style="width:70px" value="${d.enmId || v1.enmId || ''}" onchange="upd('${d.uid}','eid',this.value)"></td>
-                <td><input class="input-field" value="${d.enumerator || v1.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)"></td>
+                <td><input class="input-field" style="width:70px" value="${d.enmId || v1Item.enmId || ''}" onchange="upd('${d.uid}','eid',this.value)"></td>
+                <td><input class="input-field" value="${d.enumerator || v1Item.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)"></td>
                 ${selVis === 1 ? `
                     <td><input type="date" class="input-field" value="${d.startDate||''}" onchange="upd('${d.uid}','sd',this.value)"></td>
                     <td><input type="date" class="input-field" value="${d.endDate||''}" onchange="upd('${d.uid}','ed',this.value)"></td>
                 ` : `
                     <td><b style="color:var(--accent)">Visit ${d.visitNum}</b></td>
-                    <td><div style="color:var(--accent); font-weight:700; font-size:11px;">📅 ${suggestDateStr}</div></td>
+                    <td><div style="color:var(--accent); font-weight:700; font-size:11px;">📅 ${suggestDateStr || 'Pending V1'}</div></td>
                 `}
             </tr>`;
         }).join('');
