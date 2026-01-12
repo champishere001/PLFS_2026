@@ -21,11 +21,10 @@
         * { box-sizing: border-box; transition: all 0.2s ease; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
 
-        /* SIDEBAR & RESPONSIVE NAV */
+        /* SIDEBAR */
         .sidebar { width: var(--sb-width); min-width: var(--sb-width); background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { padding: 25px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
         .nav-scroll { flex: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; }
-        
         .overlay-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 900; backdrop-filter: blur(4px); }
 
         @media (max-width: 1024px) {
@@ -36,7 +35,6 @@
             .top-bar { padding: 10px 15px !important; gap: 10px !important; }
             .search-input { order: 3; width: 100% !important; flex: none !important; margin-top: 5px; }
             .info-panel { grid-template-columns: 1fr !important; padding: 15px !important; gap: 15px !important; }
-            .sro-box { min-width: 100% !important; }
         }
 
         /* UI ELEMENTS */
@@ -53,20 +51,17 @@
         .pill { padding: 8px; font-size: 9px; font-weight: 700; text-align: center; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); background: var(--sidebar); }
         .pill.active { background: var(--v1); color: #fff; border-color: var(--v1); }
         .pill.all-btn { grid-column: span 2; border-color: var(--accent); color: var(--accent); }
-
         .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 
         /* MAIN CONTENT */
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #020617; }
         .fixed-header-group { flex-shrink: 0; background: var(--glass); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); z-index: 100; }
-        
         .top-bar { padding: 12px 25px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
         .mobile-menu-btn { display: none; background: var(--accent); border: none; padding: 8px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; color: #000; font-size: 12px; }
         @media (max-width: 1024px) { .mobile-menu-btn { display: block; } }
 
         .date-picker-wrap { display: flex; align-items: center; gap: 8px; background: rgba(56,189,248,0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent); }
         .date-picker-wrap input { background: transparent; border: none; color: var(--accent); font-family: inherit; font-weight: 800; font-size: 11px; outline: none; cursor: pointer; color-scheme: dark; }
-        
         .search-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 8px; font-size: 13px; outline: none; }
 
         .info-panel { padding: 15px 25px; display: grid; grid-template-columns: auto 1fr auto; gap: 30px; align-items: center; }
@@ -74,15 +69,24 @@
         .sro-label { font-size: 9px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         .sro-name { font-size: 16px; font-weight: 700; color: #fff; }
 
-        /* PROGRESS BAR */
-        .timeline-container { background: rgba(0,0,0,0.2); padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border); }
-        .timeline-track { height: 6px; background: #334155; border-radius: 10px; position: relative; margin-top: 10px; }
-        .timeline-fill { height: 100%; background: linear-gradient(90deg, var(--v1), var(--accent)); border-radius: 10px; width: 0%; transition: width 0.8s ease; }
+        /* DUAL LINE PROGRESS TRACKER */
+        .timeline-container { background: rgba(15, 23, 42, 0.4); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 350px; }
+        .line-group { margin-bottom: 12px; }
+        .line-label { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .line-track { height: 3px; background: rgba(255,255,255,0.05); border-radius: 4px; position: relative; width: 100%; }
+        .line-fill { height: 100%; border-radius: 4px; position: absolute; left: 0; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .line-fill::after { content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 10px currentColor; background: currentColor; }
         
-        /* TABLE WORKSPACE */
+        #allottedLine { background: var(--accent); color: var(--accent); width: 100%; }
+        #completedLine { background: var(--v1); color: var(--v1); width: 0%; }
+        
+        .prog-stat-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+        .perc-display { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1; }
+        .perc-label { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; }
+
+        /* TABLE */
         .workspace { flex: 1; padding: 20px; overflow-y: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
         .table-wrap { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         th { background: var(--header-dark); color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 18px 15px; text-align: left; border-bottom: 3px solid var(--accent); position: sticky; top:0; z-index: 10; }
         td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
@@ -93,9 +97,11 @@
         .badge-late { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
 
         .fsu-badge { font-family: 'Monaco', monospace; font-weight: 800; color: #fff; background: rgba(56, 189, 248, 0.15); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); }
-        .input-field { background: #000; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; font-size: 11px; width: 100%; outline: none; }
         
-        /* MODALS & LOADERS */
+        /* TABLE INPUTS */
+        .input-field { background: #000; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; font-size: 11px; width: 100%; outline: none; }
+        input[type="date"].input-field { cursor: pointer; color-scheme: dark; }
+
         #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); }
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(56, 189, 248, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -153,8 +159,18 @@
             </div>
 
             <div class="timeline-container">
-                <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:800; color:var(--v1);">PROGRESS TRACKER <span id="targetStatus">ON TRACK</span></div>
-                <div class="timeline-track"><div id="progFill" class="timeline-fill"></div></div>
+                <div class="line-group">
+                    <div class="line-label" style="color:var(--accent)"><span>Allotted Units</span><span id="txtAllotted">0</span></div>
+                    <div class="line-track"><div id="allottedLine" class="line-fill"></div></div>
+                </div>
+                <div class="line-group">
+                    <div class="line-label" style="color:var(--v1)"><span>Completed Tasks</span><span id="txtCompleted">0</span></div>
+                    <div class="line-track"><div id="completedLine" class="line-fill"></div></div>
+                </div>
+                <div class="prog-stat-row">
+                    <div><span class="perc-label">Status</span><br><span style="font-size:11px; font-weight:800; color:var(--v1)">LIVE TRACKING</span></div>
+                    <div style="text-align:right"><span class="perc-label">Completion</span><br><span class="perc-display" id="targetStatus">0%</span></div>
+                </div>
             </div>
             
             <div style="display:flex; background:rgba(0,0,0,0.3); border-radius:10px; padding:4px; border:1px solid var(--border);">
@@ -175,7 +191,7 @@
     const config = { apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", authDomain: "action-plan-62fae.firebaseapp.com", databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", projectId: "action-plan-62fae" };
     firebase.initializeApp(config); const db = firebase.database();
 
-    let master = [], selSt = null, selSro = null, selMo = 0, selVis = 1, query = "";
+    let master = [], selSt = null, selSro = "ALL SROs", selMo = 0, selVis = 1, query = "";
     let systemDateString = "2026-01-12";
 
     const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -228,7 +244,7 @@
     function refresh() {
         const body = document.getElementById('dataBody');
         const h1 = document.getElementById('btnV1'), h2 = document.getElementById('btnV2');
-        if(!selSt || !selSro) { 
+        if(!selSt) { 
             body.innerHTML = "<tr><td colspan='7' style='text-align:center; padding:100px; opacity:0.3; font-weight:700;'>PLEASE SELECT A REGION FROM THE MENU</td></tr>"; 
             document.getElementById('activeHeader').style.visibility='hidden'; 
             return; 
@@ -248,11 +264,18 @@
             return matchSt && matchSro && matchMo && matchVis && matchQuery;
         });
 
-        const total = filtered.length, done = filtered.filter(d => d.endDate && d.endDate <= systemDateString).length, perc = total>0?(done/total)*100:0;
-        document.getElementById('progFill').style.width = perc+'%';
+        // PROGRESS LOGIC
+        const total = filtered.length;
+        const done = filtered.filter(d => d.endDate && d.endDate <= systemDateString).length;
+        const perc = total > 0 ? Math.round((done / total) * 100) : 0;
+        
+        document.getElementById('txtAllotted').innerText = total;
+        document.getElementById('txtCompleted').innerText = done;
+        document.getElementById('targetStatus').innerText = perc + '%';
+        document.getElementById('completedLine').style.width = perc + '%';
 
         if (selVis === 1) {
-            document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Start</th><th>End</th>`;
+            document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Start Date</th><th>End Date</th>`;
         } else {
             document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Visit</th><th>Suggested</th>`;
         }
@@ -260,10 +283,7 @@
         body.innerHTML = filtered.map(d => {
             const v1Item = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
             let suggestDateStr = "V1 Pending";
-
-            if (selVis > 1 && v1Item.endDate) {
-                suggestDateStr = addDays(v1Item.endDate, (d.visitNum - 1) * 30);
-            }
+            if (selVis > 1 && v1Item.endDate) suggestDateStr = addDays(v1Item.endDate, (d.visitNum - 1) * 30);
 
             let displayStatus = selVis === 1 
                 ? getStatus(d.endDate, (d.endDate && d.endDate <= systemDateString), systemDateString)
@@ -329,7 +349,7 @@
         } container.innerHTML = html;
     }
 
-    function selectState(st) { selSt = st; selSro = null; renderNav(); refresh(); }
+    function selectState(st) { selSt = st; selSro = "ALL SROs"; renderNav(); refresh(); }
     function setVisit(v) { selVis = v; refresh(); }
     function doSearch(v) { query = v; refresh(); }
     function verifyAdmin() { if(document.getElementById('passInput').value==='123') { document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='block'); document.getElementById('adminBtn').style.display='none'; document.getElementById('loginModal').style.display='none'; } }
