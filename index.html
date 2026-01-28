@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
+  <title>NSO | Scheme Hub 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#020617; --panel:#0f172a; --card:#1e293b; --border:#334155;
+      --accent:#38bdf8; --v1:#10b981; --text:#f8fafc; --dim:#94a3b8;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56,189,248,.14) 0%, rgba(2,6,23,1) 55%),
+        radial-gradient(circle at 100% 100%, rgba(16,185,129,.10) 0%, rgba(2,6,23,1) 55%);
+    }
+
+    .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px; }
+    .top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+      padding:18px 18px 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(15,23,42,.60);
+      backdrop-filter:blur(18px);
+      border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+    }
+    .top h1{ margin:0; font-size:20px; letter-spacing:1px; font-weight:1000; color:var(--accent); }
+    .top .sub{ margin-top:6px; font-size:12px; color:rgba(248,250,252,.75); font-weight:700; line-height:1.35; }
+    .badge{
+      font-size:11px; font-weight:1000; color:#000; background:var(--accent);
+      padding:10px 12px; border-radius:14px; white-space:nowrap;
+    }
+
+    .grid{
+      margin-top:16px;
+      display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+    }
+    @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+
+    .tile{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(30,41,59,.40);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 16px 45px rgba(0,0,0,.40);
+      cursor:pointer;
+    }
+    .tile:hover{ transform:translateY(-2px); border-color:rgba(56,189,248,.65); }
+    .tag{ font-size:10px; font-weight:1000; letter-spacing:1px; text-transform:uppercase; color:rgba(248,250,252,.65); }
+    .name{ margin-top:10px; font-size:22px; font-weight:1000; color:#fff; display:flex; align-items:center; gap:10px; }
+    .desc{ margin-top:10px; font-size:12px; color:rgba(248,250,252,.70); font-weight:700; line-height:1.5; min-height:42px; }
+    .cta{
+      margin-top:14px;
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:var(--accent);
+      color:#000;
+      font-weight:1000;
+      font-size:12px;
+    }
+
+    .note{
+      margin-top:16px;
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:14px 16px;
+      background:rgba(0,0,0,.22);
+      color:rgba(248,250,252,.75);
+      font-size:12px;
+      font-weight:700;
+      line-height:1.55;
+    }
+    code{ background:rgba(0,0,0,.25); padding:2px 6px; border-radius:8px; }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>NSO SCHEME HUB 2026</h1>
+        <div class="sub">
+          Main page for all schemes. Click any scheme to open its dashboard page.
+        </div>
+      </div>
+      <div class="badge">RO SHIMLA</div>
+    </div>
+
+    <div class="grid">
+      <!-- PLFS -->
+      <div class="tile" onclick="go('plfs.html')">
+        <div class="tag">Dashboard</div>
+        <div class="name">📊 PLFS</div>
+        <div class="desc">PLFS dashboard page (your PLFS file). Open from here.</div>
+        <div class="cta">Open PLFS →</div>
+      </div>
+
+      <!-- ASUSE -->
+      <div class="tile" onclick="go('asuse.html')">
+        <div class="tag">Dashboard</div>
+        <div class="name">🧾 ASUSE</div>
+        <div class="desc">ASUSE dashboard page (your ASUSE file). Open from here.</div>
+        <div class="cta">Open ASUSE →</div>
+      </div>
+
+      <!-- UFS -->
+      <div class="tile" onclick="go('ufs.html')">
+        <div class="tag">Weekly → Monthly (Auto)</div>
+        <div class="name">🏷️ UFS</div>
+        <div class="desc">UFS separate page: auto-picks Weekly+Monthly CSV, SRO-wise edits (no passwords).</div>
+        <div class="cta">Open UFS →</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Folder structure (recommended)</b><br><br>
+      • <code>index.html</code> (this page)<br>
+      • <code>ufs.html</code> (UFS separate page code I gave you)<br>
+      • <code>plfs.html</code> (your PLFS page)<br>
+      • <code>asuse.html</code> (your ASUSE page)<br>
+      • <code>Weekly MPR RO Shimla Level - Sheet1.csv</code><br>
+      • <code>UFS MPR Monthly RO Shimla - MONTHLY MPR.csv</code><br><br>
+      Keep CSV files in the same folder so UFS can auto-pick without upload.
+    </div>
+  </div>
+
+  <script>
+    function go(page){
+      // simple navigation
+      window.location.href = page;
+    }
+  </script>
+</body>
+</html>
