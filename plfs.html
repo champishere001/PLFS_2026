@@ -1,156 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>PLFS | Command Dashboard 2026</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PLFS | Command Dashboard 2026</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        :root { 
+            --bg: #020617; --sidebar: #0f172a; --card: #1e293b; --border: #334155;
+            --accent: #38bdf8; --v1: #10b981; --text: #f8fafc; --text-dim: #94a3b8;
+            --glass: rgba(15, 23, 42, 0.95); --sb-width: 300px;
+            --header-dark: #0f172a; --danger: #ef4444; --warning: #f59e0b;
+        }
+        
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            overflow: hidden;
+        }
 
-<!-- SheetJS -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+        .sidebar {
+            width: var(--sb-width);
+            min-width: var(--sb-width);
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+        .sidebar-header {
+            padding: 25px;
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 1px;
+        }
 
-<style>
-/* (UI kept same – trimmed here for focus) */
-body{margin:0;background:#020617;color:#fff;font-family:'Plus Jakarta Sans'}
-.left-rail{position:fixed;left:0;top:0;width:72px;height:100vh;background:#0f172a}
-.app-shell{margin-left:72px;height:100vh;display:flex}
-.sidebar{width:300px;background:#0f172a;border-right:1px solid #334155}
-.main{flex:1;display:flex;flex-direction:column}
-.workspace{flex:1;overflow:auto;padding:20px}
-</style>
+        .nav-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            scrollbar-width: thin;
+        }
+
+        .overlay-mask {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 900;
+            backdrop-filter: blur(4px);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+            }
+            .sidebar.open { left: 0; }
+            .overlay-mask.active { display: block; }
+        }
+
+        .zone-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin: 20px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.6;
+        }
+
+        .zone-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .st-btn {
+            height: 42px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(30, 41, 59, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+
+        .st-btn.active {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            color: #fff;
+        }
+
+        .st-btn.has-data {
+            border-left: 3px solid var(--v1);
+        }
+
+        .sub-menu-container {
+            grid-column: span 2;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid var(--border);
+        }
+
+        .pill-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .pill {
+            padding: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            color: var(--text-dim);
+            background: var(--sidebar);
+        }
+
+        .pill.active {
+            background: var(--v1);
+            color: #fff;
+            border-color: var(--v1);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .pill.all-btn {
+            grid-column: span 2;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #020617;
+        }
+
+        .fixed-header-group {
+            flex-shrink: 0;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .top-bar {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .date-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(56,189,248,0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+        }
+
+        .date-picker-wrap input {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        .search-input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .workspace {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .table-wrap {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 900px;
+        }
+
+        th {
+            background: var(--header-dark);
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 18px 15px;
+            text-align: left;
+            border-bottom: 3px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+    </style>
 </head>
 
 <body>
 
-<nav class="left-rail">
-  <a href="index.html">🏠</a>
-  <a href="plfs.html">📊</a>
-  <a href="ufs_weekly.html">🗓️</a>
-</nav>
+<div class="overlay-mask" id="mask" onclick="toggleMenu()"></div>
 
-<div class="app-shell">
-
-<aside class="sidebar">
-  <div id="navScroll"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">PLFS COMMAND</div>
+    <div class="nav-scroll" id="navScroll"></div>
 </aside>
 
 <main class="main">
-  <div class="workspace">
-    <table border="1" width="100%">
-      <thead><tr id="tableHeader"></tr></thead>
-      <tbody id="dataBody"></tbody>
-    </table>
-  </div>
+    <div class="fixed-header-group">
+        <header class="top-bar">
+            <button onclick="toggleMenu()">☰</button>
+            <div class="date-picker-wrap">
+                <input type="date" id="sysCalendar">
+            </div>
+            <input type="text" class="search-input" placeholder="Search...">
+        </header>
+    </div>
+
+    <div class="workspace">
+        <div class="table-wrap">
+            <table>
+                <thead><tr id="tableHeader"></tr></thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+    </div>
 </main>
 
-</div>
-
 <script>
-/* 🔹 FIREBASE */
-firebase.initializeApp({
-  apiKey:"AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
-  databaseURL:"https://action-plan-62fae-default-rtdb.firebaseio.com"
-});
-const db=firebase.database();
+const firebaseConfig = {
+    apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
+    authDomain: "action-plan-62fae.firebaseapp.com",
+    databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com",
+    projectId: "action-plan-62fae"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-/* 🔹 ORIGINAL STATE VARIABLES */
-let master=[];
-let selSt="HIMACHAL PRADESH";
-let selSro="ALL SROs";
-let selMo=0;
-let selVis=1;
-let query="";
-
-const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-/* 🔹 ORIGINAL NAV LOGIC (GLOBAL – FIXED) */
-function renderNav(){
-  const c=document.getElementById("navScroll");
-  if(!master.length){
-    c.innerHTML="No data";
-    return;
-  }
-
-  const sros=[...new Set(master.map(x=>x.sro))].sort();
-  let h=`<b>SRO OFFICES</b><br>`;
-  h+=`<div onclick="selSro='ALL SROs';refresh()">ALL</div>`;
-  sros.forEach(s=>{
-    h+=`<div onclick="selSro='${s}';refresh()">${s}</div>`;
-  });
-
-  h+=`<hr><b>MONTH</b><br>`;
-  months.forEach((m,i)=>{
-    h+=`<span onclick="selMo=${i};refresh()">${m}</span> `;
-  });
-
-  c.innerHTML=h;
+function toggleMenu(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('mask').classList.toggle('active');
 }
-
-/* 🔹 ORIGINAL TABLE LOGIC */
-function refresh(){
-  const body=document.getElementById("dataBody");
-  body.innerHTML="";
-
-  master.filter(d=>{
-    return (selSro==="ALL SROs"||d.sro===selSro) &&
-           d.monthIdx===selMo &&
-           (d.fsu+d.location).toLowerCase().includes(query);
-  }).forEach(d=>{
-    body.innerHTML+=`
-      <tr>
-        <td>${d.fsu}</td>
-        <td>${d.location}</td>
-        <td>${d.visitNum}</td>
-      </tr>`;
-  });
-}
-
-/* 🔹 ORIGINAL EXCEL IMPORT (FIXED BRACES ONLY) */
-async function handleExcel(input){
-  const file=input.files[0];
-  if(!file) return;
-
-  const data=new Uint8Array(await file.arrayBuffer());
-  const wb=XLSX.read(data,{type:"array"});
-  const ws=wb.Sheets[wb.SheetNames[0]];
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,range:7});
-
-  rows.slice(1).forEach(cols=>{
-    let fsu=cols[4], mCode=cols[5], sro=cols[6], loc=cols[10];
-    if(fsu){
-      const startM=(parseInt(mCode)-1);
-      for(let i=0;i<4;i++){
-        master.push({
-          fsu, sro, location:loc||"",
-          visitNum:i+1,
-          monthIdx:(startM+i)%12
-        });
-      }
-    }
-  });
-
-  renderNav();
-  refresh();
-}
-
-/* 🔹 ORIGINAL FIREBASE LOAD */
-async function autoFetch(){
-  const snap=await db.ref("plfs_roster/HIMACHAL PRADESH").once("value");
-  master=[];
-  if(snap.exists()){
-    Object.values(snap.val()).forEach(v=>master.push(v));
-  }
-  renderNav();
-  refresh();
-}
-
-/* 🔹 BOOT */
-window.onload=autoFetch;
 </script>
 
 </body>
