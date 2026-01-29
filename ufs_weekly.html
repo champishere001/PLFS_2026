@@ -18,7 +18,21 @@
     --danger:#ef4444;
     --muted:#94a3b8;
     --text:#f8fafc;
+
+    /* ✅ Screen table theme (matches live background) */
+    --tbl-bg: rgba(2,6,23,.35);
+    --tbl-cell: rgba(15,23,42,.82);
+    --tbl-head: rgba(30,41,59,.92);
+    --tbl-subhead: rgba(17,28,51,.92);
+    --tbl-border: rgba(148,163,184,.28);
+    --tbl-border-strong: rgba(148,163,184,.40);
+    --tbl-text: #e5e7eb;
+    --tbl-head-text: #eaf2ff;
+    --tbl-muted: #a7b2c5;
+    --tbl-row-alt: rgba(15,23,42,.55);
+    --tbl-row-hover: rgba(56,189,248,.10);
   }
+
   *{box-sizing:border-box}
   body{
     margin:0;
@@ -31,7 +45,7 @@
     overflow:hidden;
   }
 
-  /* Left Rail (optional) */
+  /* Left Rail */
   .left-rail{
     position:fixed; inset:0 auto 0 0;
     width:72px;
@@ -153,7 +167,7 @@
   }
 
   .table-wrap{
-    background: rgba(17,28,51,.75);
+    background: var(--tbl-bg);
     border:1px solid rgba(51,65,85,.85);
     border-radius:16px;
     overflow:auto;
@@ -162,32 +176,70 @@
 
   table{
     width:100%;
-    border-collapse:collapse;
+    border-collapse:separate;     /* ✅ better borders + glow look */
+    border-spacing:0;
     min-width: 1180px;
     table-layout:fixed;
   }
+
+  /* ✅ live theme cells */
   th, td{
-    border:2px solid #000;
-    padding:6px 6px;
+    border-right:1px solid var(--tbl-border);
+    border-bottom:1px solid var(--tbl-border);
+    padding:10px 8px;
     font-size:12px;
     text-align:center;
     vertical-align:middle;
-    background:#fff;
-    color:#000;
+    color:var(--tbl-text);
+    background: var(--tbl-cell);
   }
+
+  /* outer borders */
+  thead tr:first-child th{ border-top:1px solid var(--tbl-border-strong); }
+  tr td:first-child, tr th:first-child{ border-left:1px solid var(--tbl-border-strong); }
+  thead tr th{ border-top:1px solid var(--tbl-border-strong); }
+  thead tr th:last-child, tbody tr td:last-child{ border-right:1px solid var(--tbl-border-strong); }
+  tbody tr:last-child td{ border-bottom:1px solid var(--tbl-border-strong); }
+
   th{
-    background:#eaf2ff;
+    background: var(--tbl-head);
+    color: var(--tbl-head-text);
     font-weight:900;
   }
+
+  /* row 1/2 headers in thead look more “report” */
+  thead tr:nth-child(1) th{
+    background: rgba(17,28,51,.92);
+    font-size:14px;
+    letter-spacing:.4px;
+  }
+  thead tr:nth-child(2) th{
+    background: rgba(30,41,59,.92);
+    font-size:12px;
+  }
+
+  /* sticky header rows */
   thead th{
     position:sticky;
     top:0;
     z-index:5;
+    box-shadow: 0 6px 0 rgba(0,0,0,.15);
   }
-  /* allow multi sticky rows */
-  thead tr:nth-child(1) th{ top:0; z-index:9; }
-  thead tr:nth-child(2) th{ top:34px; z-index:8; }
-  thead tr:nth-child(3) th{ top:68px; z-index:7; }
+  /* ✅ use CSS vars so sticky offsets stay correct even if font/padding changes */
+  :root{
+    --h1: 44px;  /* row 1 height */
+    --h2: 44px;  /* row 2 height */
+    --h3: 48px;  /* row 3 height (group headers row) */
+  }
+  thead tr:nth-child(1) th{ top:0; z-index:10; }
+  thead tr:nth-child(2) th{ top:var(--h1); z-index:9; }
+  thead tr:nth-child(3) th{ top:calc(var(--h1) + var(--h2)); z-index:8; }
+  thead tr:nth-child(4) th{ top:calc(var(--h1) + var(--h2) + var(--h3)); z-index:7; }
+  thead tr:nth-child(5) th{ top:calc(var(--h1) + var(--h2) + var(--h3) + 44px); z-index:6; }
+
+  /* zebra + hover */
+  tbody#tbody tr:nth-child(even) td{ background: var(--tbl-row-alt); }
+  tbody#tbody tr:hover td{ background: var(--tbl-row-hover); }
 
   td .in{
     width:100%;
@@ -197,14 +249,21 @@
     text-align:center;
     font-weight:800;
     font-size:12px;
+    color:var(--tbl-text);
   }
+  td .in::placeholder{ color: rgba(167,178,197,.55); }
+
   td.scheme{
     text-align:left;
     font-weight:900;
   }
+
+  /* total row */
   tr.total-row td{
-    background:#f1f5ff;
+    background: rgba(56,189,248,.10) !important;
     font-weight:900;
+    color:#eaf6ff;
+    border-top:1px solid rgba(56,189,248,.35);
   }
 
   .note{
@@ -214,19 +273,31 @@
     font-weight:700;
   }
 
+  /* ✅ PRINT = white sheet style (keeps official output) */
   @media print{
     .left-rail,.topbar,.note{ display:none !important; }
-    body{ background:#fff; overflow:visible; }
+    body{ background:#fff; overflow:visible; color:#000; }
     .app{ margin:0; height:auto; }
     .workspace{ padding:0; overflow:visible; }
-    .table-wrap{ box-shadow:none; border:none; border-radius:0; }
+    .table-wrap{ box-shadow:none; border:none; border-radius:0; background:#fff; }
+
+    table{ border-collapse:collapse; }
+    th, td{
+      border:2px solid #000 !important;
+      padding:6px 6px !important;
+      font-size:12px !important;
+      background:#fff !important;
+      color:#000 !important;
+    }
+    th{ background:#eaf2ff !important; }
+    tr.total-row td{ background:#f1f5ff !important; color:#000 !important; }
+    td .in{ color:#000 !important; }
   }
 </style>
 </head>
 
 <body>
 
-<!-- Left Rail (same navigation style you like) -->
 <nav class="left-rail">
   <a href="index.html" class="hub">🏠 HUB</a>
   <a href="plfs.html">📊 PLFS</a>
@@ -270,7 +341,6 @@
       <table id="weeklyTable">
         <thead>
 
-          <!-- HEADER (sheet exact) -->
           <tr>
             <th colspan="13" style="text-align:center;font-weight:900;font-size:14px;">URBAN FRAME SURVEY 2022-27</th>
           </tr>
@@ -289,7 +359,7 @@
             <th colspan="2">No. of towns completed in all respect</th>
             <th colspan="2">
               No. of towns dispatched to Hqrs.<br>
-              <span style="font-size:10px">(Zone/QC to FOD Hqrs)</span>
+              <span style="font-size:10px; color: var(--tbl-muted)">(Zone/QC to FOD Hqrs)</span>
             </th>
 
             <th rowspan="3">Updated<br>Y/N</th>
@@ -319,12 +389,9 @@
           </tr>
         </thead>
 
-        <tbody id="tbody">
-          <!-- starter rows (editable) -->
-        </tbody>
+        <tbody id="tbody"></tbody>
 
         <tbody>
-          <!-- TOTAL -->
           <tr class="total-row" id="totalRow">
             <td></td>
             <td style="text-align:left;font-weight:900;">TOTAL</td>
@@ -357,10 +424,8 @@
 </div>
 
 <script>
-  // ===== Storage key =====
   const KEY = "ufs_weekly_v1";
 
-  // ===== Default rows (your screenshot) =====
   const defaultRows = [
     {scheme:"Shimla", tf_during:25, tf_since:22, tf_under:1, bf_during:39, bf_since:922, comp_during:0, comp_since:22, disp_during:0, disp_since:22, yn:"Y"},
     {scheme:"Hamirpur", tf_during:15, tf_since:13, tf_under:0, bf_during:0,  bf_since:239, comp_during:0, comp_since:13, disp_during:0, disp_since:13, yn:"Y"},
@@ -368,7 +433,6 @@
     {scheme:"Mandi", tf_during:13, tf_since:11, tf_under:1, bf_during:9,  bf_since:417, comp_during:0, comp_since:10, disp_during:0, disp_since:10, yn:"Y"}
   ];
 
-  // ===== Helpers =====
   const $ = (id)=>document.getElementById(id);
   const toNum = (v)=> {
     const n = parseFloat(String(v||"").replace(/,/g,""));
@@ -376,7 +440,6 @@
   };
 
   function fmtDate(d){
-    // YYYY-MM-DD -> DD-MM-YYYY
     if(!d) return "";
     const [y,m,dd] = d.split("-");
     return `${dd}-${m}-${y}`;
@@ -391,7 +454,6 @@
     $("hdrTop").textContent = title;
     $("hdrLine").textContent = title;
 
-    // update "During ..." headings
     const during = `During ${fmtDate(from)} to ${fmtDate(to)}`;
     $("h_tf_during").textContent = during;
     $("h_bf_during").textContent = during;
@@ -417,7 +479,7 @@
         <td><input class="in" value="${r.tf_during??""}" oninput="onEdit(${idx},'tf_during',this.value)"></td>
         <td><input class="in" value="${r.tf_since??""}" oninput="onEdit(${idx},'tf_since',this.value)"></td>
         <td><input class="in" value="${r.tf_under??""}" oninput="onEdit(${idx},'tf_under',this.value)"></td>
-        <td><input class="in" value="${(r.tf_pct??rowPct(r.tf_since,r.tf_under)).toFixed ? (r.tf_pct??rowPct(r.tf_since,r.tf_under)).toFixed(2) : (r.tf_pct??rowPct(r.tf_since,r.tf_under))}" 
+        <td><input class="in" value="${(r.tf_pct??rowPct(r.tf_since,r.tf_under)).toFixed ? (r.tf_pct??rowPct(r.tf_since,r.tf_under)).toFixed(2) : (r.tf_pct??rowPct(r.tf_since,r.tf_under))}"
                    oninput="onEdit(${idx},'tf_pct',this.value)"></td>
 
         <td><input class="in" value="${r.bf_during??""}" oninput="onEdit(${idx},'bf_during',this.value)"></td>
@@ -436,12 +498,10 @@
     recalcTotals();
   }
 
-  // Global state
   let rows = [];
 
   function recalcTotals(){
     let tf_d=0, tf_s=0, tf_u=0, bf_d=0, bf_s=0, c_d=0, c_s=0, d_d=0, d_s=0;
-    let pctSum = 0, pctCount = 0;
 
     rows.forEach(r=>{
       tf_d += toNum(r.tf_during);
@@ -456,17 +516,12 @@
 
       d_d += toNum(r.disp_during);
       d_s += toNum(r.disp_since);
-
-      // keep row % auto if user left it blank
-      const pct = toNum(r.tf_pct);
-      if(pct>0){ pctSum += pct; pctCount++; }
     });
 
     $("t_tf_during").textContent = tf_d;
     $("t_tf_since").textContent = tf_s;
     $("t_tf_under").textContent = tf_u;
 
-    // total % = (total completed since) / (total completed since + total under) * 100
     const tPct = ( (tf_s + tf_u) > 0 ) ? ((tf_s / (tf_s + tf_u)) * 100) : 0;
     $("t_tf_pct").textContent = tPct.toFixed(2);
 
@@ -482,22 +537,18 @@
     save();
   }
 
-  // called from inline inputs
   window.onEdit = function(i, key, val){
     if(!rows[i]) return;
     rows[i][key] = val;
 
-    // auto row %
     if(key === "tf_since" || key === "tf_under"){
-      // if user has NOT manually typed tf_pct, we auto set it
       const auto = rowPct(rows[i].tf_since, rows[i].tf_under);
       if(String(rows[i].tf_pct||"").trim()===""){
         rows[i].tf_pct = auto.toFixed(2);
       }
-      // also update input UI quickly
       const tr = document.querySelector(`tr[data-i="${i}"]`);
       if(tr){
-        const pctInp = tr.querySelectorAll("input.in")[4]; // 0 scheme,1 tf_d,2 tf_s,3 tf_u,4 tf_pct
+        const pctInp = tr.querySelectorAll("input.in")[4];
         if(pctInp && String(pctInp.value||"").trim()==="") pctInp.value = auto.toFixed(2);
       }
     }
@@ -517,7 +568,6 @@
   }
 
   function exportCSV(){
-    // build header labels aligned to columns
     const hdr = [
       "Sl. No.","Scheme",
       "Towns in field (During)","Towns in field (Completed Since Start)","Towns in field (Under Survey)","% Towns Completed",
@@ -542,7 +592,6 @@
       lines.push(line);
     });
 
-    // totals row
     lines.push([
       "",
       "TOTAL",
@@ -601,16 +650,13 @@
     }
   }
 
-  // header change listeners
   ["fromDate","toDate","asOnDate"].forEach(id=>{
     $(id).addEventListener("change", updateHeaderDates);
   });
 
-  // init
   load();
   updateHeaderDates();
 
-  // expose addRow/clearAll for buttons
   window.addRow = addRow;
   window.clearAll = clearAll;
   window.exportCSV = exportCSV;
