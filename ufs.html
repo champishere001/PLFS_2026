@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
-  <title>UFS | Weekly Progress Report (SRO Console)</title>
+  <title>UFS | Weekly Progress Report (Manual Base + SRO Console)</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <!-- SheetJS -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -41,7 +39,6 @@
     .btn-soft{ background:rgba(255,255,255,.10); color:#fff; border:1px solid rgba(255,255,255,.12); }
     .btn-accent{ background:var(--accent); color:#000; }
     .btn-ok{ background:var(--ok); color:#000; }
-    .btn-warn{ background:var(--warn); color:#000; }
 
     .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px;
       border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.22); color:rgba(248,250,252,.85);
@@ -71,15 +68,10 @@
     .field{ background:rgba(0,0,0,.20); border:1px solid rgba(255,255,255,.10); border-radius:12px; padding:10px; }
     .field label{ display:block; font-size:10px; font-weight:1000; letter-spacing:.7px; text-transform:uppercase; color:rgba(248,250,252,.70); margin-bottom:6px; }
     .field input{ width:100%; background:#000; border:1px solid rgba(16,185,129,.40); color:#fff; padding:10px; border-radius:10px; outline:none; font-weight:1000; font-size:12px; }
-    .help{ margin-top:10px; font-size:11px; color:rgba(248,250,252,.65); font-weight:700; line-height:1.45; }
 
     #loading{ display:none; position:fixed; inset:0; background:rgba(2,6,23,.92); z-index:9999; align-items:center; justify-content:center; flex-direction:column; color:var(--accent); }
     .spin{ width:42px; height:42px; border:4px solid rgba(56,189,248,.16); border-left-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:12px; }
     @keyframes spin{ to{ transform:rotate(360deg); } }
-
-    .err{ padding:10px; border-radius:12px; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.35); color:#fff; font-weight:800; font-size:11px; line-height:1.45; }
-    .ok{ padding:10px; border-radius:12px; background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); color:#fff; font-weight:800; font-size:11px; line-height:1.45; }
-    code{ background:rgba(0,0,0,.25); padding:2px 6px; border-radius:8px; }
   </style>
 </head>
 <body>
@@ -90,35 +82,16 @@
 </div>
 
 <div class="app">
-  <!-- LEFT -->
   <aside>
     <div class="sb-head">
       <div>
-        <b>UFS WEEKLY → MONTHLY</b>
-        <div class="sub">✅ Fixes added: file debug + auto-detect SRO column + load base once</div>
+        <b>UFS WEEKLY REPORT</b>
+        <div class="sub">Manual Base (no Excel) + Week “During” edits (Firebase)</div>
       </div>
-      <button class="btn btn-soft" onclick="reloadAll(true)">↻</button>
+      <button class="btn btn-soft" onclick="reloadWeek()">↻</button>
     </div>
 
     <div class="sb-body">
-      <div class="card">
-        <h3>File Path / Debug</h3>
-        <div class="muted">
-          This page loads XLSX using <code>fetch()</code>. On GitHub Pages filename must match exactly.
-        </div>
-
-        <div style="margin-top:8px" class="muted">Current file:</div>
-        <div class="pill"><span>📄</span><code id="fileName"></code></div>
-
-        <div style="margin-top:10px" id="fileStatus"></div>
-
-        <div style="margin-top:10px" class="muted">
-          Optional override filename (recommended: <code>weekly.xlsx</code>)
-        </div>
-        <input id="fileOverride" class="input" placeholder="weekly.xlsx" />
-        <button class="btn btn-warn" style="width:100%; margin-top:8px;" onclick="applyFileOverride()">Apply & Reload Base</button>
-      </div>
-
       <div class="card">
         <h3>Week + SRO</h3>
         <div class="grid2">
@@ -131,6 +104,7 @@
             <input id="wkEnd" class="input" type="date" />
           </div>
         </div>
+
         <div style="height:8px"></div>
         <div class="muted">Select SRO (no password)</div>
         <select id="sroSelect" class="input" onchange="selectSro(this.value)">
@@ -140,6 +114,7 @@
           <option value="Dharamshala">Dharamshala</option>
           <option value="Mandi">Mandi</option>
         </select>
+
         <div style="height:8px"></div>
         <div class="pill" id="pill">SRO: Not selected</div>
       </div>
@@ -147,9 +122,8 @@
       <div class="card" id="consoleCard" style="display:none;">
         <h3>Data Entry Console (During week)</h3>
         <div class="console-grid" id="consoleGrid"></div>
-        <div class="help">
-          ✅ Only “During …” fields are editable for selected SRO & week.<br>
-          🔒 “Since Start / Completed Since Start / Under Survey / %” remain base (read-only).
+        <div class="muted" style="margin-top:8px;">
+          Only these 4 fields are editable week-wise for selected SRO.
         </div>
         <div style="height:10px"></div>
         <button class="btn btn-ok" onclick="saveConsole()">💾 Save (Firebase)</button>
@@ -157,13 +131,12 @@
 
       <div class="card">
         <h3>Actions</h3>
-        <button class="btn btn-accent" style="width:100%;" onclick="reloadAll(false)">Reload (week edits only)</button>
+        <button class="btn btn-accent" style="width:100%;" onclick="reloadWeek()">Reload week edits</button>
         <button class="btn btn-soft" style="width:100%; margin-top:8px;" onclick="clearSro()">Clear SRO</button>
       </div>
     </div>
   </aside>
 
-  <!-- RIGHT -->
   <main>
     <header>
       <div class="title">Weekly Progress Report</div>
@@ -173,8 +146,7 @@
 
     <div class="workspace">
       <div class="panel">
-        <div class="report-title" id="reportTitle">WEEKLY PROGRESS REPORT (select week dates)</div>
-
+        <div class="report-title" id="reportTitle">WEEKLY PROGRESS REPORT</div>
         <div class="table-wrap">
           <table>
             <thead><tr id="thead"></tr></thead>
@@ -188,13 +160,8 @@
 
 <script>
 /* =======================
-   CONFIG
+   FIREBASE CONFIG
 ======================= */
-const STATE_NAME = "HIMACHAL PRADESH";
-
-// DEFAULT name (you can override from UI)
-let WEEKLY_XLSX_URL = "Weekly MPR RO Shimla Level.xlsx";
-
 const firebaseConfig = {
   apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
   authDomain: "action-plan-62fae.firebaseapp.com",
@@ -205,16 +172,77 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 /* =======================
-   STATE
+   MANUAL BASE VALUES (EDIT HERE)
+   ✅ You can change these anytime
 ======================= */
+const STATE_NAME = "HIMACHAL PRADESH";
 const SROS = ["Shimla","Hamirpur","Dharamshala","Mandi"];
-let baseLoaded = false;
 
-let baseBySro = {};   // base snapshot from XLSX
-let editsBySro = {};  // current week edits (during values)
+const MANUAL_BASE = {
+  Shimla: {
+    allotted: 25,
+    completedSince: 22,
+    underSurvey: 1,
+    pct: 88,
+    blocksSince: 922,
+    townsAllRespectSince: 22,
+    dispatchSince: 22,
+
+    // default during values (if no edit saved yet)
+    townsDuring: 0,
+    blocksDuring: 39,
+    townsAllRespectDuring: 0,
+    dispatchDuring: 0
+  },
+  Hamirpur: {
+    allotted: 15,
+    completedSince: 13,
+    underSurvey: 0,
+    pct: 87,
+    blocksSince: 239,
+    townsAllRespectSince: 13,
+    dispatchSince: 13,
+    townsDuring: 0,
+    blocksDuring: 0,
+    townsAllRespectDuring: 0,
+    dispatchDuring: 0
+  },
+  Dharamshala: {
+    allotted: 16,
+    completedSince: 13,
+    underSurvey: 1,
+    pct: 81,
+    blocksSince: 432,
+    townsAllRespectSince: 13,
+    dispatchSince: 13,
+    townsDuring: 0,
+    blocksDuring: 2,
+    townsAllRespectDuring: 0,
+    dispatchDuring: 0
+  },
+  Mandi: {
+    allotted: 13,
+    completedSince: 11,
+    underSurvey: 0,
+    pct: 85,
+    blocksSince: 408,
+    townsAllRespectSince: 10,
+    dispatchSince: 10,
+    townsDuring: 0,
+    blocksDuring: 0,
+    townsAllRespectDuring: 0,
+    dispatchDuring: 0
+  }
+};
+
+/* =======================
+   STATE (runtime)
+======================= */
+let baseBySro = {};   // will be filled from MANUAL_BASE only
+let editsBySro = {};  // week edits from Firebase
 let selectedSro = "";
 
-/* Fields we show in report */
+/* Keys editable by console */
 const CONSOLE_KEYS = ["townsDuring","blocksDuring","townsAllRespectDuring","dispatchDuring"];
 
 function toggleLoader(show, text="PLEASE WAIT..."){
@@ -230,134 +258,31 @@ function n(x){
 }
 
 /* =======================
-   XLSX read with merges
+   BASE INIT (Manual only)
 ======================= */
-function sheetToGridWithMerges(wb, sheetName){
-  const ws = wb.Sheets[sheetName];
-  const grid = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
-  const merges = ws["!merges"] || [];
-  for (const m of merges) {
-    const topLeft = (grid[m.s.r] && grid[m.s.r][m.s.c]) ?? "";
-    for (let r = m.s.r; r <= m.e.r; r++) {
-      if (!grid[r]) grid[r] = [];
-      for (let c = m.s.c; c <= m.e.c; c++) {
-        if (grid[r][c] === "" || grid[r][c] === null || typeof grid[r][c] === "undefined") {
-          grid[r][c] = topLeft;
-        }
-      }
-    }
-  }
-  return grid;
-}
-
-async function fetchArrayBuffer(url){
-  const res = await fetch(url, { cache:"no-store" });
-  if(!res.ok){
-    throw new Error(`Fetch failed (${res.status}): ${res.url}`);
-  }
-  return await res.arrayBuffer();
-}
-
-/* =======================
-   AUTO DETECT: find where SRO is
-   - checks first 6 columns
-======================= */
-function findSroCell(row){
-  for(let c=0;c<6;c++){
-    const v = (row[c] ?? "").toString().trim();
-    if(SROS.includes(v)) return { sro:v, col:c };
-  }
-  return null;
-}
-
-/* =======================
-   Parse base XLSX
-   Uses your base table columns relative to SRO column:
-   We assume row contains:
-   [SRO] [RO] [Allotted] [..] [..] [During] [CompletedSince] [UnderSurvey] [%] [BlocksDuring] [BlocksSince] ... [AllRespectDuring] [AllRespectSince] [DispatchDuring] [DispatchSince]
-   So we map offsets like you gave (col 3,6,7,8,9,10,11,24,25,26,27) but relative to start of row.
-   This is robust when SRO starts at col0 or col1.
-======================= */
-function parseBaseFromGrid(grid){
-  const bySro = {};
-  // scan all rows
-  for(const row of grid){
-    const hit = findSroCell(row);
-    if(!hit) continue;
-
-    const sro = hit.sro;
-    // In your sheet, after SRO comes RO, then allotted towns etc.
-    // We'll locate the numeric area by looking for the "allotted towns" value near +2/+1
-    // Default offsets assuming: [SRO][RO][Allotted]...
-    const baseIdx = hit.col;
-
-    // Try both patterns:
-    // Pattern A: [SRO][RO][Allotted]  => allotted at baseIdx+2
-    // Pattern B: [SlNo][SRO][Allotted] => allotted at baseIdx+1
-    let allotted = n(row[baseIdx + 2]);
-    if(allotted === 0 && n(row[baseIdx + 1]) > 0) allotted = n(row[baseIdx + 1]);
-
-    // Now best-effort mapping by scanning nearby numeric positions:
-    // If your table matches sample you sent, these are positions from the start of numeric block:
-    // CompletedDuringMonth (During week) ~ near +5,
-    // CompletedSinceStart ~ near +6,
-    // UnderSurvey ~ near +7,
-    // % ~ near +8,
-    // BlocksDuring ~ near +9,
-    // BlocksSince ~ near +10,
-    // AllRespectDuring ~ near +23,
-    // AllRespectSince ~ near +24,
-    // DispatchDuring ~ near +25,
-    // DispatchSince ~ near +26
-    // We'll compute numericBlockStart = where allotted is found.
-    const allottedCol = (allotted === n(row[baseIdx+2])) ? (baseIdx+2) : (baseIdx+1);
-    const nb = allottedCol; // numeric block begins at allotted col
-
-    const townsDuring = n(row[nb + 3]);          // your col6 (during) roughly
-    const completedSince = n(row[nb + 4]);       // col7
-    const underSurvey = n(row[nb + 5]);          // col8
-    const pct = n(row[nb + 6]);                  // col9
-    const blocksDuring = n(row[nb + 7]);         // col10
-    const blocksSince = n(row[nb + 8]);          // col11
-
-    // For later columns (all respect, dispatch), not always present in weekly sheet.
-    // We'll attempt to read far offsets if exist; else keep 0.
-    const townsAllRespectDuring = n(row[nb + 21]); // near col24
-    const townsAllRespectSince = n(row[nb + 22]);  // near col25
-    const dispatchDuring = n(row[nb + 23]);        // near col26
-    const dispatchSince = n(row[nb + 24]);         // near col27
-
-    bySro[sro] = {
-      sro,
-      allotted,
-      // during (editable)
-      townsDuring,
-      blocksDuring,
-      townsAllRespectDuring,
-      dispatchDuring,
-      // read-only base
-      completedSince,
-      underSurvey,
-      pct,
-      blocksSince,
-      townsAllRespectSince,
-      dispatchSince
-    };
-  }
-
-  // ensure all sros exist
+function loadManualBase(){
+  baseBySro = {};
   for(const s of SROS){
-    bySro[s] ||= {
-      sro:s, allotted:0,
-      townsDuring:0, blocksDuring:0, townsAllRespectDuring:0, dispatchDuring:0,
-      completedSince:0, underSurvey:0, pct:0, blocksSince:0, townsAllRespectSince:0, dispatchSince:0
+    const m = MANUAL_BASE[s] || {};
+    baseBySro[s] = {
+      sro: s,
+      allotted: n(m.allotted),
+      townsDuring: n(m.townsDuring),
+      completedSince: n(m.completedSince),
+      underSurvey: n(m.underSurvey),
+      pct: n(m.pct),
+      blocksDuring: n(m.blocksDuring),
+      blocksSince: n(m.blocksSince),
+      townsAllRespectDuring: n(m.townsAllRespectDuring),
+      townsAllRespectSince: n(m.townsAllRespectSince),
+      dispatchDuring: n(m.dispatchDuring),
+      dispatchSince: n(m.dispatchSince)
     };
   }
-  return bySro;
 }
 
 /* =======================
-   Week edits
+   WEEK EDITS (Firebase)
 ======================= */
 function weekKey(){
   const a = document.getElementById("wkStart").value;
@@ -383,6 +308,12 @@ async function loadWeekEdits(){
   }
 }
 
+async function reloadWeek(){
+  await loadWeekEdits();
+  renderConsole();
+  renderTable();
+}
+
 /* =======================
    UI: SRO + Console
 ======================= */
@@ -405,7 +336,6 @@ function renderConsole(){
 
   const base = baseBySro[selectedSro] || {};
   const edits = editsBySro[selectedSro] || {};
-
   const def = (k)=> (k in edits) ? edits[k] : (base[k] ?? 0);
 
   box.innerHTML = `
@@ -489,7 +419,6 @@ function renderTable(){
     "Towns completed in all respect (During week)","Towns completed in all respect Since Start",
     "Towns dispatched to HQ (During week)","Towns dispatched to HQ Since Start"
   ];
-
   document.getElementById("thead").innerHTML = cols.map(c=>`<th>${c}</th>`).join("");
 
   const rows = SROS.map((sro, i)=>{
@@ -555,93 +484,21 @@ function renderTable(){
 }
 
 /* =======================
-   File debug + Base load once
-======================= */
-function showFileStatus(ok, msg){
-  const el = document.getElementById("fileStatus");
-  el.innerHTML = ok ? `<div class="ok">✅ ${msg}</div>` : `<div class="err">❌ ${msg}</div>`;
-}
-function applyFileOverride(){
-  const v = (document.getElementById("fileOverride").value || "").trim();
-  if(!v) return alert("Enter filename like: weekly.xlsx");
-  WEEKLY_XLSX_URL = v;
-  baseLoaded = false;
-  reloadAll(true);
-}
-
-async function loadBaseOnce(forceReload){
-  if(baseLoaded && !forceReload) return;
-
-  document.getElementById("fileName").innerText = WEEKLY_XLSX_URL;
-  toggleLoader(true, "LOADING BASE XLSX...");
-  try{
-    const buf = await fetchArrayBuffer(WEEKLY_XLSX_URL);
-    showFileStatus(true, `File loaded: ${WEEKLY_XLSX_URL}`);
-
-    const wb = XLSX.read(buf, { type:"array" });
-    const sheet = wb.SheetNames[0];
-    const grid = sheetToGridWithMerges(wb, sheet);
-
-    baseBySro = parseBaseFromGrid(grid);
-
-    // if still all zeros, tell user
-    const anyNonZero = SROS.some(s => (baseBySro[s]?.allotted || 0) > 0 || (baseBySro[s]?.completedSince || 0) > 0);
-    if(!anyNonZero){
-      showFileStatus(false, `File loaded but data rows not detected. Your XLSX layout differs. Rename columns or share 1 sheet structure. (Parser tried auto SRO column detection.)`);
-    }
-
-    baseLoaded = true;
-  } catch(e){
-    showFileStatus(false, e.message + "  |  Try rename XLSX to weekly.xlsx and update override.");
-    baseLoaded = false;
-    // Keep safe defaults
-    baseBySro = {};
-    for(const s of SROS){
-      baseBySro[s] = {
-        sro:s, allotted:0,
-        townsDuring:0, blocksDuring:0, townsAllRespectDuring:0, dispatchDuring:0,
-        completedSince:0, underSurvey:0, pct:0, blocksSince:0, townsAllRespectSince:0, dispatchSince:0
-      };
-    }
-  } finally {
-    toggleLoader(false);
-  }
-}
-
-/* =======================
-   Reload logic:
-   - load base once (or forced)
-   - load week edits on every reload/when week changes
-======================= */
-async function reloadAll(forceBase){
-  await loadBaseOnce(forceBase);
-  await loadWeekEdits();
-  renderConsole();
-  renderTable();
-}
-
-/* When week dates change: reload week edits only */
-async function onWeekChange(){
-  await loadWeekEdits();
-  renderConsole();
-  renderTable();
-}
-
-/* =======================
    Boot
 ======================= */
 window.onload = async () => {
-  // set default week = today
+  // Manual base load
+  loadManualBase();
+
+  // default dates
   const today = new Date().toISOString().slice(0,10);
   document.getElementById("wkEnd").value = today;
   document.getElementById("wkStart").value = today;
 
-  document.getElementById("wkStart").addEventListener("change", onWeekChange);
-  document.getElementById("wkEnd").addEventListener("change", onWeekChange);
+  document.getElementById("wkStart").addEventListener("change", reloadWeek);
+  document.getElementById("wkEnd").addEventListener("change", reloadWeek);
 
-  document.getElementById("fileName").innerText = WEEKLY_XLSX_URL;
-
-  await reloadAll(true);
+  await reloadWeek();
 };
 </script>
 </body>
