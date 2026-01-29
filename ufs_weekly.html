@@ -56,9 +56,60 @@
     .report-title{ font-weight:1000; color:#fff; padding:10px 10px 12px; border-bottom:1px solid rgba(255,255,255,.08); }
     .table-wrap{ margin-top:12px; background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:auto; }
     table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
-    th{ position:sticky; top:0; z-index:10; background:#0b1220; color:var(--accent); font-size:11px; text-transform:uppercase;
-      font-weight:1000; letter-spacing:.7px; padding:12px 10px; border-bottom:2px solid rgba(56,189,248,.55); text-align:left; white-space:nowrap; }
-    td{ padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.08); color:rgba(248,250,252,.85); font-size:12px; vertical-align:middle; white-space:nowrap; }
+    tbody tr:nth-child(odd){ background: rgba(255,255,255,.03); }
+tbody tr:hover{ background: rgba(56,189,248,.08); }
+
+/* ✅ sticky first 2 columns (Sl No + SRO) */
+th:first-child, td:first-child{
+  position:sticky; left:0; z-index:11;
+  background:#0b1220;
+}
+th:nth-child(2), td:nth-child(2){
+  position:sticky; left:70px; z-index:11;  /* adjust if SlNo width changes */
+  background:#0b1220;
+}
+
+/* ✅ give fixed widths for first columns */
+th:first-child, td:first-child{ width:70px; min-width:70px; }
+th:nth-child(2), td:nth-child(2){ width:140px; min-width:140px; }
+
+    th{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:#0b1220;
+  color:var(--accent);
+  font-size:11px;
+  text-transform:uppercase;
+  font-weight:1000;
+  letter-spacing:.7px;
+  padding:12px 10px;
+  border-bottom:2px solid rgba(56,189,248,.55);
+  text-align:left;
+
+  /* ✅ wrap header text */
+  white-space:normal;          /* was nowrap */
+  line-height:1.2;
+  word-break:break-word;
+  hyphens:auto;
+  max-width:160px;             /* controls wrap width */
+  vertical-align:bottom;
+}
+
+    td{
+  padding:10px 10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  color:rgba(248,250,252,.85);
+  font-size:12px;
+  vertical-align:middle;
+
+  /* ✅ keep values clean */
+  white-space:nowrap;          /* keep data one line */
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:220px;
+}
+
     .num{ text-align:right; font-variant-numeric: tabular-nums; }
     .sro{ font-weight:1000; }
     .total-row td{ font-weight:1000; color:#fff; background:rgba(0,0,0,.25); }
