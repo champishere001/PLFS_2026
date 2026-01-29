@@ -19,305 +19,340 @@
         }
         
         * { box-sizing: border-box; transition: all 0.2s ease; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            height: 100dvh;
-            display: flex;
-            overflow: hidden;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100vh; height: 100dvh; display: flex; overflow: hidden; }
 
-        .sidebar {
-            width: var(--sb-width);
-            min-width: var(--sb-width);
-            background: var(--sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-        }
+        .sidebar { width: var(--sb-width); min-width: var(--sb-width); background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar-header { padding: 25px; font-weight: 800; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); letter-spacing: 1px; }
+        /* ===== LEFT SIDEBAR ===== */
+.sidebar{
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 72px;                 /* compact width */
+  background: #0f172a;
+  border-right: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 14px;
+  gap: 18px;
+  z-index: 9999;
+}
 
-        .sidebar-header {
-            padding: 25px;
-            font-weight: 800;
-            font-size: 18px;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
-            letter-spacing: 1px;
-        }
+/* links */
+.sidebar a{
+  color: #fff;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.2;
+  padding: 8px 6px;
+  border-radius: 10px;
+  width: 56px;
+  transition: all 0.25s ease;
+}
 
-        .nav-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            scrollbar-width: thin;
-        }
+/* hover */
+.sidebar a:hover{
+  background: #1e293b;
+  transform: translateX(2px);
+}
 
-        .overlay-mask {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 900;
-            backdrop-filter: blur(4px);
-        }
+/* special colors */
+.sidebar a.hub{ color:#38bdf8; }
+.sidebar a.plfs{ color:#10b981; }
+
+/* ===== MAIN CONTENT SHIFT ===== */
+.main-content{
+  margin-left: 72px;   /* same as sidebar width */
+  padding: 16px;
+}
+
+        .nav-scroll { flex: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; }
+        .overlay-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 900; backdrop-filter: blur(4px); }
 
         @media (max-width: 1024px) {
-            .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                bottom: 0;
-                width: 280px;
-            }
+            .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .sidebar.open { left: 0; }
             .overlay-mask.active { display: block; }
         }
 
-        .zone-title {
-            font-size: 10px;
-            font-weight: 800;
-            color: var(--accent);
-            text-transform: uppercase;
-            margin: 20px 0 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0.6;
-        }
+        .zone-title { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
+        .zone-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+        .state-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .st-btn { height: 42px; border-radius: 8px; border: 1px solid var(--border); background: rgba(30, 41, 59, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); }
+        .st-btn.active { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); color: #fff; }
+        .st-btn.has-data { border-left: 3px solid var(--v1); }
 
-        .zone-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
+        .sub-menu-container { grid-column: span 2; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; margin-top: 5px; border: 1px solid var(--border); }
+        .pill-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .pill { padding: 8px; font-size: 9px; font-weight: 700; text-align: center; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); background: var(--sidebar); }
+        .pill.active { background: var(--v1); color: #fff; border-color: var(--v1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+        .pill.all-btn { grid-column: span 2; border-color: var(--accent); color: var(--accent); }
+        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 
-        .state-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #020617; height: 100vh; }
+        .fixed-header-group { flex-shrink: 0; background: var(--glass); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); z-index: 100; }
+        .top-bar { padding: 12px 25px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        .st-btn {
-            height: 42px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: rgba(30, 41, 59, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-dim);
-        }
+        .date-picker-wrap { display: flex; align-items: center; gap: 8px; background: rgba(56,189,248,0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent); }
+        .date-picker-wrap input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 11px; outline: none; cursor: pointer; color-scheme: dark; }
+        .search-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 8px; font-size: 13px; outline: none; }
 
-        .st-btn.active {
-            border-color: var(--accent);
-            background: rgba(56, 189, 248, 0.1);
-            color: #fff;
-        }
+        .info-panel { padding: 15px 25px; display: grid; grid-template-columns: auto 1fr auto; gap: 30px; align-items: center; }
+        .sro-box { background: #1e293b; border: 1px solid var(--accent); padding: 10px 20px; border-radius: 10px; min-width: 200px; }
+        .sro-label { font-size: 9px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+        .sro-name { font-size: 16px; font-weight: 700; color: #fff; }
 
-        .st-btn.has-data {
-            border-left: 3px solid var(--v1);
-        }
+        /* PROGRESS TRACKER */
+        .timeline-container { background: rgba(15, 23, 42, 0.4); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 350px; }
+        .line-group { margin-bottom: 8px; }
+        .line-label { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+        .line-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; position: relative; overflow: hidden; }
+        .line-fill { height: 100%; border-radius: 4px; position: absolute; left: 0; transition: width 1s ease; }
 
-        .sub-menu-container {
-            grid-column: span 2;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            padding: 12px;
-            margin-top: 5px;
-            border: 1px solid var(--border);
-        }
+        /* VISIT TOGGLE BUTTONS */
+        .visit-segmented { display: flex; background: rgba(0,0,0,0.4); border-radius: 14px; padding: 4px; border: 1px solid var(--border); min-width: 260px; }
+        .v-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 11px; color: var(--text-dim); background: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .v-btn.active-v1 { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        .v-btn.active-v2 { background: var(--v1); color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
 
-        .pill-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-        }
+        .workspace { flex: 1; padding: 20px; padding-bottom: 100px; overflow-y: auto; scrollbar-width: thin; }
+        .table-wrap { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
+        th { background: var(--header-dark); color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 18px 15px; text-align: left; border-bottom: 3px solid var(--accent); position: sticky; top:0; z-index: 10; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
 
-        .pill {
-            padding: 8px;
-            font-size: 9px;
-            font-weight: 700;
-            text-align: center;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            color: var(--text-dim);
-            background: var(--sidebar);
-        }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; }
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--v1); border-color: var(--v1); }
+        .badge-pending { background: rgba(255, 255, 255, 0.05); color: var(--text-dim); border-color: var(--border); }
+        .badge-late { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
+        .fsu-badge { font-family: 'Monaco', monospace; font-weight: 800; color: #fff; background: rgba(56, 189, 248, 0.1); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
 
-        .pill.active {
-            background: var(--v1);
-            color: #fff;
-            border-color: var(--v1);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-        }
-
-        .pill.all-btn {
-            grid-column: span 2;
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .month-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-top: 10px;
-        }
-
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #020617;
-        }
-
-        .fixed-header-group {
-            flex-shrink: 0;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-        }
-
-        .top-bar {
-            padding: 12px 25px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .date-picker-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(56,189,248,0.1);
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--accent);
-        }
-
-        .date-picker-wrap input {
-            background: transparent;
-            border: none;
-            color: var(--accent);
-            font-weight: 800;
-            font-size: 11px;
-            outline: none;
-            cursor: pointer;
-            color-scheme: dark;
-        }
-
-        .search-input {
-            flex: 1;
-            background: #000;
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .workspace {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .table-wrap {
-            background: var(--card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 900px;
-        }
-
-        th {
-            background: var(--header-dark);
-            color: var(--accent);
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 18px 15px;
-            text-align: left;
-            border-bottom: 3px solid var(--accent);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-            color: var(--text-dim);
-        }
+        #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 20000; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(56, 189, 248, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-
 <body>
+<nav class="sidebar">
+  <a href="index.html" class="hub">🏠 HUB</a>
+  <a href="plfs.html" class="plfs">📊 PLFS</a>
+  <a href="ufs_weekly.html">🗓️ UFS Weekly</a>
+  <a href="ufs_monthly.html">📅 UFS Monthly</a>
+</nav>
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText" style="font-weight: 800; letter-spacing: 2px; font-size: 11px;">SYNCING...</div>
+</div>
 
 <div class="overlay-mask" id="mask" onclick="toggleMenu()"></div>
 
+<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index: 10001; align-items:center; justify-content:center; backdrop-filter: blur(8px);">
+    <div style="background:var(--sidebar); padding:40px; border-radius:20px; border:1px solid var(--border); text-align:center; width:320px;">
+        <h3 style="color:var(--accent); margin-bottom:20px">ADMIN ACCESS</h3>
+        <input type="password" id="passInput" class="input-field" placeholder="PASSCODE" style="text-align: center; font-size: 18px; letter-spacing: 5px; margin-bottom:20px;">
+        <button onclick="verifyAdmin()" style="width:100%; background:var(--accent); border:none; padding:12px; border-radius:8px; font-weight:800; cursor:pointer; color:#000;">UNLOCK</button>
+        <button onclick="document.getElementById('loginModal').style.display='none'" style="margin-top:15px; background:transparent; color:var(--text-dim); border:none; cursor:pointer;">Cancel</button>
+    </div>
+</div>
+
 <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">PLFS COMMAND</div>
+    <div class="sidebar-header" style="display:flex; justify-content:space-between; align-items:center;">
+        PLFS COMMAND
+        <span onclick="toggleMenu()" style="cursor:pointer; font-size:20px;" class="mobile-menu-btn">✕</span>
+    </div>
     <div class="nav-scroll" id="navScroll"></div>
+    <div style="padding:15px; border-top:1px solid var(--border); display: grid; gap: 8px;">
+        <button id="adminBtn" class="btn" style="background:var(--card); color:#fff; width:100%; border:none; padding:10px; border-radius:8px; cursor:pointer; font-size:12px;" onclick="document.getElementById('loginModal').style.display='flex'">🔐 Global Admin</button>
+        <label class="admin-locked" style="display:none; width:100%; background:var(--accent); padding:10px; color:#000; border-radius:8px; font-weight:700; cursor:pointer; text-align:center; font-size:12px;">📂 Import Master <input type="file" hidden onchange="handleExcel(this)"></label>
+        <button onclick="lockSession()" style="background:var(--danger); color:#fff; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">🔒 LOCK SESSION</button>
+    </div>
 </aside>
 
 <main class="main">
     <div class="fixed-header-group">
         <header class="top-bar">
-            <button onclick="toggleMenu()">☰</button>
+            <button class="mobile-menu-btn" style="display:none; background:var(--accent); border:none; padding:8px 12px; border-radius:6px; font-weight:800;" onclick="toggleMenu()">☰</button>
             <div class="date-picker-wrap">
-                <input type="date" id="sysCalendar">
+                <input type="date" id="sysCalendar" onchange="updateSysDate(this.value)">
             </div>
-            <input type="text" class="search-input" placeholder="Search...">
+            <input type="text" class="search-input" placeholder="🔍 Search FSU, Location..." onkeyup="doSearch(this.value)">
+            <div style="display:flex; gap:8px;">
+                <button class="btn" style="background:transparent; border:1px solid var(--v1); color:var(--v1); padding:8px 12px; border-radius:6px; cursor:pointer;" onclick="exportCSV()">📥</button>
+                <button class="btn" style="background:var(--accent); border:none; color:#000; padding:8px 15px; border-radius:6px; font-weight:700; cursor:pointer;" onclick="syncToCloud()">☁️ Sync</button>
+            </div>
         </header>
+
+        <div class="info-panel" id="activeHeader" style="visibility: hidden;">
+            <div class="sro-box">
+                <div class="sro-label" id="vSt">STATE</div>
+                <div class="sro-name" id="vSro">SRO OFFICE</div>
+            </div>
+
+            <div class="timeline-container">
+                <div class="line-group">
+                    <div class="line-label" style="color:var(--accent)"><span>Allotted Units</span><span id="txtAllotted">0</span></div>
+                    <div class="line-track"><div id="allottedLine" class="line-fill" style="background:var(--accent); width:100%;"></div></div>
+                </div>
+                <div class="line-group">
+                    <div class="line-label" style="color:var(--v1)"><span>Completed Tasks</span><span id="txtCompleted">0</span></div>
+                    <div class="line-track"><div id="completedLine" class="line-fill" style="background:var(--v1); width:0%;"></div></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                    <span style="font-size:9px; color:var(--text-dim); font-weight:700;">LIVE PROGRESS</span>
+                    <span id="targetStatus" style="font-size:18px; font-weight:800; color:var(--text);">0%</span>
+                </div>
+            </div>
+            
+            <div class="visit-segmented">
+                <button id="btnV1" class="v-btn" onclick="setVisit(1)"><span>🎯</span> VISIT 1</button>
+                <button id="btnV2" class="v-btn" onclick="setVisit(2)"><span>🔄</span> REVISITS</button>
+            </div>
+        </div>
     </div>
 
     <div class="workspace">
         <div class="table-wrap">
-            <table>
-                <thead><tr id="tableHeader"></tr></thead>
-                <tbody id="dataBody"></tbody>
-            </table>
+            <table><thead><tr id="tableHeader"></tr></thead><tbody id="dataBody"></tbody></table>
         </div>
     </div>
 </main>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
-    authDomain: "action-plan-62fae.firebaseapp.com",
-    databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com",
-    projectId: "action-plan-62fae"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    const config = { apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", authDomain: "action-plan-62fae.firebaseapp.com", databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", projectId: "action-plan-62fae" };
+    firebase.initializeApp(config); const db = firebase.database();
 
-function toggleMenu(){
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('mask').classList.toggle('active');
-}
+    let master = [], selSt = null, selSro = "ALL SROs", selMo = 0, selVis = 1, query = "";
+    let systemDateString = "2026-01-18";
+    let unlockedSros = new Set();
+    let globalAdmin = false;
+
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const nsoZones = { "NORTH": ["HIMACHAL PRADESH", "PUNJAB", "HARYANA", "RAJASTHAN", "DELHI", "JAMMU & KASHMIR", "LADAKH", "CHANDIGARH"], "SOUTH": ["ANDHRA PRADESH", "KARNATAKA", "KERALA", "TAMIL NADU", "TELANGANA", "PUDUCHERRY"], "EAST": ["BIHAR", "JHARKHAND", "ODISHA", "WEST BENGAL"], "WEST": ["GOA", "GUJARAT", "MAHARASHTRA", "DADRA NAGAR HAVELI"], "CENTRAL": ["CHHATTISGARH", "MADHYA PRADESH", "UTTARAKHAND", "UTTAR PRADESH"], "NE": ["ASSAM", "ARUNACHAL PRADESH", "MANIPUR", "MEGHALAYA", "MIZORAM", "NAGALAND", "SIKKIM", "TRIPURA"] };
+
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mask').classList.toggle('active'); }
+    function toggleLoader(show, text = "PLEASE WAIT...") { const l = document.getElementById('loadingOverlay'); document.getElementById('loadingText').innerText = text; l.style.display = show ? 'flex' : 'none'; }
+    function updateSysDate(val) { systemDateString = val; refresh(); }
+    
+    function getStatus(targetDate, isComplete, currentObsDate) {
+        if (!targetDate || targetDate === "V1 Pending") return '<span class="status-badge badge-pending">Pending</span>';
+        if (isComplete) return '<span class="status-badge badge-done">Complete</span>';
+        if (targetDate <= currentObsDate) return '<span class="status-badge badge-late">Late</span>';
+        return '<span class="status-badge badge-future" style="color:var(--warning); border:1px solid var(--warning); padding:4px 10px; border-radius:4px; font-size:9px;">Scheduled</span>';
+    }
+
+    function addDays(dateStr, days) { if (!dateStr || dateStr === "V1 Pending") return null; const r = new Date(dateStr); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; }
+
+    async function handleExcel(input) {
+        const file = input.files[0]; if(!file) return;
+        toggleLoader(true, "PROCESSING...");
+        try {
+            let stName = file.name.split('.')[0].split('_').pop().trim().toUpperCase();
+            const data = new Uint8Array(await file.arrayBuffer());
+            const rows = XLSX.utils.sheet_to_json(XLSX.read(data, {type:'array'}).Sheets[XLSX.read(data, {type:'array'}).SheetNames[0]], {header:1, range:7});
+            rows.slice(1).forEach(cols => {
+                let fsu = cols[4], mCode = cols[5], sro = String(cols[6]||'NSO'), loc = cols[10];
+                if(fsu) {
+                    const startM = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
+                    for(let i=0; i<4; i++) master.push({ uid: `${stName}_${fsu}_V${i+1}`, fsu, state: stName, sro, monthIdx: (startM + i)%12, location: loc||"---", visitNum: i+1 });
+                }
+            }); renderNav(); alert("Data Processed.");
+        } finally { toggleLoader(false); }
+    }
+
+    function refresh() {
+        const body = document.getElementById('dataBody');
+        const h1 = document.getElementById('btnV1'), h2 = document.getElementById('btnV2');
+        if(!selSt) { body.innerHTML = "<tr><td colspan='7' style='text-align:center; padding:100px; opacity:0.3;'>SELECT A REGION</td></tr>"; document.getElementById('activeHeader').style.visibility='hidden'; return; }
+        
+        document.getElementById('activeHeader').style.visibility='visible';
+        document.getElementById('vSt').innerText = selSt; document.getElementById('vSro').innerText = selSro; 
+
+        // Update Button Appearance
+        h1.className = selVis === 1 ? 'v-btn active-v1' : 'v-btn';
+        h2.className = selVis === 2 ? 'v-btn active-v2' : 'v-btn';
+
+        const filtered = master.filter(d => {
+            const matchSt = d.state === selSt;
+            const matchSro = selSro === "ALL SROs" ? true : d.sro === selSro;
+            const matchMo = d.monthIdx === selMo;
+            const matchVis = selVis === 1 ? d.visitNum === 1 : d.visitNum > 1;
+            const matchQuery = (String(d.fsu).includes(query) || d.location.toLowerCase().includes(query.toLowerCase()));
+            return matchSt && matchSro && matchMo && matchVis && matchQuery;
+        });
+
+        const total = filtered.length;
+        const done = filtered.filter(d => d.endDate && d.endDate <= systemDateString).length;
+        const perc = total > 0 ? Math.round((done / total) * 100) : 0;
+        document.getElementById('txtAllotted').innerText = total; document.getElementById('txtCompleted').innerText = done;
+        document.getElementById('targetStatus').innerText = perc + '%'; document.getElementById('completedLine').style.width = perc + '%';
+
+        if (selVis === 1) document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Start</th><th>End</th>`;
+        else document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Visit</th><th>Suggested</th>`;
+
+        body.innerHTML = filtered.map(d => {
+            const v1Item = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
+            let suggestDateStr = (selVis > 1 && v1Item.endDate) ? addDays(v1Item.endDate, (d.visitNum - 1) * 30) : "V1 Pending";
+            let displayStatus = selVis === 1 ? getStatus(d.endDate, (d.endDate && d.endDate <= systemDateString), systemDateString) : getStatus(suggestDateStr, (d.endDate && d.endDate <= systemDateString), systemDateString);
+
+            return `<tr>
+                <td>${displayStatus}</td>
+                <td><span class="fsu-badge">${d.fsu}</span></td>
+                <td><div style="width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${d.location}</div></td>
+                <td><input class="input-field" style="width:70px" value="${d.enmId || v1Item.enmId || ''}" onchange="upd('${d.uid}','eid',this.value)"></td>
+                <td><input class="input-field" style="width:100px" value="${d.enumerator || v1Item.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)"></td>
+                ${selVis === 1 ? `
+                    <td><input type="date" class="input-field" value="${d.startDate||''}" onchange="upd('${d.uid}','sd',this.value)"></td>
+                    <td><input type="date" class="input-field" value="${d.endDate||''}" onchange="upd('${d.uid}','ed',this.value)"></td>
+                ` : `
+                    <td><b style="color:var(--accent)">V${d.visitNum}</b></td>
+                    <td style="color:var(--accent); font-weight:700;">${suggestDateStr}</td>
+                `}
+            </tr>`;
+        }).join('');
+    }
+
+    function upd(id, f, v) { let item = master.find(x => x.uid === id); if(item) { if(f==='eid') item.enmId = v; if(f==='en') item.enumerator = v; if(f==='sd') item.startDate = v; if(f==='ed') item.endDate = v; refresh(); } }
+
+    async function syncToCloud() { if(!selSt) return; toggleLoader(true, "SYNCING..."); try { const data = {}; master.filter(m => m.state === selSt).forEach(m => data[m.uid] = m); await db.ref(`plfs_roster/${selSt}`).set(data); alert("Cloud Updated."); } finally { toggleLoader(false); } }
+
+    async function autoFetch() { toggleLoader(true, "FETCHING..."); try { const snap = await db.ref(`plfs_roster`).once('value'); master = []; if(snap.exists()) snap.forEach(s => Object.values(s.val()).forEach(r => master.push(r))); renderNav(); refresh(); } finally { toggleLoader(false); } }
+
+    function selectSroWithAuth(sroName) {
+        if (globalAdmin || unlockedSros.has(sroName)) { selSro = sroName; renderNav(); refresh(); return; }
+        if (sroName === "ALL SROs") { alert("Restricted to Global Admin."); return; }
+        const pass = prompt(`Enter Password for ${sroName}:`);
+        if (pass && pass.toUpperCase() === sroName.substring(0, 3).toUpperCase()) { unlockedSros.add(sroName); selSro = sroName; renderNav(); refresh(); } 
+        else { alert("Incorrect Password."); }
+    }
+
+    function renderNav() {
+        const container = document.getElementById('navScroll'); let html = "";
+        for (const [zone, states] of Object.entries(nsoZones)) {
+            html += `<div class="zone-title">${zone}</div><div class="state-grid">`;
+            states.forEach(st => {
+                html += `<div class="st-btn ${selSt===st?'active':''} ${master.some(x=>x.state===st)?'has-data':''}" onclick="selectState('${st}')"><div>${st}</div></div>`;
+                if (selSt === st) {
+                    const sros = [...new Set(master.filter(x => x.state === st).map(x => x.sro))].sort();
+                    html += `<div class="sub-menu-container"><div class="pill-grid"><div class="pill all-btn ${selSro==='ALL SROs'?'active':''}" onclick="event.stopPropagation(); selectSroWithAuth('ALL SROs');">🌍 ALL SRO's</div>`;
+                    sros.forEach(s => html += `<div class="pill ${selSro===s?'active':''}" onclick="event.stopPropagation(); selectSroWithAuth('${s}');">${s}</div>`);
+                    html += `</div><div class="month-grid">` + months.map((m, i) => `<div class="pill ${selMo===i?'active':''}" onclick="event.stopPropagation(); selMo=${i}; renderNav(); refresh();">${m.substring(0,3)}</div>`).join('') + `</div></div>`;
+                }
+            }); html += `</div>`;
+        } container.innerHTML = html;
+    }
+
+    function selectState(st) { selSt = st; selSro = "ALL SROs"; renderNav(); refresh(); }
+    function setVisit(v) { selVis = v; refresh(); }
+    function doSearch(v) { query = v; refresh(); }
+    function verifyAdmin() { if(document.getElementById('passInput').value==='123') { globalAdmin = true; document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='block'); document.getElementById('adminBtn').style.display='none'; document.getElementById('loginModal').style.display='none'; renderNav(); refresh(); } }
+    function lockSession() { globalAdmin = false; unlockedSros.clear(); selSt = null; selSro = "ALL SROs"; document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='none'); document.getElementById('adminBtn').style.display='block'; renderNav(); refresh(); alert("Locked."); }
+    function exportCSV() { const rows = Array.from(document.querySelectorAll("table tr")); const csv = rows.map(r => Array.from(r.querySelectorAll("th, td")).map(c => { const i = c.querySelector('input'); return `"${(i ? i.value : c.innerText).replace(/"/g, '""')}"`; }).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `PLFS_EXPORT.csv`; a.click(); }
+
+    window.onload = () => { document.getElementById('sysCalendar').value = "2026-01-18"; autoFetch(); };
 </script>
-
 </body>
 </html>
