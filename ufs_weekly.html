@@ -1,561 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
-  <title>UFS | Weekly Progress Report (Manual Base + SRO Console)</title>
+<meta charset="UTF-8">
+<title>UFS Weekly Progress Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  body{
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f4f7fb;
+    margin:0;
+    padding:20px;
+  }
 
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  .container{
+    max-width:1600px;
+    margin:auto;
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:0 6px 18px rgba(0,0,0,.1);
+  }
 
-  <style>
-    :root{
-      --bg:#020617; --sb:#0f172a; --card:#0b1220; --border:#334155;
-      --accent:#38bdf8; --ok:#10b981; --text:#f8fafc; --dim:#94a3b8;
-      --warn:#f59e0b; --danger:#ef4444;
-    }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; height:100dvh; overflow:hidden; }
-    .app{ height:100%; display:flex; overflow:hidden; }
+  h2,h3{
+    text-align:center;
+    margin:4px 0;
+    font-weight:800;
+  }
 
-    aside{ width:390px; min-width:390px; background:var(--sb); border-right:1px solid var(--border); display:flex; flex-direction:column; }
-    .sb-head{ padding:16px; border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-    .sb-head b{ color:var(--accent); letter-spacing:1px; }
-    .sb-head .sub{ margin-top:6px; font-size:11px; color:rgba(248,250,252,.70); font-weight:700; line-height:1.35; }
+  h2{ font-size:18px; }
+  h3{ font-size:14px; }
 
-    .sb-body{ padding:14px 16px 16px; overflow:auto; display:grid; gap:12px; }
-    .card{ background:rgba(30,41,59,.35); border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px; box-shadow:0 14px 36px rgba(0,0,0,.25); }
-    .card h3{ margin:0 0 10px; font-size:12px; font-weight:1000; letter-spacing:.8px; text-transform:uppercase; color:rgba(248,250,252,.92); }
-    .muted{ font-size:11px; color:rgba(248,250,252,.65); font-weight:700; line-height:1.45; }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    table-layout:fixed;
+  }
 
-    .input, select{
-      width:100%; background:#000; border:1px solid rgba(255,255,255,.12);
-      color:#fff; padding:10px; border-radius:10px; outline:none; font-weight:900; font-size:12px;
-    }
-    .btn{ border:none; border-radius:10px; padding:10px 12px; font-weight:1000; cursor:pointer; font-size:12px; }
-    .btn-soft{ background:rgba(255,255,255,.10); color:#fff; border:1px solid rgba(255,255,255,.12); }
-    .btn-accent{ background:var(--accent); color:#000; }
-    .btn-ok{ background:var(--ok); color:#000; }
+  th, td{
+    border:2px solid #000;
+    padding:6px 6px;
+    font-size:12px;
+    text-align:center;
+    vertical-align:middle;
+  }
 
-    .pill{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.22); color:rgba(248,250,252,.85);
-      font-size:11px; font-weight:1000;
-    }
-    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  th{
+    background:#eaf2ff;
+    font-weight:800;
+  }
 
-    main{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
-    header{ padding:12px 16px; background:rgba(15,23,42,.92); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
-    header .title{ font-weight:1000; letter-spacing:1px; color:var(--accent); }
-    header .grow{ flex:1; }
+  td input{
+    width:100%;
+    border:none;
+    outline:none;
+    text-align:center;
+    font-size:12px;
+    background:transparent;
+  }
 
-    .workspace{ flex:1; padding:14px 16px 18px; overflow:auto; }
-    .panel{ background:rgba(30,41,59,.25); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:12px; box-shadow:0 16px 44px rgba(0,0,0,.35); }
-    .report-title{ font-weight:1000; color:#fff; padding:10px 10px 12px; border-bottom:1px solid rgba(255,255,255,.08); }
-    .table-wrap{ margin-top:12px; background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:auto; }
-    table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1200px; }
-    tbody tr:nth-child(odd){ background: rgba(255,255,255,.03); }
-tbody tr:hover{ background: rgba(56,189,248,.08); }
+  .scheme{
+    text-align:left;
+    padding-left:8px;
+    font-weight:700;
+  }
 
-/* ✅ sticky first 2 columns (Sl No + SRO) */
-th:first-child, td:first-child{
-  position:sticky; left:0; z-index:11;
-  background:#0b1220;
-}
-th:nth-child(2), td:nth-child(2){
-  position:sticky; left:70px; z-index:11;  /* adjust if SlNo width changes */
-  background:#0b1220;
-}
+  .total-row td{
+    font-weight:800;
+    background:#f1f5ff;
+  }
 
-/* ✅ give fixed widths for first columns */
-th:first-child, td:first-child{ width:70px; min-width:70px; }
-th:nth-child(2), td:nth-child(2){ width:140px; min-width:140px; }
+  .yn{
+    font-weight:800;
+  }
 
-    th{
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:#0b1220;
-  color:var(--accent);
-  font-size:11px;
-  text-transform:uppercase;
-  font-weight:1000;
-  letter-spacing:.7px;
-  padding:12px 10px;
-  border-bottom:2px solid rgba(56,189,248,.55);
-  text-align:left;
-
-  /* ✅ wrap header text */
-  white-space:normal;          /* was nowrap */
-  line-height:1.2;
-  word-break:break-word;
-  hyphens:auto;
-  max-width:160px;             /* controls wrap width */
-  vertical-align:bottom;
-}
-
-    td{
-  padding:10px 10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  color:rgba(248,250,252,.85);
-  font-size:12px;
-  vertical-align:middle;
-
-  /* ✅ keep values clean */
-  white-space:nowrap;          /* keep data one line */
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:220px;
-}
-
-    .num{ text-align:right; font-variant-numeric: tabular-nums; }
-    .sro{ font-weight:1000; }
-    .total-row td{ font-weight:1000; color:#fff; background:rgba(0,0,0,.25); }
-    .mark-edit{ border-left:3px solid var(--ok); padding-left:8px; }
-
-    .console-grid{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
-    .field{ background:rgba(0,0,0,.20); border:1px solid rgba(255,255,255,.10); border-radius:12px; padding:10px; }
-    .field label{ display:block; font-size:10px; font-weight:1000; letter-spacing:.7px; text-transform:uppercase; color:rgba(248,250,252,.70); margin-bottom:6px; }
-    .field input{ width:100%; background:#000; border:1px solid rgba(16,185,129,.40); color:#fff; padding:10px; border-radius:10px; outline:none; font-weight:1000; font-size:12px; }
-
-    #loading{ display:none; position:fixed; inset:0; background:rgba(2,6,23,.92); z-index:9999; align-items:center; justify-content:center; flex-direction:column; color:var(--accent); }
-    .spin{ width:42px; height:42px; border:4px solid rgba(56,189,248,.16); border-left-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:12px; }
-    @keyframes spin{ to{ transform:rotate(360deg); } }
-  </style>
+  @media print{
+    body{ background:#fff; padding:0; }
+    .container{ box-shadow:none; }
+  }
+</style>
 </head>
+
 <body>
 
-<div id="loading">
-  <div class="spin"></div>
-  <div id="loadingText" style="font-weight:1000; letter-spacing:2px; font-size:12px;">LOADING...</div>
-</div>
+<div class="container">
 
-<div class="app">
-  <aside>
-    <div class="sb-head">
-      <div>
-        <b>UFS WEEKLY REPORT</b>
-        <div class="sub">✅ Excel removed • Base values = manual • Week edits = Firebase</div>
-      </div>
-      <button class="btn btn-soft" onclick="reloadWeek()">↻</button>
-    </div>
+  <h2>URBAN FRAME SURVEY 2022-27</h2>
+  <h3>WEEKLY PROGRESS REPORT (24th January 2026 – 30th January 2026) as on 30th January 2026</h3>
 
-    <div class="sb-body">
-      <div class="card">
-        <h3>Week + SRO</h3>
-        <div class="grid2">
-          <div>
-            <div class="muted">Week Start</div>
-            <input id="wkStart" class="input" type="date" />
-          </div>
-          <div>
-            <div class="muted">Week End (as on)</div>
-            <input id="wkEnd" class="input" type="date" />
-          </div>
-        </div>
+  <table>
+    <thead>
 
-        <div style="height:8px"></div>
-        <div class="muted">Select SRO (no password)</div>
-        <select id="sroSelect" class="input" onchange="selectSro(this.value)">
-          <option value="">-- Select SRO --</option>
-          <option value="Shimla">Shimla</option>
-          <option value="Hamirpur">Hamirpur</option>
-          <option value="Dharamshala">Dharamshala</option>
-          <option value="Mandi">Mandi</option>
-        </select>
-
-        <div style="height:8px"></div>
-        <div class="pill" id="pill">SRO: Not selected</div>
-      </div>
-
-      <div class="card" id="consoleCard" style="display:none;">
-        <h3>Data Entry Console (During week)</h3>
-        <div class="console-grid" id="consoleGrid"></div>
-        <div class="muted" style="margin-top:8px;">
-          Only these 4 “During week” fields are editable for selected SRO.
-        </div>
-        <div style="height:10px"></div>
-        <button class="btn btn-ok" onclick="saveConsole()">💾 Save (Firebase)</button>
-      </div>
-
-      <div class="card">
-        <h3>Actions</h3>
-        <button class="btn btn-accent" style="width:100%;" onclick="reloadWeek()">Reload week edits</button>
-        <button class="btn btn-soft" style="width:100%; margin-top:8px;" onclick="clearSro()">Clear SRO</button>
-      </div>
-
-      <div class="card">
-        <h3>Manual Base Values (Edit in code)</h3>
-        <div class="muted">
-          Initial/base values are inside <code>MANUAL_BASE</code> object in this HTML.<br>
-          Excel file is not used anymore.
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <main>
-    <header>
-      <div class="title">Weekly Progress Report</div>
-      <div class="grow"></div>
-      <button class="btn btn-soft" onclick="clearSro()">Clear SRO</button>
-    </header>
-
-    <div class="workspace">
-      <div class="panel">
-        <div class="report-title" id="reportTitle">WEEKLY PROGRESS REPORT</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr id="thead"></tr></thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script>
-/* =======================
-   FIREBASE CONFIG
-======================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
-  authDomain: "action-plan-62fae.firebaseapp.com",
-  databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com",
-  projectId: "action-plan-62fae"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-/* =======================
-   MANUAL BASE VALUES (EDIT HERE)
-======================= */
-const STATE_NAME = "HIMACHAL PRADESH";
-const SROS = ["Shimla","Hamirpur","Dharamshala","Mandi"];
-
-/* ✅ PUT YOUR INITIAL VALUES HERE */
-const MANUAL_BASE = {
-  Shimla: {
-    allotted: 25,
-    completedSince: 22,
-    underSurvey: 1,
-    pct: 88,
-    blocksSince: 922,
-    townsAllRespectSince: 22,
-    dispatchSince: 22,
-    townsDuring: 0,
-    blocksDuring: 39,
-    townsAllRespectDuring: 0,
-    dispatchDuring: 0
-  },
-  Hamirpur: {
-    allotted: 15,
-    completedSince: 13,
-    underSurvey: 0,
-    pct: 87,
-    blocksSince: 239,
-    townsAllRespectSince: 13,
-    dispatchSince: 13,
-    townsDuring: 0,
-    blocksDuring: 0,
-    townsAllRespectDuring: 0,
-    dispatchDuring: 0
-  },
-  Dharamshala: {
-    allotted: 16,
-    completedSince: 13,
-    underSurvey: 1,
-    pct: 81,
-    blocksSince: 432,
-    townsAllRespectSince: 13,
-    dispatchSince: 13,
-    townsDuring: 0,
-    blocksDuring: 2,
-    townsAllRespectDuring: 0,
-    dispatchDuring: 0
-  },
-  Mandi: {
-    allotted: 13,
-    completedSince: 11,
-    underSurvey: 0,
-    pct: 85,
-    blocksSince: 408,
-    townsAllRespectSince: 10,
-    dispatchSince: 10,
-    townsDuring: 0,
-    blocksDuring: 0,
-    townsAllRespectDuring: 0,
-    dispatchDuring: 0
-  }
-};
-
-/* =======================
-   STATE (runtime)
-======================= */
-let baseBySro = {};   // from MANUAL_BASE
-let editsBySro = {};  // week edits from Firebase
-let selectedSro = "";
-
-/* Keys editable by console */
-const CONSOLE_KEYS = ["townsDuring","blocksDuring","townsAllRespectDuring","dispatchDuring"];
-
-function toggleLoader(show, text="PLEASE WAIT..."){
-  const el = document.getElementById("loading");
-  document.getElementById("loadingText").innerText = text;
-  el.style.display = show ? "flex" : "none";
-}
-function n(x){
-  const t = (x ?? "").toString().replace(/[%\s,]/g,"").trim();
-  if(!t) return 0;
-  const v = Number(t);
-  return Number.isFinite(v) ? v : 0;
-}
-
-/* =======================
-   Manual base init
-======================= */
-function loadManualBase(){
-  baseBySro = {};
-  for(const s of SROS){
-    const m = MANUAL_BASE[s] || {};
-    baseBySro[s] = {
-      sro: s,
-      allotted: n(m.allotted),
-      townsDuring: n(m.townsDuring),
-      completedSince: n(m.completedSince),
-      underSurvey: n(m.underSurvey),
-      pct: n(m.pct),
-      blocksDuring: n(m.blocksDuring),
-      blocksSince: n(m.blocksSince),
-      townsAllRespectDuring: n(m.townsAllRespectDuring),
-      townsAllRespectSince: n(m.townsAllRespectSince),
-      dispatchDuring: n(m.dispatchDuring),
-      dispatchSince: n(m.dispatchSince)
-    };
-  }
-}
-
-/* =======================
-   WEEK EDITS (Firebase)
-======================= */
-function weekKey(){
-  const a = document.getElementById("wkStart").value;
-  const b = document.getElementById("wkEnd").value;
-  if(!a || !b) return "";
-  return `${a}_to_${b}`;
-}
-
-async function loadWeekEdits(){
-  editsBySro = {};
-  const wk = weekKey();
-  if(!wk) return;
-
-  toggleLoader(true, "LOADING WEEK EDITS...");
-  try{
-    const snap = await db.ref(`ufs_weekly_console_edits/${STATE_NAME}/${wk}`).once("value");
-    if(!snap.exists()) return;
-    snap.forEach(sroNode=>{
-      editsBySro[sroNode.key] = sroNode.val() || {};
-    });
-  } finally {
-    toggleLoader(false);
-  }
-}
-
-async function reloadWeek(){
-  await loadWeekEdits();
-  renderConsole();
-  renderTable();
-}
-
-/* =======================
-   UI: SRO + Console
-======================= */
-function selectSro(val){
-  selectedSro = (val || "").trim();
-  document.getElementById("pill").innerText = selectedSro ? `SRO: ${selectedSro}` : "SRO: Not selected";
-  document.getElementById("consoleCard").style.display = selectedSro ? "block" : "none";
-  renderConsole();
-  renderTable();
-}
-function clearSro(){
-  selectedSro = "";
-  document.getElementById("sroSelect").value = "";
-  selectSro("");
-}
-
-function renderConsole(){
-  const box = document.getElementById("consoleGrid");
-  if(!selectedSro){ box.innerHTML = ""; return; }
-
-  const base = baseBySro[selectedSro] || {};
-  const edits = editsBySro[selectedSro] || {};
-  const def = (k)=> (k in edits) ? edits[k] : (base[k] ?? 0);
-
-  box.innerHTML = `
-    <div class="field"><label>Towns in field (During week)</label><input type="number" min="0" step="1" id="ed_townsDuring" value="${def("townsDuring")}"></div>
-    <div class="field"><label>Blocks formed (During week)</label><input type="number" min="0" step="1" id="ed_blocksDuring" value="${def("blocksDuring")}"></div>
-    <div class="field"><label>Towns completed (all respect) During week</label><input type="number" min="0" step="1" id="ed_townsAllRespectDuring" value="${def("townsAllRespectDuring")}"></div>
-    <div class="field"><label>Towns dispatched to HQ (During week)</label><input type="number" min="0" step="1" id="ed_dispatchDuring" value="${def("dispatchDuring")}"></div>
-  `;
-}
-
-async function saveConsole(){
-  if(!selectedSro) return alert("Select SRO first.");
-  const wk = weekKey();
-  if(!wk) return alert("Select Week Start and Week End dates.");
-
-  const payload = {
-    townsDuring: n(document.getElementById("ed_townsDuring").value),
-    blocksDuring: n(document.getElementById("ed_blocksDuring").value),
-    townsAllRespectDuring: n(document.getElementById("ed_townsAllRespectDuring").value),
-    dispatchDuring: n(document.getElementById("ed_dispatchDuring").value),
-    updatedAt: Date.now()
-  };
-
-  toggleLoader(true, "SAVING...");
-  try{
-    await db.ref(`ufs_weekly_console_edits/${STATE_NAME}/${wk}/${selectedSro}`).set(payload);
-    editsBySro[selectedSro] = payload;
-    renderTable();
-    alert("Saved.");
-  } finally {
-    toggleLoader(false);
-  }
-}
-
-/* =======================
-   Report Title + Table
-======================= */
-function fmtDate(iso){
-  try{
-    const d = new Date(iso);
-    const day = d.getDate();
-    const suf = (day%10===1 && day!==11) ? "st" : (day%10===2 && day!==12) ? "nd" : (day%10===3 && day!==13) ? "rd" : "th";
-    const month = d.toLocaleString("en",{month:"long"});
-    const year = d.getFullYear();
-    return `${day}${suf} ${month} ${year}`;
-  } catch { return iso; }
-}
-function reportTitle(){
-  const a = document.getElementById("wkStart").value;
-  const b = document.getElementById("wkEnd").value;
-  if(!a || !b) return "WEEKLY PROGRESS REPORT (select week dates)";
-  return `WEEKLY PROGRESS REPORT (${fmtDate(a)} - ${fmtDate(b)}) as on ${fmtDate(b)}`;
-}
-
-function mergedRowForSro(sro){
-  const base = baseBySro[sro] || {};
-  const edits = editsBySro[sro] || {};
-  return {
-    sro,
-    allotted: base.allotted ?? 0,
-    townsDuring: (edits.townsDuring ?? base.townsDuring ?? 0),
-    completedSince: base.completedSince ?? 0,
-    underSurvey: base.underSurvey ?? 0,
-    pct: base.pct ?? 0,
-    blocksDuring: (edits.blocksDuring ?? base.blocksDuring ?? 0),
-    blocksSince: base.blocksSince ?? 0,
-    townsAllRespectDuring: (edits.townsAllRespectDuring ?? base.townsAllRespectDuring ?? 0),
-    townsAllRespectSince: base.townsAllRespectSince ?? 0,
-    dispatchDuring: (edits.dispatchDuring ?? base.dispatchDuring ?? 0),
-    dispatchSince: base.dispatchSince ?? 0
-  };
-}
-
-function renderTable(){
-  document.getElementById("reportTitle").innerText = reportTitle();
-
-  const cols = [
-    "Sl. No.","SRO","Alloted towns",
-    "Towns in field (During week)","Completed Since Start","Under Survey","% Towns Completed",
-    "Blocks formed in field (During week)","Blocks formed Since Start",
-    "Towns completed in all respect (During week)","Towns completed in all respect Since Start",
-    "Towns dispatched to HQ (During week)","Towns dispatched to HQ Since Start"
-  ];
-  document.getElementById("thead").innerHTML = cols.map(c=>`<th>${c}</th>`).join("");
-
-  const rows = SROS.map((sro, i)=>{
-    const r = mergedRowForSro(sro);
-    const isSel = selectedSro === sro;
-    const editMark = (k)=> (isSel && CONSOLE_KEYS.includes(k)) ? "mark-edit" : "";
-    return `
+      <!-- GROUP HEADER -->
       <tr>
-        <td class="num">${i+1}</td>
-        <td class="sro">${sro}</td>
-        <td class="num">${r.allotted}</td>
-        <td class="num ${editMark("townsDuring")}">${r.townsDuring}</td>
-        <td class="num">${r.completedSince}</td>
-        <td class="num">${r.underSurvey}</td>
-        <td class="num">${r.pct}</td>
-        <td class="num ${editMark("blocksDuring")}">${r.blocksDuring}</td>
-        <td class="num">${r.blocksSince}</td>
-        <td class="num ${editMark("townsAllRespectDuring")}">${r.townsAllRespectDuring}</td>
-        <td class="num">${r.townsAllRespectSince}</td>
-        <td class="num ${editMark("dispatchDuring")}">${r.dispatchDuring}</td>
-        <td class="num">${r.dispatchSince}</td>
+        <th rowspan="3">Sl.<br>No.</th>
+        <th rowspan="3">Scheme</th>
+
+        <th colspan="4">Towns in field</th>
+        <th colspan="2">Blocks formed in field</th>
+
+        <th colspan="2">No. of towns completed in all respect</th>
+
+        <th colspan="2">
+          No. of towns dispatched to Hqrs.<br>
+          <span style="font-size:10px">(Zone/QC to FOD Hqrs)</span>
+        </th>
+
+        <th rowspan="3">Updated<br>Y/N</th>
       </tr>
-    `;
-  });
 
-  const tot = SROS.reduce((a, s)=>{
-    const r = mergedRowForSro(s);
-    a.allotted += r.allotted;
-    a.townsDuring += r.townsDuring;
-    a.completedSince += r.completedSince;
-    a.underSurvey += r.underSurvey;
-    a.blocksDuring += r.blocksDuring;
-    a.blocksSince += r.blocksSince;
-    a.townsAllRespectDuring += r.townsAllRespectDuring;
-    a.townsAllRespectSince += r.townsAllRespectSince;
-    a.dispatchDuring += r.dispatchDuring;
-    a.dispatchSince += r.dispatchSince;
-    return a;
-  }, {allotted:0,townsDuring:0,completedSince:0,underSurvey:0,blocksDuring:0,blocksSince:0,townsAllRespectDuring:0,townsAllRespectSince:0,dispatchDuring:0,dispatchSince:0});
+      <!-- EMPTY ALIGNMENT ROW (as in sheet) -->
+      <tr>
+        <th colspan="4"></th>
+        <th colspan="2"></th>
+        <th colspan="2"></th>
+        <th colspan="2"></th>
+      </tr>
 
-  const pctTotal = tot.allotted ? ((tot.completedSince/tot.allotted)*100) : 0;
-  const pctShow = Math.round(pctTotal*100)/100;
+      <!-- COLUMN HEADER -->
+      <tr>
+        <th>During<br>24-01-2026<br>to<br>30-01-2026</th>
+        <th>Completed<br>Since Start</th>
+        <th>Under<br>Survey</th>
+        <th>% Towns<br>Completed</th>
 
-  rows.push(`
-    <tr class="total-row">
-      <td></td>
-      <td>Total</td>
-      <td class="num">${tot.allotted}</td>
-      <td class="num">${tot.townsDuring}</td>
-      <td class="num">${tot.completedSince}</td>
-      <td class="num">${tot.underSurvey}</td>
-      <td class="num">${pctShow}</td>
-      <td class="num">${tot.blocksDuring}</td>
-      <td class="num">${tot.blocksSince}</td>
-      <td class="num">${tot.townsAllRespectDuring}</td>
-      <td class="num">${tot.townsAllRespectSince}</td>
-      <td class="num">${tot.dispatchDuring}</td>
-      <td class="num">${tot.dispatchSince}</td>
-    </tr>
-  `);
+        <th>During<br>24-01-2026<br>to<br>30-01-2026</th>
+        <th>Since<br>Start</th>
 
-  document.getElementById("tbody").innerHTML = rows.join("");
-}
+        <th>During<br>24-01-2026<br>to<br>30-01-2026</th>
+        <th>Since<br>Start</th>
 
-/* =======================
-   Boot
-======================= */
-window.onload = async () => {
-  loadManualBase();
+        <th>During<br>24-01-2026<br>to<br>30-01-2026</th>
+        <th>Since<br>Start</th>
+      </tr>
 
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById("wkEnd").value = today;
-  document.getElementById("wkStart").value = today;
+    </thead>
 
-  document.getElementById("wkStart").addEventListener("change", reloadWeek);
-  document.getElementById("wkEnd").addEventListener("change", reloadWeek);
+    <tbody>
 
-  await reloadWeek();
-  renderTable();
-};
-</script>
+      <!-- ROW 1 -->
+      <tr>
+        <td>1</td>
+        <td class="scheme">Shimla</td>
+
+        <td><input value="25"></td>
+        <td><input value="22"></td>
+        <td><input value="1"></td>
+        <td><input value="88"></td>
+
+        <td><input value="39"></td>
+        <td><input value="922"></td>
+
+        <td><input value="0"></td>
+        <td><input value="22"></td>
+
+        <td><input value="0"></td>
+        <td><input value="22"></td>
+
+        <td class="yn">Y</td>
+      </tr>
+
+      <!-- ROW 2 -->
+      <tr>
+        <td>2</td>
+        <td class="scheme">Hamirpur</td>
+
+        <td><input value="15"></td>
+        <td><input value="13"></td>
+        <td><input value="0"></td>
+        <td><input value="87"></td>
+
+        <td><input value="0"></td>
+        <td><input value="239"></td>
+
+        <td><input value="0"></td>
+        <td><input value="13"></td>
+
+        <td><input value="0"></td>
+        <td><input value="13"></td>
+
+        <td class="yn">Y</td>
+      </tr>
+
+      <!-- ROW 3 -->
+      <tr>
+        <td>3</td>
+        <td class="scheme">Dharamshala</td>
+
+        <td><input value="16"></td>
+        <td><input value="13"></td>
+        <td><input value="1"></td>
+        <td><input value="81"></td>
+
+        <td><input value="2"></td>
+        <td><input value="432"></td>
+
+        <td><input value="0"></td>
+        <td><input value="13"></td>
+
+        <td><input value="0"></td>
+        <td><input value="13"></td>
+
+        <td class="yn">Y</td>
+      </tr>
+
+      <!-- ROW 4 -->
+      <tr>
+        <td>4</td>
+        <td class="scheme">Mandi</td>
+
+        <td><input value="13"></td>
+        <td><input value="11"></td>
+        <td><input value="1"></td>
+        <td><input value="85"></td>
+
+        <td><input value="9"></td>
+        <td><input value="417"></td>
+
+        <td><input value="0"></td>
+        <td><input value="10"></td>
+
+        <td><input value="0"></td>
+        <td><input value="10"></td>
+
+        <td class="yn">Y</td>
+      </tr>
+
+      <!-- TOTAL ROW -->
+      <tr class="total-row">
+        <td></td>
+        <td class="scheme">TOTAL</td>
+
+        <td>69</td>
+        <td>59</td>
+        <td>3</td>
+        <td>85.51</td>
+
+        <td>50</td>
+        <td>2010</td>
+
+        <td>0</td>
+        <td>58</td>
+
+        <td>0</td>
+        <td>58</td>
+
+        <td></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+</div>
+
 </body>
 </html>
