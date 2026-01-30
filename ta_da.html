@@ -194,50 +194,32 @@
 html, body{
   height: auto !important;
 }
+/* ===== PRINT: hide Range + Claim details ===== */
+@media print {
 
-@media print{
-  /* remove any extra page area */
-  body{
-    margin:0 !important;
-    padding:0 !important;
-    background:#fff !important;
+  /* If you already have a print header/footer, keep them as-is */
+
+  /* HIDE: Saved Ranges box */
+  #savedRanges,
+  .saved-ranges,
+  .ranges-box,
+  [data-print-hide="ranges"]{
+    display: none !important;
   }
 
-  /* put EVERYTHING inside this wrapper (see below) */
-  .print-one-page{
-    width: 100% !important;
-    max-width: 100% !important;
-
-    /* prevents page-2 */
-    break-after: avoid !important;
-    page-break-after: avoid !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-
-    /* scale down to fit one page */
-    transform: scale(0.85);          /* adjust 0.88–0.98 if needed */
-    transform-origin: top left;
-
-    /* important: avoid overflow that triggers 2nd page */
-    overflow: hidden !important;
+  /* HIDE: Applied Rates / Claim details strip */
+  #claimDetails,
+  .claim-details,
+  .applied-rates,
+  .rate-strip,
+  [data-print-hide="claim"]{
+    display: none !important;
   }
 
-  /* keep table from splitting */
-  table, thead, tbody, tfoot, tr, td, th{
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* reduce spacing (huge effect on extra blank page) */
-  th, td{
-    padding: 3px 4px !important;
-    line-height: 1.1 !important;
-    font-size: 11px !important;
-  }
-
-  /* kill any bottom gaps */
-  .no-print, button, .controls{
-    display:none !important;
+  /* Optional: reduce extra gap left by hidden blocks */
+  .print-gap-fix{
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 }
 </style>
