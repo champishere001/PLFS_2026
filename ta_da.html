@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TA/DA Calculation Sheet</title>
+
+<style>
+  body{
+    margin:0;
+    padding:18px;
+    background:#f3f5f7;
+    font-family: Arial, Helvetica, sans-serif;
+    color:#111;
+  }
+  .sheet{
+    max-width:1200px;
+    margin:auto;
+    background:#fff;
+    padding:14px;
+    border:1px solid #cfd6df;
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:13px;
+  }
+  td, th{
+    border:1px solid #000;
+    padding:6px 6px;
+    text-align:center;
+    vertical-align:middle;
+    word-wrap:break-word;
+  }
+
+  .title{
+    font-weight:700;
+    font-size:16px;
+    padding:10px 6px;
+  }
+
+  .hdrline{
+    text-align:left;
+    font-weight:600;
+  }
+
+  /* Inputs/select inside cells */
+  input, select{
+    width:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    text-align:center;
+    font-size:13px;
+    padding:2px 0;
+    font-family: inherit;
+  }
+  .left input, .left select{ text-align:left; padding-left:2px; }
+  .left{ text-align:left; }
+
+  .grouphead{
+    font-weight:700;
+  }
+  .colhead th{
+    font-weight:700;
+  }
+
+  .totalrow td{
+    font-weight:700;
+  }
+
+  .rate-badge{
+    font-weight:700;
+    text-align:right;
+    font-size:12px;
+  }
+  .rate-badge span{
+    display:inline-block;
+    padding:2px 8px;
+    border:1px solid #000;
+    border-radius:999px;
+    margin-left:6px;
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin-top:12px;
+  }
+  .btn{
+    cursor:pointer;
+    border:none;
+    border-radius:6px;
+    padding:10px 14px;
+    font-weight:700;
+    background:#1a4f8d;
+    color:#fff;
+  }
+  .btn.secondary{ background:#2f3b4a; }
+  .btn.danger{ background:#b42318; }
+
+  @media print{
+    body{ background:#fff; padding:0; }
+    .sheet{ box-shadow:none; border:none; padding:0; }
+    .actions{ display:none; }
+  }
+</style>
+</head>
+
+<body>
+<div class="sheet">
+
+  <table id="tada">
+    <colgroup>
+      <col style="width:12.5%">
+      <col style="width:10.5%">
+      <col style="width:10.5%">
+      <col style="width:10.5%">
+      <col style="width:11%">
+      <col style="width:10%">
+      <col style="width:10%">
+      <col style="width:10.5%">
+      <col style="width:14.5%">
+    </colgroup>
+
+    <tr><td colspan="9" style="border:none; padding:4px;"></td></tr>
+
+    <tr>
+      <td colspan="9" class="title">
+        दोरा भत्ता / दैनिक भत्ता गणना पत्र &nbsp;|&nbsp; TA/DA CALCULATION SHEET
+      </td>
+    </tr>
+
+    <tr><td colspan="9" style="border:none; padding:6px;"></td></tr>
+
+    <tr>
+      <td colspan="5" class="hdrline left">
+        नाम/Name :
+        <input id="name" class="left" placeholder="Enter Name" />
+      </td>
+      <td colspan="4" class="hdrline left">
+        पद-नाम/Designation :
+        <select id="desig" class="left" onchange="updateRates()">
+          <option value="">Select Designation</option>
+          <option value="ENUM">Enumerator</option>
+          <option value="SUP">Survey Supervisor</option>
+          <option value="SSO">Senior Statistical Officer</option>
+        </select>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="3" class="hdrline left">
+        स्थान /Place :
+        <input id="place" class="left" placeholder="Enter Place" />
+      </td>
+      <td colspan="3" class="hdrline left">
+        माह/Month :
+        <input id="month" class="left" type="month" />
+      </td>
+      <td colspan="3" class="hdrline left">
+        वर्ष /Year :
+        <input id="year" class="left" type="number" placeholder="2025" />
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="9" class="rate-badge">
+        Applied Rates:
+        <span id="rateText">DA ₹0 | Hotel ₹0</span>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="grouphead"></td>
+      <td colspan="4" class="grouphead">DA Details</td>
+      <td colspan="3" class="grouphead">Travelling Detail</td>
+      <td class="grouphead"></td>
+    </tr>
+
+    <tr class="colhead">
+      <th>Date</th>
+      <th>No. of DA</th>
+      <th>DA Amount</th>
+      <th>Hotel Bill</th>
+      <th>Total DA (3+4)</th>
+      <th>Mode</th>
+      <th>K.M.</th>
+      <th>Total Fare</th>
+      <th>Total (5+8)</th>
+    </tr>
+
+    <tbody id="rows"></tbody>
+
+    <tr class="totalrow">
+      <td colspan="2" class="left">Grand Total</td>
+      <td id="gDA">0</td>
+      <td id="gHotel">0</td>
+      <td id="gTDA">0</td>
+      <td></td>
+      <td></td>
+      <td id="gFare">0</td>
+      <td id="gAll">0</td>
+    </tr>
+
+    <tr>
+      <td colspan="9" class="left" style="border-top:none; padding-top:16px;">
+        <span style="font-weight:700;">दिनांक:-</span>
+        <span style="display:inline-block; width:220px; border-bottom:1px solid #000; margin:0 14px 0 8px;"></span>
+        <span style="float:right; font-weight:700;">संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</span>
+      </td>
+    </tr>
+  </table>
+
+  <div class="actions">
+    <button class="btn secondary" onclick="addRow()">+ Add Row</button>
+    <button class="btn danger" onclick="clearRows()">Clear Rows</button>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+
+</div>
+
+<script>
+  // Designation-wise rates
+  let DA_RATE = 0;
+  let HOTEL_RATE = 0;
+
+  const rowsEl = document.getElementById("rows");
+  const rateText = document.getElementById("rateText");
+
+  function money(n){
+    n = Number(n || 0);
+    // show integer cleanly, else 2-decimal
+    const rounded = Math.round(n * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  }
+
+  function updateRates(){
+    const d = document.getElementById("desig").value;
+
+    if(d === "ENUM"){
+      DA_RATE = 400;
+      HOTEL_RATE = 750;
+    } else if(d === "SUP"){
+      DA_RATE = 500;
+      HOTEL_RATE = 750;
+    } else if(d === "SSO"){
+      DA_RATE = 1000;
+      HOTEL_RATE = 968;
+    } else {
+      DA_RATE = 0;
+      HOTEL_RATE = 0;
+    }
+
+    rateText.textContent = `DA ₹${money(DA_RATE)} | Hotel ₹${money(HOTEL_RATE)}`;
+    recalc();
+  }
+
+  function addRow(prefill = {}){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="date" value="${prefill.date || ""}" oninput="recalc()"></td>
+      <td><input type="number" min="0" step="1" value="${prefill.days ?? 1}" oninput="recalc()"></td>
+      <td class="da">0</td>
+      <td class="hotel">0</td>
+      <td class="tda">0</td>
+      <td><input value="${prefill.mode || ""}"></td>
+      <td><input type="number" min="0" step="0.1" value="${prefill.km || ""}" oninput="recalc()"></td>
+      <td><input type="number" min="0" step="0.01" value="${prefill.fare || ""}" oninput="recalc()"></td>
+      <td class="total">0</td>
+    `;
+    rowsEl.appendChild(tr);
+    recalc();
+  }
+
+  function clearRows(){
+    rowsEl.innerHTML = "";
+    // keep 3 blank rows like sheet feel
+    addRow(); addRow(); addRow();
+  }
+
+  function recalc(){
+    let gDA = 0, gHotel = 0, gTDA = 0, gFare = 0, gAll = 0;
+
+    [...rowsEl.querySelectorAll("tr")].forEach(tr => {
+      const days = Number(tr.children[1].querySelector("input").value || 0);
+      const fare = Number(tr.children[7].querySelector("input").value || 0);
+
+      const da = days * DA_RATE;
+      const hotel = days * HOTEL_RATE;
+      const tda = da + hotel;
+      const total = tda + fare;
+
+      tr.querySelector(".da").textContent = money(da);
+      tr.querySelector(".hotel").textContent = money(hotel);
+      tr.querySelector(".tda").textContent = money(tda);
+      tr.querySelector(".total").textContent = money(total);
+
+      gDA += da;
+      gHotel += hotel;
+      gTDA += tda;
+      gFare += fare;
+      gAll += total;
+    });
+
+    document.getElementById("gDA").textContent = money(gDA);
+    document.getElementById("gHotel").textContent = money(gHotel);
+    document.getElementById("gTDA").textContent = money(gTDA);
+    document.getElementById("gFare").textContent = money(gFare);
+    document.getElementById("gAll").textContent = money(gAll);
+  }
+
+  // Auto-fill year from month if empty
+  document.getElementById("month").addEventListener("input", (e) => {
+    const val = e.target.value; // yyyy-mm
+    if(val && !document.getElementById("year").value){
+      document.getElementById("year").value = val.split("-")[0];
+    }
+  });
+
+  // Start: 3 rows
+  addRow(); addRow(); addRow();
+  updateRates(); // set badge
+</script>
+
+</body>
+</html>
