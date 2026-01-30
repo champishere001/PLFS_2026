@@ -1,865 +1,478 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TA/DA Calculation Sheet (Multi Tour + 1 Page PDF + Excel)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TA/DA Calculation Sheet</title>
 
-<!-- Excel -->
+<!-- Excel Export (SheetJS) -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-
-<!-- PDF deps -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
   :root{
     --border:#000;
-    --bg:#f2f4f7;
+    --bg:#f3f5f7;
     --card:#fff;
-    --head:#f0f0f0;
-    --btn:#0b5ed7;
-    --btn2:#198754;
-    --btn3:#6c757d;
-    --danger:#dc3545;
+    --muted:#64748b;
+    --accent:#2563eb;
   }
-
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);font-family:Arial,system-ui;padding:10px}
-  .wrap{max-width:1200px;margin:auto}
-
-  /* Anything with .no-export will not be included in PDF */
-  .pdf-export .no-export{display:none !important}
-
-  /* ===== Toolbar ===== */
-  .toolbar{
-    display:flex;flex-wrap:wrap;gap:8px;
-    background:var(--card);border:1px solid var(--border);
-    padding:10px;border-radius:8px;margin-bottom:10px;
-    align-items:flex-end;
+  body{
+    margin:0;
+    padding:16px;
+    background:var(--bg);
+    font-family: Arial, Helvetica, sans-serif;
+    color:#111;
   }
-  .field{display:flex;flex-direction:column;gap:4px}
-  .field label{font-size:12px;font-weight:700}
-  .field input,.field select{
-    height:34px;padding:6px 8px;border:1px solid #c7c7c7;border-radius:6px;
-    font-size:13px;min-width:170px;background:#fff;
+  .sheet{
+    max-width: 1250px;
+    margin:auto;
+    background:var(--card);
+    border:1px solid #cfd6df;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    padding:14px;
   }
-  .field.small input{min-width:120px}
-  .field.tiny input{min-width:90px}
-  .field.tiny select{min-width:220px}
 
-  .toggle{
-    display:flex;align-items:center;gap:8px;
-    height:34px;padding:0 10px;border:1px solid #c7c7c7;border-radius:6px;background:#fff;
-    font-size:13px;
+  .topbar{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .title{
+    text-align:center;
+    font-weight:800;
+    line-height:1.25;
+    font-size:16px;
+    flex:1;
+  }
+  .controls{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    min-width: 320px;
+  }
+  .btn{
+    border:1px solid #cbd5e1;
+    background:#fff;
+    padding:7px 10px;
+    font-size:12.5px;
+    font-weight:700;
+    border-radius:8px;
+    cursor:pointer;
     user-select:none;
   }
-  .toggle input{width:16px;height:16px;margin:0}
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.danger{ background:#ef4444; color:#fff; border-color:#ef4444; }
+  .btn:active{ transform: translateY(1px); }
 
-  .btn{
-    height:34px;border:none;border-radius:6px;
-    padding:0 12px;color:#fff;font-weight:800;cursor:pointer;font-size:13px;
-    white-space:nowrap;
+  .meta{
+    display:grid;
+    grid-template-columns: 1.2fr 1fr 1fr 0.9fr 0.9fr;
+    gap:6px;
+    margin:10px 0 10px;
   }
-  .btn.primary{background:var(--btn)}
-  .btn.success{background:var(--btn2)}
-  .btn.gray{background:var(--btn3)}
-  .btn.danger{background:var(--danger)}
-  .btn:active{transform:translateY(1px)}
-  .hint{font-size:12px;color:#333;margin-left:auto;max-width:760px}
-
-  .rateBadge{
-    height:34px;display:flex;align-items:center;gap:8px;
-    padding:0 10px;border-radius:6px;border:1px dashed #9aa4b2;background:#fff;
-    font-size:12px;
-  }
-  .rateBadge b{font-size:12px}
-
-  /* ===== Multi range panel ===== */
-  .ranges{
-    width:100%;
-    border:1px dashed #b8c0cc;
-    border-radius:8px;
-    padding:10px;
-    background:#fff;
+  .field{
+    border:1px solid var(--border);
+    padding:6px 8px;
     display:flex;
-    flex-direction:column;
     gap:8px;
+    align-items:center;
+    min-height:34px;
   }
-  .rangesHead{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  }
-  .rangesHead .title{font-weight:900;font-size:13px}
-
-  /* side-by-side */
-  #rangesContainer{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
-  .rangeRow{
-    display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
-    padding:8px;border:1px solid #e3e7ee;border-radius:8px;background:#fafbfc;
-  }
-  .rangeRow .field input{min-width:150px}
-  .rangeTag{
-    font-size:12px;font-weight:900;background:#eef2ff;border:1px solid #c7d2fe;
-    padding:6px 10px;border-radius:999px;height:34px;display:flex;align-items:center;
-  }
-
-  /* ===== Sheet (export area) ===== */
-  #taDaSheet{
-    background:var(--card);border:1px solid var(--border);
-    padding:10px;border-radius:8px;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-
-  table{width:100%;border-collapse:collapse}
-  .header-grid td{
-    border:1px solid var(--border);
-    padding:6px;
+  .label{
+    font-weight:700;
     font-size:12px;
-  }
-  .header-title{
-    text-align:center;font-weight:900;font-size:14px;background:var(--head);
-  }
-
-  .main{
-    table-layout:fixed;
-  }
-  .main th,.main td{
-    border:1px solid var(--border);
-    text-align:center;
-    padding:3px 4px;
-    font-size:11px;
-    line-height:1.1;
-    vertical-align:middle;
     white-space:nowrap;
   }
-  .main th{background:var(--head);font-weight:900}
-
-  .main input,.main select{
+  .input{
+    border:none;
+    outline:none;
+    font-size:12.5px;
+    width:100%;
+  }
+  .select{
     width:100%;
     border:none;
+    outline:none;
+    font-size:12.5px;
+    background:transparent;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:11px;
+  }
+  th, td{
+    border:1px solid var(--border);
+    padding:4px 5px;
+    text-align:center;
+    vertical-align:middle;
+    line-height:1.25;
+    word-wrap:break-word;
+    white-space:normal;
+  }
+  th{
+    font-weight:800;
+    background:#f1f5f9;
+  }
+
+  td input, td select{
+    width:100%;
+    border:none;
+    outline:none;
+    font-size:11px;
+    padding:2px 3px;
     background:transparent;
     text-align:center;
-    font-size:11px;
-    padding:0;
-    height:18px;
-    outline:none;
-    color:#000;
-    -webkit-text-fill-color:#000;
-    opacity:1;
   }
-  .main td{height:22px}
-  .right{text-align:right}
-
-  .footer{
-    display:flex;justify-content:space-between;gap:10px;
-    margin-top:8px;font-size:11px;
+  td input[type="number"]{ appearance:textfield; }
+  td .ro{
+    display:block;
+    font-weight:800;
   }
-  .line{
-    border-bottom:1px solid #000;display:inline-block;min-width:180px;height:12px;vertical-align:bottom;
+  tfoot td{
+    font-weight:900;
+    background:#f8fafc;
   }
 
-  /* Compact while capturing PDF */
-  .pdf-compact .header-grid td{padding:4px;font-size:10px}
-  .pdf-compact .header-title{font-size:12px}
-  .pdf-compact .main th,.pdf-compact .main td{font-size:9px;padding:2px 3px}
-  .pdf-compact .main td{height:18px}
-  .pdf-compact .main input,.pdf-compact .main select{height:14px;font-size:9px}
-  .pdf-compact .footer{font-size:9px;margin-top:6px}
-  .pdf-compact .line{min-width:150px}
+  .footer-line{
+    margin-top:14px;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    font-size:12px;
+  }
+  .muted{ color:var(--muted); font-weight:700; }
 
-  /* ✅ PDF: flexible columns (auto distribute width) */
-  .pdf-flex table{ width:100% !important; }
-  .pdf-flex .main{ table-layout:auto !important; }
-  .pdf-flex .main th,
-  .pdf-flex .main td{ width:auto !important; }
-  .pdf-flex .main input,
-  .pdf-flex .main select{ min-width:0 !important; }
-
+  /* ===== PRINT: readable, A4 landscape ===== */
+  @media print{
+    @page{ size: A4 landscape; margin: 10mm; }
+    body{ background:#fff; padding:0; margin:0; }
+    .sheet{ box-shadow:none; border:none; padding:0; max-width:100%; }
+    .controls{ display:none !important; }
+    table{ font-size:10.5px; }
+    tr{ page-break-inside:avoid; }
+    table{ page-break-inside:avoid; }
+  }
 </style>
 </head>
 
 <body>
-<div class="wrap">
+<div class="sheet" id="sheet">
 
-  <!-- toolbar NOT exported -->
-  <div class="toolbar no-export">
-    <div class="field">
-      <label>नाम / Name</label>
-      <input id="name" placeholder="Name" />
+  <div class="topbar">
+    <div class="title">
+      दौरा भत्ता / दैनिक भत्ता गणना शीट<br/>
+      <span class="muted">TA / DA CALCULATION SHEET</span>
     </div>
 
-    <div class="field">
-      <label>पदनाम / Designation</label>
-      <select id="designation">
-        <option value="">Select</option>
-        <option value="Senior Statistical Officer">Senior Statistical Officer</option>
-        <option value="Survey Supervisor">Survey Supervisor</option>
-        <option value="Survey Enumerator">Survey Enumerator</option>
-        <option value="Other">Other</option>
-      </select>
+    <div class="controls no-print">
+      <button class="btn" onclick="addRow()">+ Add Row</button>
+      <button class="btn danger" onclick="removeSelectedRows()">Remove Selected</button>
+      <button class="btn" onclick="recalcAll()">Recalculate</button>
+      <button class="btn primary" onclick="generatePDF()">Generate PDF</button>
+      <button class="btn primary" onclick="exportExcel()">Export Excel</button>
     </div>
-
-    <div class="field small">
-      <label>स्थान / Place</label>
-      <input id="place" placeholder="Place" />
-    </div>
-
-    <div class="toggle">
-      <input id="autoRates" type="checkbox" checked />
-      <span><b>Auto rates</b> by designation</span>
-    </div>
-
-    <div class="toggle">
-      <input id="autoHotel" type="checkbox" checked />
-      <span><b>Auto Hotel</b> claim</span>
-    </div>
-
-    <div class="field tiny">
-      <label>DA (₹)</label>
-      <input id="rateDA" type="number" value="500" />
-    </div>
-    <div class="field tiny">
-      <label>Hotel (₹)</label>
-      <input id="rateHotel" type="number" value="750" />
-    </div>
-
-    <div class="rateBadge">
-      <span>Applied:</span>
-      <b id="appliedRateText">DA 500 | Hotel 750</b>
-    </div>
-
-    <div class="ranges">
-      <div class="rangesHead">
-        <div class="title">Multi Tour Ranges</div>
-        <button class="btn gray" type="button" onclick="addRangeUI()">+ Add Range</button>
-        <div style="font-size:12px;color:#333">Ranges will add next to previous (not replace).</div>
-      </div>
-      <div id="rangesContainer"></div>
-    </div>
-
-    <button class="btn success" onclick="generateRows()">Generate Rows</button>
-    <button class="btn gray" onclick="addRow()">+ Add Row</button>
-    <button class="btn gray" onclick="clearAll()">Clear</button>
-
-    <button class="btn primary" onclick="exportPDFSinglePage()">⬇️ PDF (1 Page)</button>
-    <button class="btn primary" onclick="exportExcel()">⬇️ Excel</button>
-
-    <div class="hint">✅ PDF = only sheet (no toolbar) • ✅ Always landscape, 1 page • ✅ Blank stays blank</div>
   </div>
 
-  <!-- EXPORT AREA -->
-  <div id="taDaSheet">
-    <table class="header-grid">
-      <tr>
-        <td colspan="8" class="header-title">दौरा भत्ता / दैनिक भत्ता गणना शीट  @ TA/DA CALCULATION SHEET</td>
-      </tr>
-      <tr>
-        <td class="right"><b>नाम/Name</b></td>
-        <td colspan="3"><span id="hName">-</span></td>
-        <td class="right"><b>पदनाम/Designation</b></td>
-        <td colspan="3"><span id="hDesig">-</span></td>
-      </tr>
-      <tr>
-        <td class="right"><b>स्थान/Place</b></td>
-        <td colspan="3"><span id="hPlace">-</span></td>
-        <td class="right"><b>माह/Month</b></td>
-        <td><span id="hMonth">-</span></td>
-        <td class="right"><b>वर्ष/Year</b></td>
-        <td><span id="hYear">-</span></td>
-      </tr>
-    </table>
-
-    <table class="main" id="tadaTable">
-      <thead>
-        <tr>
-          <th style="width:110px">Date</th>
-          <th style="width:85px">No. of DA</th>
-          <th style="width:80px">DA</th>
-          <th style="width:90px">Hotel Bill</th>
-          <th style="width:95px">Total DA</th>
-          <th style="width:90px">Mode</th>
-          <th style="width:85px">K.M.</th>
-          <th style="width:95px">Total Fare</th>
-          <th style="width:95px">Grand Total</th>
-        </tr>
-      </thead>
-
-      <tbody id="rows"></tbody>
-
-      <tfoot>
-        <tr>
-          <th colspan="1">Grand Total</th>
-          <th id="gt_daCount">0</th>
-          <th id="gt_da">0</th>
-          <th id="gt_hotel">0</th>
-          <th id="gt_totalDA">0</th>
-          <th colspan="2"></th>
-          <th id="gt_fare">0</th>
-          <th id="gt_grand">0</th>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div class="footer">
-      <div>दिनांक: <span class="line"></span></div>
-      <div>सम्बन्धित क्षेत्र कर्मचारी के हस्ताक्षर: <span class="line"></span></div>
+  <div class="meta">
+    <div class="field">
+      <div class="label">नाम / Name</div>
+      <input id="name" class="input" placeholder="Enter name" />
     </div>
+
+    <div class="field">
+      <div class="label">पदनाम / Designation</div>
+      <input id="designation" class="input" placeholder="Enter designation" />
+    </div>
+
+    <div class="field">
+      <div class="label">स्थान / Place</div>
+      <input id="place" class="input" placeholder="Enter place" />
+    </div>
+
+    <div class="field">
+      <div class="label">Month</div>
+      <select id="month" class="select" onchange="generateMonthRows()"></select>
+    </div>
+
+    <div class="field">
+      <div class="label">Year</div>
+      <input id="year" class="input" type="number" min="2000" max="2100" value="2026" onchange="generateMonthRows()" />
+    </div>
+  </div>
+
+  <table id="tadaTable">
+    <thead>
+      <tr>
+        <th style="width:3.8%">Sel</th>
+        <th style="width:7%">Date</th>
+        <th style="width:8%">No. of DA</th>
+        <th style="width:8%">DA</th>
+        <th style="width:10%">Hotel Bill</th>
+        <th style="width:10%">Total DA</th>
+        <th style="width:12%">Mode</th>
+        <th style="width:8%">K.M.</th>
+        <th style="width:10%">Rate/KM</th>
+        <th style="width:10%">Total Fare</th>
+        <th style="width:13%">Grand Total</th>
+      </tr>
+    </thead>
+
+    <tbody id="tbody">
+      <!-- rows auto generated -->
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <td colspan="2">Grand Total</td>
+        <td id="sumDAcount">0</td>
+        <td id="sumDA">0</td>
+        <td id="sumHotel">0</td>
+        <td id="sumTotalDA">0</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td id="sumFare">0</td>
+        <td id="sumGrand">0</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="footer-line">
+    <div>दिनांक: ____________________</div>
+    <div>संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</div>
   </div>
 </div>
 
 <script>
-const LS_KEY = "tada_sheet_multi_ranges_pdf_fixed_v1";
+/* ===================== DEFAULTS ===================== */
+const DEFAULT_DA = 500;
+const DEFAULT_HOTEL = 750;
+const DEFAULT_RATE_KM = 0; // keep 0 by default; user can enter (or you can set e.g. 10)
 
-/* Designation-wise rates */
-const DESIGNATION_RATES = {
-  "Senior Statistical Officer": { da: 1000, hotel: 960 },
-  "Survey Supervisor":         { da: 500,  hotel: 750 },
-  "Survey Enumerator":         { da: 400,  hotel: 750 },
-  "Other":                     { da: 500,  hotel: 750 }
-};
+const MODES = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Walk", "Other"];
 
-function parseNum(v){
-  const s = String(v ?? "").trim();
-  if(s === "") return 0;
-  const x = Number(s.replace(/[^0-9.\-]/g,""));
-  return isNaN(x) ? 0 : x;
-}
-function fmtINR(n){ return Math.round(Number(n||0)).toString(); }
-function isBlank(v){ return String(v ?? "").trim() === ""; }
-function setValIfDifferent(el, v){ if(el.value !== v) el.value = v; }
-
-function toLocalISO(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
-function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
-
-function setHeaderFromInputs(){
-  const name = document.getElementById("name").value.trim() || "-";
-  const desig = document.getElementById("designation").value || "-";
-  const place = document.getElementById("place").value.trim() || "-";
-  document.getElementById("hName").textContent = name;
-  document.getElementById("hDesig").textContent = desig;
-  document.getElementById("hPlace").textContent = place;
-
-  const ranges = getRanges().filter(r=>r.from);
-  const firstFrom = ranges[0]?.from || "";
-  const d = firstFrom ? new Date(firstFrom + "T00:00:00") : new Date();
-  document.getElementById("hMonth").textContent = d.toLocaleString("en-US",{month:"long"});
-  document.getElementById("hYear").textContent = d.getFullYear();
-  updateRateBadge();
+function money(n){
+  const x = Number(n || 0);
+  return (Math.round(x * 100) / 100).toString();
 }
 
-function updateRateBadge(){
-  const da = parseNum(document.getElementById("rateDA").value);
-  const ht = parseNum(document.getElementById("rateHotel").value);
-  document.getElementById("appliedRateText").textContent = `DA ${da} | Hotel ${ht}`;
+function daysInMonth(year, monthIndex){
+  // monthIndex: 0-11
+  return new Date(year, monthIndex + 1, 0).getDate();
 }
 
-function applyDesignationRates(){
-  if(!document.getElementById("autoRates").checked) { updateRateBadge(); return; }
-  const desig = document.getElementById("designation").value || "";
-  const r = DESIGNATION_RATES[desig];
-  if(!r){ updateRateBadge(); return; }
+/* ===================== BUILD MONTH DROPDOWN ===================== */
+(function initMonth(){
+  const m = document.getElementById("month");
+  const months = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+  months.forEach((name,i)=>{
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = name;
+    m.appendChild(opt);
+  });
+  // set current month by default
+  const now = new Date();
+  m.value = now.getMonth();
+  document.getElementById("year").value = now.getFullYear();
+  generateMonthRows();
+})();
 
-  document.getElementById("rateDA").value = r.da;
-  document.getElementById("rateHotel").value = r.hotel;
+/* ===================== ROW TEMPLATE ===================== */
+function rowHTML(dateStr=""){
+  const modeOptions = MODES.map(v => `<option value="${v}">${v || "—"}</option>`).join("");
+  return `
+    <tr>
+      <td><input type="checkbox" class="rowSel" /></td>
+      <td><input type="text" class="date" value="${dateStr}" placeholder="DD" /></td>
 
-  document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
+      <td><input type="number" class="daCount" min="0" value="1" oninput="recalcRow(this)" /></td>
+      <td><input type="number" class="da" min="0" value="${DEFAULT_DA}" oninput="recalcRow(this)" /></td>
+      <td><input type="number" class="hotel" min="0" value="${DEFAULT_HOTEL}" oninput="recalcRow(this)" /></td>
+
+      <td><span class="ro totalDA">0</span></td>
+
+      <td>
+        <select class="mode" onchange="recalcRow(this)">${modeOptions}</select>
+      </td>
+
+      <td><input type="number" class="km" min="0" value="0" oninput="recalcRow(this)" /></td>
+      <td><input type="number" class="rate" min="0" value="${DEFAULT_RATE_KM}" oninput="recalcRow(this)" /></td>
+
+      <td><span class="ro fare">0</span></td>
+      <td><span class="ro grand">0</span></td>
+    </tr>
+  `;
+}
+
+/* ===================== GENERATE MONTH ROWS ===================== */
+function generateMonthRows(){
+  const monthIndex = Number(document.getElementById("month").value);
+  const year = Number(document.getElementById("year").value || new Date().getFullYear());
+
+  const totalDays = daysInMonth(year, monthIndex);
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  // NOTE: If you truly want ONE PAGE ALWAYS, keep rows limited.
+  // Here we generate full month but print will overflow if too many rows.
+  for(let d=1; d<=totalDays; d++){
+    tbody.insertAdjacentHTML("beforeend", rowHTML(String(d).padStart(2,"0")));
+  }
+  recalcAll();
+}
+
+/* ===================== ADD / REMOVE ROWS ===================== */
+function addRow(){
+  document.getElementById("tbody").insertAdjacentHTML("beforeend", rowHTML(""));
+  recalcAll();
+}
+
+function removeSelectedRows(){
+  const tbody = document.getElementById("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  rows.forEach(r=>{
+    const chk = r.querySelector(".rowSel");
+    if(chk && chk.checked) r.remove();
+  });
+  recalcAll();
+}
+
+/* ===================== CALCULATIONS ===================== */
+/*
+  Logic:
+  TotalDA = (NoOfDA * DA) + Hotel
+  Fare = KM * Rate/KM   (or user keeps 0 and enters km only; still OK)
+  Grand = TotalDA + Fare
+*/
+function recalcRow(el){
+  const tr = el.closest("tr");
+  if(!tr) return;
+
+  const daCount = Number(tr.querySelector(".daCount")?.value || 0);
+  const da = Number(tr.querySelector(".da")?.value || 0);
+  const hotel = Number(tr.querySelector(".hotel")?.value || 0);
+
+  const km = Number(tr.querySelector(".km")?.value || 0);
+  const rate = Number(tr.querySelector(".rate")?.value || 0);
+
+  const totalDA = (daCount * da) + hotel;
+  const fare = km * rate;
+  const grand = totalDA + fare;
+
+  tr.querySelector(".totalDA").textContent = money(totalDA);
+  tr.querySelector(".fare").textContent = money(fare);
+  tr.querySelector(".grand").textContent = money(grand);
+
   recalcTotals();
-  saveAll();
-  updateRateBadge();
 }
 
-/* ===== ranges UI ===== */
-function addRangeUI(prefill={from:"",to:""}){
-  const id = uid();
-  const row = document.createElement("div");
-  row.className = "rangeRow";
-  row.dataset.rangeId = id;
-
-  row.innerHTML = `
-    <div class="rangeTag">Range</div>
-    <div class="field small">
-      <label>From</label>
-      <input type="date" class="rg_from" value="${prefill.from||""}">
-    </div>
-    <div class="field small">
-      <label>To</label>
-      <input type="date" class="rg_to" value="${prefill.to||""}">
-    </div>
-    <button class="btn danger" type="button">Remove</button>
-  `;
-
-  row.querySelector(".btn.danger").addEventListener("click", ()=>{
-    row.remove();
-    setHeaderFromInputs();
-    saveAll();
+function recalcAll(){
+  document.querySelectorAll("#tbody tr").forEach(tr=>{
+    recalcRow(tr); // works because recalcRow uses closest tr; passing tr is fine if handled
   });
-
-  row.querySelectorAll("input").forEach(inp=>{
-    inp.addEventListener("input", ()=>{ setHeaderFromInputs(); saveAll(); });
-    inp.addEventListener("change", ()=>{ setHeaderFromInputs(); saveAll(); });
+  // If passing tr, closest("tr") will return itself? Not for element that isn't inside itself.
+  // So we call recalcRow with a child element instead:
+  document.querySelectorAll("#tbody tr").forEach(tr=>{
+    recalcRow(tr.querySelector("input,select") || tr);
   });
-
-  document.getElementById("rangesContainer").appendChild(row);
-  setHeaderFromInputs();
-  saveAll();
-}
-
-function getRanges(){
-  return [...document.querySelectorAll("#rangesContainer .rangeRow")].map((row, idx)=>({
-    id: row.dataset.rangeId || String(idx+1),
-    from: row.querySelector(".rg_from")?.value || "",
-    to: row.querySelector(".rg_to")?.value || ""
-  }));
-}
-
-function dateRange(from, to){
-  const out=[];
-  if(!from || !to) return out;
-
-  const d1 = new Date(from + "T00:00:00");
-  const d2 = new Date(to + "T00:00:00");
-  if(isNaN(d1) || isNaN(d2)) return out;
-
-  d1.setHours(0,0,0,0);
-  d2.setHours(0,0,0,0);
-  if(d2 < d1) return out;
-
-  for(let d=new Date(d1); d<=d2; d.setDate(d.getDate()+1)){
-    out.push(new Date(d));
-  }
-  return out;
-}
-
-/* ===== table ===== */
-function renderModeOptions(selected){
-  const modes = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Other"];
-  return modes.map(m=>{
-    const sel = (m === (selected||"")) ? "selected" : "";
-    return `<option value="${m}" ${sel}>${m}</option>`;
-  }).join("");
-}
-
-function makeRow(data={}){
-  const tr = document.createElement("tr");
-  tr.dataset.rangeId = data.rangeId || "";
-  tr.dataset.rangeEnd = data.rangeEnd || "";
-  tr.dataset.hotelManual = data.hotelManual ? "1" : "0";
-
-  tr.innerHTML = `
-    <td><input type="date" class="r_date" value="${data.date||""}"></td>
-    <td><input type="number" min="0" step="1" class="r_noDA" value="${data.noDA ?? ""}"></td>
-    <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? ""}"></td>
-    <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? ""}" title="manual"></td>
-    <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? ""}" readonly></td>
-    <td><select class="r_mode">${renderModeOptions(data.mode)}</select></td>
-    <td><input type="number" min="0" step="1" class="r_km" value="${data.km ?? ""}"></td>
-    <td><input type="number" min="0" step="1" class="r_fare" value="${data.fare ?? ""}"></td>
-    <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? ""}" readonly></td>
-  `;
-
-  const hotelInput = tr.querySelector(".r_hotel");
-  hotelInput.addEventListener("input", ()=>{
-    tr.dataset.hotelManual = isBlank(hotelInput.value) ? "0" : "1";
-    recalcRow(tr); recalcTotals(); saveAll();
-  });
-
-  tr.querySelectorAll("input,select").forEach(el=>{
-    if(el === hotelInput) return;
-    el.addEventListener("input", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); });
-    el.addEventListener("change", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); setHeaderFromInputs(); });
-  });
-
-  recalcRow(tr);
-  return tr;
-}
-
-function isRowLastDay(tr, dateISO){
-  const end = tr.dataset.rangeEnd || "";
-  return !!(end && dateISO && end === dateISO);
-}
-function shouldAutoHotel(tr){
-  return document.getElementById("autoHotel").checked && tr.dataset.hotelManual !== "1";
-}
-function applyAutoHotelIfNeeded(tr){
-  if(!shouldAutoHotel(tr)) return;
-
-  const rateHotel = parseNum(document.getElementById("rateHotel").value);
-  const dateISO = tr.querySelector(".r_date").value || "";
-  const noDAraw = tr.querySelector(".r_noDA").value;
-
-  if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
-    setValIfDifferent(tr.querySelector(".r_hotel"), "");
-    return;
-  }
-  if(isRowLastDay(tr, dateISO)){
-    setValIfDifferent(tr.querySelector(".r_hotel"), "");
-    return;
-  }
-  setValIfDifferent(tr.querySelector(".r_hotel"), String(rateHotel));
-}
-
-function recalcRow(tr){
-  const rateDA = parseNum(document.getElementById("rateDA").value);
-  const noDAraw = tr.querySelector(".r_noDA").value;
-
-  if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
-    setValIfDifferent(tr.querySelector(".r_DA"), "");
-  }else{
-    setValIfDifferent(tr.querySelector(".r_DA"), String(parseNum(noDAraw) * rateDA));
-  }
-
-  applyAutoHotelIfNeeded(tr);
-
-  const DAraw = tr.querySelector(".r_DA").value;
-  const hotelRaw = tr.querySelector(".r_hotel").value;
-  const fareRaw = tr.querySelector(".r_fare").value;
-
-  const DA = parseNum(DAraw);
-  const hotel = parseNum(hotelRaw);
-  const fare = parseNum(fareRaw);
-
-  const totalDAEl = tr.querySelector(".r_totalDA");
-  if(isBlank(DAraw) && isBlank(hotelRaw)){
-    setValIfDifferent(totalDAEl, "");
-  }else{
-    setValIfDifferent(totalDAEl, String(DA + hotel));
-  }
-
-  const grandEl = tr.querySelector(".r_grand");
-  if(isBlank(totalDAEl.value) && isBlank(fareRaw)){
-    setValIfDifferent(grandEl, "");
-  }else{
-    setValIfDifferent(grandEl, String((DA + hotel) + fare));
-  }
 }
 
 function recalcTotals(){
-  const trs = [...document.querySelectorAll("#rows tr")];
-  let daCount=0, da=0, hotel=0, totalDA=0, fare=0, grand=0;
+  let sumDAcount = 0;
+  let sumDA = 0;
+  let sumHotel = 0;
+  let sumTotalDA = 0;
+  let sumFare = 0;
+  let sumGrand = 0;
 
-  trs.forEach(tr=>{
-    daCount += parseNum(tr.querySelector(".r_noDA").value);
-    da += parseNum(tr.querySelector(".r_DA").value);
-    hotel += parseNum(tr.querySelector(".r_hotel").value);
-    totalDA += parseNum(tr.querySelector(".r_totalDA").value);
-    fare += parseNum(tr.querySelector(".r_fare").value);
-    grand += parseNum(tr.querySelector(".r_grand").value);
+  document.querySelectorAll("#tbody tr").forEach(tr=>{
+    sumDAcount += Number(tr.querySelector(".daCount")?.value || 0);
+    sumDA += Number(tr.querySelector(".da")?.value || 0) * Number(tr.querySelector(".daCount")?.value || 0);
+    sumHotel += Number(tr.querySelector(".hotel")?.value || 0);
+    sumTotalDA += Number(tr.querySelector(".totalDA")?.textContent || 0);
+    sumFare += Number(tr.querySelector(".fare")?.textContent || 0);
+    sumGrand += Number(tr.querySelector(".grand")?.textContent || 0);
   });
 
-  document.getElementById("gt_daCount").textContent = fmtINR(daCount);
-  document.getElementById("gt_da").textContent = fmtINR(da);
-  document.getElementById("gt_hotel").textContent = fmtINR(hotel);
-  document.getElementById("gt_totalDA").textContent = fmtINR(totalDA);
-  document.getElementById("gt_fare").textContent = fmtINR(fare);
-  document.getElementById("gt_grand").textContent = fmtINR(grand);
+  document.getElementById("sumDAcount").textContent = money(sumDAcount);
+  document.getElementById("sumDA").textContent = money(sumDA);
+  document.getElementById("sumHotel").textContent = money(sumHotel);
+  document.getElementById("sumTotalDA").textContent = money(sumTotalDA);
+  document.getElementById("sumFare").textContent = money(sumFare);
+  document.getElementById("sumGrand").textContent = money(sumGrand);
 }
 
-function addRow(prefill={}){
-  document.getElementById("rows").appendChild(makeRow(prefill));
-  recalcTotals();
-  saveAll();
+/* ===================== PDF (PRINT) ===================== */
+function generatePDF(){
+  // Uses browser print dialog (Save as PDF). Print CSS ensures readability.
+  window.print();
 }
 
-function generateRows(){
-  const ranges = getRanges().filter(r=>r.from && r.to);
-  if(!ranges.length){
-    if(!document.querySelector("#rows tr")) addRow({});
-    setHeaderFromInputs();
-    return;
-  }
-
-  document.getElementById("rows").innerHTML = "";
-
-  ranges.forEach(rg=>{
-    const list = dateRange(rg.from, rg.to);
-    const endISO = rg.to;
-
-    list.forEach(d=>{
-      const iso = toLocalISO(d);
-      addRow({ date: iso, noDA: 1, rangeId: rg.id, rangeEnd: endISO, hotelManual: 0 });
-    });
-  });
-
-  document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
-  setHeaderFromInputs();
-  recalcTotals();
-  saveAll();
-}
-
-function clearAll(){
-  document.getElementById("rows").innerHTML = "";
-  recalcTotals();
-  saveAll();
-}
-
-/* ===== Save/Restore ===== */
-function saveAll(){
-  const payload = {
-    meta:{
-      name: document.getElementById("name").value || "",
-      designation: document.getElementById("designation").value || "",
-      place: document.getElementById("place").value || "",
-      autoRates: document.getElementById("autoRates").checked ? 1 : 0,
-      autoHotel: document.getElementById("autoHotel").checked ? 1 : 0,
-      rateDA: document.getElementById("rateDA").value || "500",
-      rateHotel: document.getElementById("rateHotel").value || "750",
-    },
-    ranges: getRanges(),
-    rows: [...document.querySelectorAll("#rows tr")].map(tr=>({
-      date: tr.querySelector(".r_date").value || "",
-      noDA: tr.querySelector(".r_noDA").value || "",
-      DA: tr.querySelector(".r_DA").value || "",
-      hotel: tr.querySelector(".r_hotel").value || "",
-      hotelManual: tr.dataset.hotelManual === "1" ? 1 : 0,
-      totalDA: tr.querySelector(".r_totalDA").value || "",
-      mode: tr.querySelector(".r_mode").value || "",
-      km: tr.querySelector(".r_km").value || "",
-      fare: tr.querySelector(".r_fare").value || "",
-      grand: tr.querySelector(".r_grand").value || "",
-      rangeId: tr.dataset.rangeId || "",
-      rangeEnd: tr.dataset.rangeEnd || ""
-    }))
-  };
-  localStorage.setItem(LS_KEY, JSON.stringify(payload));
-}
-
-function loadAll(){
-  const raw = localStorage.getItem(LS_KEY);
-  if(!raw) return false;
-  try{
-    const data = JSON.parse(raw);
-    const m = data.meta || {};
-
-    document.getElementById("name").value = m.name || "";
-    document.getElementById("designation").value = m.designation || "";
-    document.getElementById("place").value = m.place || "";
-    document.getElementById("autoRates").checked = (m.autoRates ?? 1) ? true : false;
-    document.getElementById("autoHotel").checked = (m.autoHotel ?? 1) ? true : false;
-
-    document.getElementById("rateDA").value = m.rateDA || "500";
-    document.getElementById("rateHotel").value = m.rateHotel || "750";
-
-    const rc = document.getElementById("rangesContainer");
-    rc.innerHTML = "";
-    const ranges = data.ranges || [];
-    if(ranges.length){
-      ranges.forEach(r=> addRangeUI({from:r.from||"", to:r.to||""}));
-    }else{
-      addRangeUI();
-    }
-
-    const tbody = document.getElementById("rows");
-    tbody.innerHTML = "";
-    (data.rows || []).forEach(r=>{
-      addRow({
-        date: r.date||"",
-        noDA: r.noDA ?? "",
-        DA: r.DA ?? "",
-        hotel: r.hotel ?? "",
-        totalDA: r.totalDA ?? "",
-        mode: r.mode ?? "",
-        km: r.km ?? "",
-        fare: r.fare ?? "",
-        grand: r.grand ?? "",
-        hotelManual: r.hotelManual ? 1 : 0,
-        rangeId: r.rangeId || "",
-        rangeEnd: r.rangeEnd || ""
-      });
-    });
-
-    setHeaderFromInputs();
-    document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
-    recalcTotals();
-    updateRateBadge();
-    return true;
-  }catch(e){
-    return false;
-  }
-}
-
-/* ===== Bind meta ===== */
-function bindMeta(){
-  ["name","place","rateDA","rateHotel"].forEach(id=>{
-    const el = document.getElementById(id);
-    el.addEventListener("input", ()=>{
-      setHeaderFromInputs();
-      document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
-      recalcTotals();
-      saveAll();
-    });
-    el.addEventListener("change", ()=>{
-      setHeaderFromInputs();
-      document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
-      recalcTotals();
-      saveAll();
-    });
-  });
-
-  document.getElementById("designation").addEventListener("change", ()=>{
-    setHeaderFromInputs();
-    applyDesignationRates();
-    saveAll();
-  });
-
-  document.getElementById("autoRates").addEventListener("change", ()=>{
-    applyDesignationRates();
-    saveAll();
-  });
-
-  document.getElementById("autoHotel").addEventListener("change", ()=>{
-    document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
-    recalcTotals();
-    saveAll();
-  });
-}
-
-/* ===== Export ===== */
-function makeFileName(prefix, ext){
-  const nm = (document.getElementById("name").value || "User").trim().replace(/\s+/g,"_");
-  const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
-  return `${prefix}_${nm}${des?("_"+des):""}.${ext}`;
-}
-
-/* ✅ PDF: A4 landscape, STRICTLY 1 page (fit-to-page) + flexible columns */
-async function exportPDFSinglePage(){
-  const sheet = document.getElementById("taDaSheet");
-
-  document.body.classList.add("pdf-export");
-  sheet.classList.add("pdf-compact");
-  sheet.classList.add("pdf-flex");     // ✅ flexible columns during capture
-
-  try{
-    const canvas = await html2canvas(sheet, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight
-    });
-
-    const { jsPDF } = window.jspdf;
-
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4",
-      compress: true
-    });
-
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-
-    const margin = 5;
-    const maxW = pageW - margin * 2;
-    const maxH = pageH - margin * 2;
-
-    const imgW = canvas.width;
-    const imgH = canvas.height;
-
-    const ratio = Math.min(maxW / imgW, maxH / imgH);
-    const w = imgW * ratio;
-    const h = imgH * ratio;
-
-    const x = (pageW - w) / 2;
-    const y = (pageH - h) / 2;
-
-    pdf.addImage(imgData, "JPEG", x, y, w, h, undefined, "FAST");
-    pdf.save(makeFileName("TA_DA_A4_OnePage", "pdf"));
-
-  } catch (e) {
-    alert("PDF export failed. Reload once and try again.");
-    console.error(e);
-  } finally {
-    sheet.classList.remove("pdf-flex");
-    sheet.classList.remove("pdf-compact");
-    document.body.classList.remove("pdf-export");
-  }
-}
-
-/* ===== Excel ===== */
+/* ===================== EXCEL EXPORT ===================== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
-  const aoa = [];
 
-  const name = document.getElementById("hName").textContent;
-  const desig = document.getElementById("hDesig").textContent;
-  const place = document.getElementById("hPlace").textContent;
-  const month = document.getElementById("hMonth").textContent;
-  const year = document.getElementById("hYear").textContent;
+  // Header info
+  const meta = [
+    ["TA/DA CALCULATION SHEET"],
+    ["Name", document.getElementById("name").value || ""],
+    ["Designation", document.getElementById("designation").value || ""],
+    ["Place", document.getElementById("place").value || ""],
+    ["Month", document.getElementById("month").selectedOptions[0].textContent, "Year", document.getElementById("year").value || ""],
+    []
+  ];
 
-  const rateDA = parseNum(document.getElementById("rateDA").value);
-  const rateHotel = parseNum(document.getElementById("rateHotel").value);
+  // Table rows
+  const data = [];
+  data.push(["Date","No. of DA","DA","Hotel Bill","Total DA","Mode","KM","Rate/KM","Total Fare","Grand Total"]);
 
-  const ranges = getRanges().filter(r=>r.from && r.to);
-  const rangesText = ranges.length ? ranges.map((r,i)=>`R${i+1}:${r.from}→${r.to}`).join(" | ") : "-";
-
-  aoa.push(["TA/DA CALCULATION SHEET"]);
-  aoa.push([]);
-  aoa.push(["Name", name, "", "", "Designation", desig]);
-  aoa.push(["Place", place, "", "", "Month", month, "Year", year]);
-  aoa.push(["Rates Applied", `DA: ${rateDA}`, `Hotel: ${rateHotel}`]);
-  aoa.push(["Tour Ranges", rangesText]);
-  aoa.push([]);
-  aoa.push(["Date","No. of DA","DA","Hotel Bill","Total DA","Mode","K.M.","Total Fare","Grand Total"]);
-
-  document.querySelectorAll("#rows tr").forEach(tr=>{
-    aoa.push([
-      tr.querySelector(".r_date").value || "",
-      tr.querySelector(".r_noDA").value || "",
-      tr.querySelector(".r_DA").value || "",
-      tr.querySelector(".r_hotel").value || "",
-      tr.querySelector(".r_totalDA").value || "",
-      tr.querySelector(".r_mode").value || "",
-      tr.querySelector(".r_km").value || "",
-      tr.querySelector(".r_fare").value || "",
-      tr.querySelector(".r_grand").value || "",
+  document.querySelectorAll("#tbody tr").forEach(tr=>{
+    data.push([
+      tr.querySelector(".date")?.value || "",
+      Number(tr.querySelector(".daCount")?.value || 0),
+      Number(tr.querySelector(".da")?.value || 0),
+      Number(tr.querySelector(".hotel")?.value || 0),
+      Number(tr.querySelector(".totalDA")?.textContent || 0),
+      tr.querySelector(".mode")?.value || "",
+      Number(tr.querySelector(".km")?.value || 0),
+      Number(tr.querySelector(".rate")?.value || 0),
+      Number(tr.querySelector(".fare")?.textContent || 0),
+      Number(tr.querySelector(".grand")?.textContent || 0),
     ]);
   });
 
-  aoa.push([]);
-  aoa.push([
-    "Grand Total",
-    parseNum(document.getElementById("gt_daCount").textContent),
-    parseNum(document.getElementById("gt_da").textContent),
-    parseNum(document.getElementById("gt_hotel").textContent),
-    parseNum(document.getElementById("gt_totalDA").textContent),
-    "",
-    "",
-    parseNum(document.getElementById("gt_fare").textContent),
-    parseNum(document.getElementById("gt_grand").textContent),
-  ]);
+  data.push([]);
+  data.push(["Grand Total","","","","","","","","", Number(document.getElementById("sumGrand").textContent || 0)]);
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = [
-    {wch:12},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:8},{wch:12},{wch:12}
-  ];
-  XLSX.utils.book_append_sheet(wb, ws, "TA_DA");
-  XLSX.writeFile(wb, makeFileName("TA_DA_Sheet","xlsx"));
+  const ws1 = XLSX.utils.aoa_to_sheet(meta.concat(data));
+  XLSX.utils.book_append_sheet(wb, ws1, "TA_DA");
+
+  const fileName = `TA_DA_${document.getElementById("month").selectedOptions[0].textContent}_${document.getElementById("year").value}.xlsx`;
+  XLSX.writeFile(wb, fileName);
 }
 
-/* ===== INIT ===== */
-(function init(){
-  bindMeta();
-  const ok = loadAll();
-  if(!ok){
-    addRangeUI();
-    addRow({});
+/* ===================== SMALL FIX: recalcRow when passed TR ===================== */
+const _recalcRow = recalcRow;
+recalcRow = function(el){
+  // allow passing TR directly
+  if(el && el.tagName === "TR"){
+    const first = el.querySelector("input,select,span") || el;
+    return _recalcRow(first);
   }
-  setHeaderFromInputs();
-  applyDesignationRates();
-  recalcTotals();
-  updateRateBadge();
-})();
+  return _recalcRow(el);
+};
 </script>
+
 </body>
 </html>
