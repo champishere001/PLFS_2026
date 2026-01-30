@@ -56,7 +56,7 @@
   .btn.success{background:var(--btn2)}
   .btn.gray{background:var(--btn3)}
   .btn:active{transform:translateY(1px)}
-  .hint{font-size:12px;color:#333;margin-left:auto;max-width:620px}
+  .hint{font-size:12px;color:#333;margin-left:auto;max-width:680px}
 
   #taDaSheet{
     background:var(--card);border:1px solid var(--border);
@@ -151,7 +151,7 @@
       <span><b>Auto rates</b> by designation</span>
     </div>
 
-    <div class="toggle" title="ON = Hotel auto fill (last day vacant). Manual entry allowed.">
+    <div class="toggle" title="ON = Hotel auto fill (last day blank). Manual entry allowed.">
       <input id="autoHotel" type="checkbox" checked />
       <span><b>Auto Hotel</b> claim</span>
     </div>
@@ -187,7 +187,7 @@
     <button class="btn primary" onclick="exportExcel()">⬇️ Excel</button>
 
     <div class="hint">
-      ✅ Blank stays blank (no forced 0) • ✅ Date-range rows • ✅ Auto totals • ✅ Designation-wise rates • ✅ Save/Restore
+      ✅ Fixed To-Date row (timezone safe) • ✅ Blank stays blank • ✅ Auto totals • ✅ Designation-wise rates • ✅ Save/Restore
     </div>
   </div>
 
@@ -251,7 +251,16 @@
 </div>
 
 <script>
-const LS_KEY = "tada_sheet_v4_blank_vacant";
+/* =========================
+   UPDATED FIXES:
+   ✅ To-Date row bug fixed (timezone safe) using toLocalISO()
+   ✅ Blank stays blank (vacant) if no entry
+   ✅ Hotel auto fill: only when No. of DA is entered, last day blank, manual override supported
+   ✅ Designation-wise rates (as provided)
+   ✅ All original buttons + save/restore + PDF + Excel
+   ========================= */
+
+const LS_KEY = "tada_sheet_v5_todate_fixed_blank";
 
 /* Designation-wise rates (as you provided) */
 const DESIGNATION_RATES = {
@@ -261,6 +270,7 @@ const DESIGNATION_RATES = {
   "Other":                     { da: 500,  hotel: 750 }
 };
 
+/* ===== helpers ===== */
 function parseNum(v){
   const s = String(v ?? "").trim();
   if(s === "") return 0;
@@ -268,12 +278,15 @@ function parseNum(v){
   return isNaN(x) ? 0 : x;
 }
 function fmtINR(n){ return Math.round(Number(n||0)).toString(); }
+function isBlank(v){ return String(v ?? "").trim() === ""; }
+function setValIfDifferent(el, v){ if(el.value !== v) el.value = v; }
 
-function isBlank(v){
-  return String(v ?? "").trim() === "";
-}
-function setValIfDifferent(el, v){
-  if(el.value !== v) el.value = v;
+/* ✅ timezone-safe local ISO date */
+function toLocalISO(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
 }
 
 function setHeaderFromInputs(){
@@ -286,7 +299,7 @@ function setHeaderFromInputs(){
   document.getElementById("hPlace").textContent = place;
 
   const from = document.getElementById("fromDate").value;
-  const d = from ? new Date(from) : new Date();
+  const d = from ? new Date(from + "T00:00:00") : new Date();
   document.getElementById("hMonth").textContent = d.toLocaleString("en-US",{month:"long"});
   document.getElementById("hYear").textContent = d.getFullYear();
 
@@ -323,7 +336,7 @@ function renderModeOptions(selected){
   }).join("");
 }
 
-/* ===== Hotel auto helpers (blank if no entry) ===== */
+/* ===== Hotel auto helpers ===== */
 function isLastDay(dateISO){
   const to = document.getElementById("toDate").value;
   if(!to || !dateISO) return false;
@@ -339,19 +352,17 @@ function applyAutoHotelIfNeeded(tr){
   const dateISO = tr.querySelector(".r_date").value || "";
   const noDAraw = tr.querySelector(".r_noDA").value;
 
-  // ✅ If noDA blank OR 0 => keep hotel blank (vacant)
+  // If noDA blank OR <=0 => keep hotel blank
   if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
     setValIfDifferent(tr.querySelector(".r_hotel"), "");
     return;
   }
-
-  // ✅ last day => keep hotel blank (vacant)
+  // last day => hotel blank
   if(isLastDay(dateISO)){
     setValIfDifferent(tr.querySelector(".r_hotel"), "");
     return;
   }
-
-  // otherwise set hotel to rate
+  // otherwise set hotel = rate
   setValIfDifferent(tr.querySelector(".r_hotel"), String(rateHotel));
 }
 
@@ -361,20 +372,19 @@ function makeRow(data={}){
 
   tr.innerHTML = `
     <td><input type="date" class="r_date" value="${data.date||""}"></td>
-    <td><input type="number" min="0" step="1" class="r_noDA" value="${(data.noDA ?? "") === 0 ? "" : (data.noDA ?? "")}"></td>
+    <td><input type="number" min="0" step="1" class="r_noDA" value="${data.noDA ?? ""}"></td>
     <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? ""}"></td>
     <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? ""}" title="Type = manual override"></td>
     <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? ""}" readonly></td>
     <td><select class="r_mode">${renderModeOptions(data.mode)}</select></td>
-    <td><input type="number" min="0" step="1" class="r_km" value="${(data.km ?? "") === 0 ? "" : (data.km ?? "")}"></td>
-    <td><input type="number" min="0" step="1" class="r_fare" value="${(data.fare ?? "") === 0 ? "" : (data.fare ?? "")}"></td>
+    <td><input type="number" min="0" step="1" class="r_km" value="${data.km ?? ""}"></td>
+    <td><input type="number" min="0" step="1" class="r_fare" value="${data.fare ?? ""}"></td>
     <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? ""}" readonly></td>
   `;
 
   const hotelInput = tr.querySelector(".r_hotel");
-
-  // ✅ manual override only if user types something; if cleared => back to auto
   hotelInput.addEventListener("input", ()=>{
+    // if user types any value => manual; if cleared => back to auto
     tr.dataset.hotelManual = isBlank(hotelInput.value) ? "0" : "1";
     recalcRow(tr); recalcTotals(); saveAll();
   });
@@ -392,10 +402,9 @@ function makeRow(data={}){
 function recalcRow(tr){
   const rateDA = parseNum(document.getElementById("rateDA").value);
 
-  const noDAEl = tr.querySelector(".r_noDA");
-  const noDAraw = noDAEl.value;
+  const noDAraw = tr.querySelector(".r_noDA").value;
 
-  // ✅ If noDA blank OR 0 => keep DA blank (vacant)
+  // DA blank if noDA blank or 0
   if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
     setValIfDifferent(tr.querySelector(".r_DA"), "");
   }else{
@@ -403,23 +412,24 @@ function recalcRow(tr){
     setValIfDifferent(tr.querySelector(".r_DA"), String(computedDA));
   }
 
-  // ✅ Auto hotel applies but keeps blank where needed
+  // hotel auto (blank rules)
   applyAutoHotelIfNeeded(tr);
 
-  const DA = parseNum(tr.querySelector(".r_DA").value);
-  const hotel = parseNum(tr.querySelector(".r_hotel").value);
+  const DAraw = tr.querySelector(".r_DA").value;
+  const hotelRaw = tr.querySelector(".r_hotel").value;
   const fareRaw = tr.querySelector(".r_fare").value;
+
+  const DA = parseNum(DAraw);
+  const hotel = parseNum(hotelRaw);
   const fare = parseNum(fareRaw);
 
-  // TotalDA blank if both DA & hotel blank
   const totalDAEl = tr.querySelector(".r_totalDA");
-  if(isBlank(tr.querySelector(".r_DA").value) && isBlank(tr.querySelector(".r_hotel").value)){
+  if(isBlank(DAraw) && isBlank(hotelRaw)){
     setValIfDifferent(totalDAEl, "");
   }else{
     setValIfDifferent(totalDAEl, String(DA + hotel));
   }
 
-  // Grand blank if TotalDA blank AND fare blank
   const grandEl = tr.querySelector(".r_grand");
   if(isBlank(totalDAEl.value) && isBlank(fareRaw)){
     setValIfDifferent(grandEl, "");
@@ -455,14 +465,22 @@ function addRow(prefill={}){
   saveAll();
 }
 
+/* ✅ timezone-safe dateRange (no UTC shift) */
 function dateRange(from, to){
   const out=[];
-  const d1 = new Date(from);
-  const d2 = new Date(to);
+  if(!from || !to) return out;
+
+  const d1 = new Date(from + "T00:00:00");
+  const d2 = new Date(to + "T00:00:00");
   if (isNaN(d1) || isNaN(d2)) return out;
-  d1.setHours(0,0,0,0); d2.setHours(0,0,0,0);
+
+  d1.setHours(0,0,0,0);
+  d2.setHours(0,0,0,0);
   if (d2 < d1) return out;
-  for(let d=new Date(d1); d<=d2; d.setDate(d.getDate()+1)) out.push(new Date(d));
+
+  for(let d=new Date(d1); d<=d2; d.setDate(d.getDate()+1)){
+    out.push(new Date(d));
+  }
   return out;
 }
 
@@ -478,9 +496,10 @@ function generateRows(){
   }
 
   document.getElementById("rows").innerHTML = "";
+
   list.forEach(d=>{
-    const iso = d.toISOString().slice(0,10);
-    // default: 1 DA each date (this is an entry), so DA will fill, hotel auto rule applies
+    const iso = toLocalISO(d);  // ✅ FIXED (no toISOString)
+    // default: 1 DA for each date (you can edit to blank anytime)
     addRow({date: iso, noDA: 1, hotelManual: 0});
   });
 
@@ -496,6 +515,7 @@ function clearAll(){
   saveAll();
 }
 
+/* ===== save/restore ===== */
 function saveAll(){
   const payload = {
     meta:{
@@ -511,15 +531,15 @@ function saveAll(){
     },
     rows: [...document.querySelectorAll("#rows tr")].map(tr=>({
       date: tr.querySelector(".r_date").value || "",
-      noDA: tr.querySelector(".r_noDA").value,       // keep as string (blank stays blank)
-      DA: tr.querySelector(".r_DA").value,
-      hotel: tr.querySelector(".r_hotel").value,
+      noDA: tr.querySelector(".r_noDA").value || "",
+      DA: tr.querySelector(".r_DA").value || "",
+      hotel: tr.querySelector(".r_hotel").value || "",
       hotelManual: tr.dataset.hotelManual === "1" ? 1 : 0,
-      totalDA: tr.querySelector(".r_totalDA").value,
+      totalDA: tr.querySelector(".r_totalDA").value || "",
       mode: tr.querySelector(".r_mode").value || "",
-      km: tr.querySelector(".r_km").value,
-      fare: tr.querySelector(".r_fare").value,
-      grand: tr.querySelector(".r_grand").value,
+      km: tr.querySelector(".r_km").value || "",
+      fare: tr.querySelector(".r_fare").value || "",
+      grand: tr.querySelector(".r_grand").value || "",
     }))
   };
   localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -598,7 +618,7 @@ function bindMeta(){
   });
 }
 
-/* ===== PDF EXPORT ===== */
+/* ===== PDF ===== */
 function makeFileName(prefix, ext){
   const nm = (document.getElementById("name").value || "User").trim().replace(/\s+/g,"_");
   const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
@@ -625,7 +645,7 @@ function exportPDF(){
   html2pdf().set(opt).from(sheet).save().finally(()=> sheet.classList.remove("pdf-compact"));
 }
 
-/* ===== EXCEL EXPORT ===== */
+/* ===== EXCEL ===== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
   const aoa = [];
@@ -691,8 +711,7 @@ function exportExcel(){
   applyDesignationRates();
 
   if (!ok){
-    // start with 1 empty row (everything vacant)
-    addRow({hotelManual:0});
+    addRow({hotelManual:0}); // 1 empty row
     document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
   }
 
