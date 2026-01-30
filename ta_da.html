@@ -56,9 +56,8 @@
   .btn.success{background:var(--btn2)}
   .btn.gray{background:var(--btn3)}
   .btn:active{transform:translateY(1px)}
-  .hint{font-size:12px;color:#333;margin-left:auto;max-width:560px}
+  .hint{font-size:12px;color:#333;margin-left:auto;max-width:620px}
 
-  /* Sheet */
   #taDaSheet{
     background:var(--card);border:1px solid var(--border);
     padding:10px;border-radius:8px;
@@ -84,7 +83,6 @@
   }
   .main th{background:var(--head);font-weight:900}
 
-  /* Compact inputs inside table */
   .main input,.main select{
     width:100%;
     border:none;
@@ -94,14 +92,11 @@
     padding:0;
     height:18px;
     outline:none;
-
-    /* ✅ visibility fix (mobile + pdf canvas) */
     color:#000;
     -webkit-text-fill-color:#000;
     opacity:1;
   }
   .main td{height:22px}
-
   .right{text-align:right}
 
   .footer{
@@ -112,7 +107,6 @@
     border-bottom:1px solid #000;display:inline-block;min-width:180px;height:12px;vertical-align:bottom;
   }
 
-  /* Make PDF output tighter */
   .pdf-compact .main td{height:20px}
   .pdf-compact .main input,.pdf-compact .main select{height:16px;font-size:10px}
   .pdf-compact .main th{font-size:10px}
@@ -130,7 +124,6 @@
 <body>
 <div class="wrap">
 
-  <!-- ===== TOOLBAR ===== -->
   <div class="toolbar">
     <div class="field">
       <label>नाम / Name</label>
@@ -158,8 +151,7 @@
       <span><b>Auto rates</b> by designation</span>
     </div>
 
-    <!-- ✅ NEW: Auto hotel claim toggle -->
-    <div class="toggle" title="ON = Hotel auto fill (last day 0). Manual entry allowed.">
+    <div class="toggle" title="ON = Hotel auto fill (last day vacant). Manual entry allowed.">
       <input id="autoHotel" type="checkbox" checked />
       <span><b>Auto Hotel</b> claim</span>
     </div>
@@ -195,11 +187,10 @@
     <button class="btn primary" onclick="exportExcel()">⬇️ Excel</button>
 
     <div class="hint">
-      ✅ Date-range rows • ✅ Auto totals • ✅ Designation-wise rates • ✅ Auto Hotel (last day 0) • ✅ Save/Restore
+      ✅ Blank stays blank (no forced 0) • ✅ Date-range rows • ✅ Auto totals • ✅ Designation-wise rates • ✅ Save/Restore
     </div>
   </div>
 
-  <!-- ===== SHEET ===== -->
   <div id="taDaSheet">
     <table class="header-grid">
       <tr>
@@ -260,20 +251,9 @@
 </div>
 
 <script>
-/* =========================
-   Checked & Working:
-   ✅ Date range rows
-   ✅ DA auto = noDA * rateDA (always synced)
-   ✅ Hotel claim auto fill (toggle) + last day 0 + manual override per row
-   ✅ Row total + Grand totals
-   ✅ localStorage save/restore
-   ✅ PDF + Excel export (no print)
-   ✅ Designation-wise rates
-   ========================= */
+const LS_KEY = "tada_sheet_v4_blank_vacant";
 
-const LS_KEY = "tada_sheet_v3_designation_hotel";
-
-/* ✅ Designation-wise rates (as you provided) */
+/* Designation-wise rates (as you provided) */
 const DESIGNATION_RATES = {
   "Senior Statistical Officer": { da: 1000, hotel: 960 },
   "Survey Supervisor":         { da: 500,  hotel: 750 },
@@ -282,10 +262,19 @@ const DESIGNATION_RATES = {
 };
 
 function parseNum(v){
-  const x = Number(String(v||"").replace(/[^0-9.\-]/g,""));
+  const s = String(v ?? "").trim();
+  if(s === "") return 0;
+  const x = Number(s.replace(/[^0-9.\-]/g,""));
   return isNaN(x) ? 0 : x;
 }
 function fmtINR(n){ return Math.round(Number(n||0)).toString(); }
+
+function isBlank(v){
+  return String(v ?? "").trim() === "";
+}
+function setValIfDifferent(el, v){
+  if(el.value !== v) el.value = v;
+}
 
 function setHeaderFromInputs(){
   const name = document.getElementById("name").value.trim() || "-";
@@ -310,7 +299,6 @@ function updateRateBadge(){
   document.getElementById("appliedRateText").textContent = `DA ${da} | Hotel ${ht}`;
 }
 
-/* ✅ Apply rates from designation if toggle ON */
 function applyDesignationRates(){
   if(!document.getElementById("autoRates").checked) { updateRateBadge(); return; }
 
@@ -331,12 +319,11 @@ function renderModeOptions(selected){
   const modes = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Other"];
   return modes.map(m=>{
     const sel = (m === (selected||"")) ? "selected" : "";
-    const label = m==="" ? "" : m;
-    return `<option value="${m}" ${sel}>${label}</option>`;
+    return `<option value="${m}" ${sel}>${m}</option>`;
   }).join("");
 }
 
-/* ===== Hotel auto logic helpers ===== */
+/* ===== Hotel auto helpers (blank if no entry) ===== */
 function isLastDay(dateISO){
   const to = document.getElementById("toDate").value;
   if(!to || !dateISO) return false;
@@ -350,11 +337,22 @@ function applyAutoHotelIfNeeded(tr){
 
   const rateHotel = parseNum(document.getElementById("rateHotel").value);
   const dateISO = tr.querySelector(".r_date").value || "";
-  const noDA = parseNum(tr.querySelector(".r_noDA").value);
+  const noDAraw = tr.querySelector(".r_noDA").value;
 
-  // rule: last day => no hotel
-  const autoVal = (noDA > 0 && !isLastDay(dateISO)) ? rateHotel : 0;
-  tr.querySelector(".r_hotel").value = autoVal;
+  // ✅ If noDA blank OR 0 => keep hotel blank (vacant)
+  if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
+    setValIfDifferent(tr.querySelector(".r_hotel"), "");
+    return;
+  }
+
+  // ✅ last day => keep hotel blank (vacant)
+  if(isLastDay(dateISO)){
+    setValIfDifferent(tr.querySelector(".r_hotel"), "");
+    return;
+  }
+
+  // otherwise set hotel to rate
+  setValIfDifferent(tr.querySelector(".r_hotel"), String(rateHotel));
 }
 
 function makeRow(data={}){
@@ -363,31 +361,30 @@ function makeRow(data={}){
 
   tr.innerHTML = `
     <td><input type="date" class="r_date" value="${data.date||""}"></td>
-    <td><input type="number" min="0" step="1" class="r_noDA" value="${data.noDA ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? 0}" title="Type = manual override"></td>
-    <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? 0}" readonly></td>
+    <td><input type="number" min="0" step="1" class="r_noDA" value="${(data.noDA ?? "") === 0 ? "" : (data.noDA ?? "")}"></td>
+    <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? ""}"></td>
+    <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? ""}" title="Type = manual override"></td>
+    <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? ""}" readonly></td>
     <td><select class="r_mode">${renderModeOptions(data.mode)}</select></td>
-    <td><input type="number" min="0" step="1" class="r_km" value="${data.km ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_fare" value="${data.fare ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? 0}" readonly></td>
+    <td><input type="number" min="0" step="1" class="r_km" value="${(data.km ?? "") === 0 ? "" : (data.km ?? "")}"></td>
+    <td><input type="number" min="0" step="1" class="r_fare" value="${(data.fare ?? "") === 0 ? "" : (data.fare ?? "")}"></td>
+    <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? ""}" readonly></td>
   `;
 
-  // ✅ hotel manual override detection
   const hotelInput = tr.querySelector(".r_hotel");
+
+  // ✅ manual override only if user types something; if cleared => back to auto
   hotelInput.addEventListener("input", ()=>{
-    tr.dataset.hotelManual = "1";       // once user types, lock manual
+    tr.dataset.hotelManual = isBlank(hotelInput.value) ? "0" : "1";
     recalcRow(tr); recalcTotals(); saveAll();
   });
 
-  // other events
   tr.querySelectorAll("input,select").forEach(el=>{
     if(el === hotelInput) return;
     el.addEventListener("input", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); });
     el.addEventListener("change", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); setHeaderFromInputs(); });
   });
 
-  // initial calc
   recalcRow(tr);
   return tr;
 }
@@ -395,19 +392,40 @@ function makeRow(data={}){
 function recalcRow(tr){
   const rateDA = parseNum(document.getElementById("rateDA").value);
 
-  const noDA = parseNum(tr.querySelector(".r_noDA").value);
-  const computedDA = noDA * rateDA;
-  tr.querySelector(".r_DA").value = computedDA ? computedDA : 0;
+  const noDAEl = tr.querySelector(".r_noDA");
+  const noDAraw = noDAEl.value;
 
-  // ✅ auto hotel applies (unless manual override)
+  // ✅ If noDA blank OR 0 => keep DA blank (vacant)
+  if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
+    setValIfDifferent(tr.querySelector(".r_DA"), "");
+  }else{
+    const computedDA = parseNum(noDAraw) * rateDA;
+    setValIfDifferent(tr.querySelector(".r_DA"), String(computedDA));
+  }
+
+  // ✅ Auto hotel applies but keeps blank where needed
   applyAutoHotelIfNeeded(tr);
 
+  const DA = parseNum(tr.querySelector(".r_DA").value);
   const hotel = parseNum(tr.querySelector(".r_hotel").value);
-  const totalDA = computedDA + hotel;
-  tr.querySelector(".r_totalDA").value = totalDA;
+  const fareRaw = tr.querySelector(".r_fare").value;
+  const fare = parseNum(fareRaw);
 
-  const fare = parseNum(tr.querySelector(".r_fare").value);
-  tr.querySelector(".r_grand").value = totalDA + fare;
+  // TotalDA blank if both DA & hotel blank
+  const totalDAEl = tr.querySelector(".r_totalDA");
+  if(isBlank(tr.querySelector(".r_DA").value) && isBlank(tr.querySelector(".r_hotel").value)){
+    setValIfDifferent(totalDAEl, "");
+  }else{
+    setValIfDifferent(totalDAEl, String(DA + hotel));
+  }
+
+  // Grand blank if TotalDA blank AND fare blank
+  const grandEl = tr.querySelector(".r_grand");
+  if(isBlank(totalDAEl.value) && isBlank(fareRaw)){
+    setValIfDifferent(grandEl, "");
+  }else{
+    setValIfDifferent(grandEl, String((DA + hotel) + fare));
+  }
 }
 
 function recalcTotals(){
@@ -432,8 +450,7 @@ function recalcTotals(){
 }
 
 function addRow(prefill={}){
-  const tbody = document.getElementById("rows");
-  tbody.appendChild(makeRow(prefill));
+  document.getElementById("rows").appendChild(makeRow(prefill));
   recalcTotals();
   saveAll();
 }
@@ -445,9 +462,7 @@ function dateRange(from, to){
   if (isNaN(d1) || isNaN(d2)) return out;
   d1.setHours(0,0,0,0); d2.setHours(0,0,0,0);
   if (d2 < d1) return out;
-  for(let d=new Date(d1); d<=d2; d.setDate(d.getDate()+1)){
-    out.push(new Date(d));
-  }
+  for(let d=new Date(d1); d<=d2; d.setDate(d.getDate()+1)) out.push(new Date(d));
   return out;
 }
 
@@ -457,7 +472,7 @@ function generateRows(){
 
   const list = dateRange(from, to);
   if (!list.length){
-    if (!document.querySelector("#rows tr")) addRow();
+    if (!document.querySelector("#rows tr")) addRow({hotelManual:0});
     setHeaderFromInputs();
     return;
   }
@@ -465,11 +480,10 @@ function generateRows(){
   document.getElementById("rows").innerHTML = "";
   list.forEach(d=>{
     const iso = d.toISOString().slice(0,10);
-    // default: 1 DA each day
+    // default: 1 DA each date (this is an entry), so DA will fill, hotel auto rule applies
     addRow({date: iso, noDA: 1, hotelManual: 0});
   });
 
-  // After generation, ensure hotel gets auto-filled correctly (last day 0)
   document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
   setHeaderFromInputs();
   recalcTotals();
@@ -482,7 +496,6 @@ function clearAll(){
   saveAll();
 }
 
-/* ===== Save/Load ===== */
 function saveAll(){
   const payload = {
     meta:{
@@ -498,15 +511,15 @@ function saveAll(){
     },
     rows: [...document.querySelectorAll("#rows tr")].map(tr=>({
       date: tr.querySelector(".r_date").value || "",
-      noDA: parseNum(tr.querySelector(".r_noDA").value),
-      DA: parseNum(tr.querySelector(".r_DA").value),
-      hotel: parseNum(tr.querySelector(".r_hotel").value),
+      noDA: tr.querySelector(".r_noDA").value,       // keep as string (blank stays blank)
+      DA: tr.querySelector(".r_DA").value,
+      hotel: tr.querySelector(".r_hotel").value,
       hotelManual: tr.dataset.hotelManual === "1" ? 1 : 0,
-      totalDA: parseNum(tr.querySelector(".r_totalDA").value),
+      totalDA: tr.querySelector(".r_totalDA").value,
       mode: tr.querySelector(".r_mode").value || "",
-      km: parseNum(tr.querySelector(".r_km").value),
-      fare: parseNum(tr.querySelector(".r_fare").value),
-      grand: parseNum(tr.querySelector(".r_grand").value),
+      km: tr.querySelector(".r_km").value,
+      fare: tr.querySelector(".r_fare").value,
+      grand: tr.querySelector(".r_grand").value,
     }))
   };
   localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -535,7 +548,6 @@ function loadAll(){
     (data.rows || []).forEach(r=> tbody.appendChild(makeRow(r)));
 
     setHeaderFromInputs();
-    // apply auto hotel/da recalcs safely
     document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
     recalcTotals();
     updateRateBadge();
@@ -545,7 +557,6 @@ function loadAll(){
   }
 }
 
-/* ===== Bind meta inputs ===== */
 function bindMeta(){
   ["name","place","rateDA","rateHotel","fromDate","toDate"].forEach(id=>{
     const el = document.getElementById(id);
@@ -581,7 +592,6 @@ function bindMeta(){
   });
 
   document.getElementById("autoHotel").addEventListener("change", ()=>{
-    // turn ON => reapply auto hotel to non-manual rows
     document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
     recalcTotals();
     saveAll();
@@ -612,9 +622,7 @@ function exportPDF(){
     pagebreak: { mode: ["avoid-all"] }
   };
 
-  html2pdf().set(opt).from(sheet).save().finally(()=>{
-    sheet.classList.remove("pdf-compact");
-  });
+  html2pdf().set(opt).from(sheet).save().finally(()=> sheet.classList.remove("pdf-compact"));
 }
 
 /* ===== EXCEL EXPORT ===== */
@@ -637,20 +645,19 @@ function exportExcel(){
   aoa.push(["Place", place, "", "", "Month", month, "Year", year]);
   aoa.push(["Rates Applied", `DA: ${rateDA}`, `Hotel: ${rateHotel}`]);
   aoa.push([]);
-
   aoa.push(["Date","No. of DA","DA","Hotel Bill","Total DA","Mode","K.M.","Total Fare","Grand Total"]);
 
   document.querySelectorAll("#rows tr").forEach(tr=>{
     aoa.push([
       tr.querySelector(".r_date").value || "",
-      parseNum(tr.querySelector(".r_noDA").value),
-      parseNum(tr.querySelector(".r_DA").value),
-      parseNum(tr.querySelector(".r_hotel").value),
-      parseNum(tr.querySelector(".r_totalDA").value),
+      tr.querySelector(".r_noDA").value || "",
+      tr.querySelector(".r_DA").value || "",
+      tr.querySelector(".r_hotel").value || "",
+      tr.querySelector(".r_totalDA").value || "",
       tr.querySelector(".r_mode").value || "",
-      parseNum(tr.querySelector(".r_km").value),
-      parseNum(tr.querySelector(".r_fare").value),
-      parseNum(tr.querySelector(".r_grand").value),
+      tr.querySelector(".r_km").value || "",
+      tr.querySelector(".r_fare").value || "",
+      tr.querySelector(".r_grand").value || "",
     ]);
   });
 
@@ -681,11 +688,10 @@ function exportExcel(){
   bindMeta();
   const ok = loadAll();
   setHeaderFromInputs();
-
-  // apply designation rates initially (if toggle on)
   applyDesignationRates();
 
   if (!ok){
+    // start with 1 empty row (everything vacant)
     addRow({hotelManual:0});
     document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
   }
