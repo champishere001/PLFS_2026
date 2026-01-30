@@ -41,13 +41,11 @@
     font-size:16px;
     padding:10px 6px;
   }
-
   .hdrline{
     text-align:left;
     font-weight:600;
   }
 
-  /* Inputs/select inside cells */
   input, select{
     width:100%;
     border:none;
@@ -61,16 +59,9 @@
   .left input, .left select{ text-align:left; padding-left:2px; }
   .left{ text-align:left; }
 
-  .grouphead{
-    font-weight:700;
-  }
-  .colhead th{
-    font-weight:700;
-  }
-
-  .totalrow td{
-    font-weight:700;
-  }
+  .grouphead{ font-weight:700; }
+  .colhead th{ font-weight:700; }
+  .totalrow td{ font-weight:700; }
 
   .rate-badge{
     font-weight:700;
@@ -85,10 +76,89 @@
     margin-left:6px;
   }
 
-  .actions{
+  .mini{
+    display:inline-flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .mini input[type="date"]{
+    width:160px;
+    border:1px solid #000;
+    padding:4px 6px;
+    border-radius:6px;
+    background:#fff;
+    text-align:left;
+  }
+
+  .btn-mini{
+    border:none;
+    cursor:pointer;
+    font-weight:800;
+    padding:6px 10px;
+    border-radius:8px;
+    background:#1a4f8d;
+    color:#fff;
+  }
+  .btn-mini.gray{ background:#2f3b4a; }
+  .btn-mini.red{ background:#b42318; }
+  .btn-mini:active{ transform: scale(.99); }
+
+  .ranges{
+    margin-top:8px;
+    border:1px solid #000;
+    border-radius:10px;
+    padding:10px;
+    background:#fff;
+  }
+  .ranges h4{
+    margin:0 0 8px;
+    font-size:12.5px;
+    font-weight:900;
+    letter-spacing:.2px;
+  }
+  .range-list{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:6px;
+  }
+  .range-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 10px;
+    border:1px solid #000;
+    border-radius:10px;
+    background:#f8fafc;
+    font-weight:800;
+    font-size:12px;
+  }
+  .range-item .meta{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .range-item code{
+    background:#fff;
+    border:1px solid #000;
+    padding:2px 6px;
+    border-radius:999px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight:900;
+  }
+  .range-item .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  .actionsbar{
     display:flex;
     gap:10px;
     justify-content:flex-end;
+    flex-wrap:wrap;
     margin-top:12px;
   }
   .btn{
@@ -96,17 +166,28 @@
     border:none;
     border-radius:6px;
     padding:10px 14px;
-    font-weight:700;
+    font-weight:900;
     background:#1a4f8d;
     color:#fff;
   }
   .btn.secondary{ background:#2f3b4a; }
   .btn.danger{ background:#b42318; }
 
+  tr.sel{
+    outline: 3px solid #1a4f8d;
+    outline-offset:-3px;
+    background:#eef6ff;
+  }
+
+  .hotelMark{
+    font-size:11px;
+    font-weight:900;
+  }
+
   @media print{
     body{ background:#fff; padding:0; }
     .sheet{ box-shadow:none; border:none; padding:0; }
-    .actions{ display:none; }
+    .actionsbar, .ranges{ display:none; }
   }
 </style>
 </head>
@@ -168,10 +249,33 @@
       </td>
     </tr>
 
+    <!-- Multi Range Controller (inside sheet, same feel) -->
+    <tr>
+      <td colspan="9" class="hdrline left">
+        <div class="mini">
+          <span><b>Tour Range:</b></span>
+          <span>From</span>
+          <input id="fromDate" type="date" />
+          <span>To</span>
+          <input id="toDate" type="date" />
+          <span>Total Days: <b id="tourDays">0</b></span>
+          <button type="button" class="btn-mini" onclick="addRange()">Add Range</button>
+          <button type="button" class="btn-mini gray" onclick="generateAllRanges()">Generate All Ranges</button>
+        </div>
+
+        <div class="ranges" id="rangesBox">
+          <h4>Saved Ranges (multiple allowed in month)</h4>
+          <div class="range-list" id="rangeList"></div>
+        </div>
+      </td>
+    </tr>
+
     <tr>
       <td colspan="9" class="rate-badge">
         Applied Rates:
         <span id="rateText">DA ₹0 | Hotel ₹0</span>
+        <span style="margin-left:10px;">Tip:</span>
+        <span style="border-style:dashed;">Click row to select • “Add Journey Day” duplicates selected date • Double-tap Hotel cell toggles No-Hotel</span>
       </td>
     </tr>
 
@@ -216,8 +320,10 @@
     </tr>
   </table>
 
-  <div class="actions">
+  <div class="actionsbar">
     <button class="btn secondary" onclick="addRow()">+ Add Row</button>
+    <button class="btn secondary" onclick="duplicateSelected()">➕ Add Journey Day (Duplicate Selected)</button>
+    <button class="btn danger" onclick="deleteSelected()">🗑 Delete Selected</button>
     <button class="btn danger" onclick="clearRows()">Clear Rows</button>
     <button class="btn" onclick="window.print()">Print</button>
   </div>
@@ -225,16 +331,20 @@
 </div>
 
 <script>
-  // Designation-wise rates
+  // ===== Rates =====
   let DA_RATE = 0;
   let HOTEL_RATE = 0;
 
   const rowsEl = document.getElementById("rows");
   const rateText = document.getElementById("rateText");
+  const rangeList = document.getElementById("rangeList");
+
+  // Ranges array: {id, fromISO, toISO, days}
+  let ranges = [];
+  let selectedRow = null;
 
   function money(n){
     n = Number(n || 0);
-    // show integer cleanly, else 2-decimal
     const rounded = Math.round(n * 100) / 100;
     return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
   }
@@ -260,8 +370,133 @@
     recalc();
   }
 
+  // ===== Tour Range helpers =====
+  function parseDate(v){
+    if(!v) return null;
+    const d = new Date(v + "T00:00:00");
+    return isNaN(d) ? null : d;
+  }
+
+  function toISO(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${dd}`;
+  }
+
+  function dayDiffInclusive(a, b){
+    const ms = 24*60*60*1000;
+    const diff = Math.round((b - a) / ms);
+    return diff >= 0 ? diff + 1 : 0;
+  }
+
+  function updateTourDaysUI(){
+    const from = parseDate(document.getElementById("fromDate").value);
+    const to   = parseDate(document.getElementById("toDate").value);
+    const days = (from && to) ? dayDiffInclusive(from, to) : 0;
+    document.getElementById("tourDays").textContent = days;
+    return { from, to, days };
+  }
+
+  document.addEventListener("input", (e)=>{
+    if(e.target && (e.target.id === "fromDate" || e.target.id === "toDate")){
+      updateTourDaysUI();
+    }
+  });
+
+  function addRange(){
+    const { from, to, days } = updateTourDaysUI();
+    if(!from || !to || !days) return;
+
+    const item = {
+      id: String(Date.now()) + "_" + Math.floor(Math.random()*9999),
+      fromISO: toISO(from),
+      toISO: toISO(to),
+      days
+    };
+    ranges.push(item);
+    renderRanges();
+  }
+
+  function removeRange(id){
+    ranges = ranges.filter(r => r.id !== id);
+    renderRanges();
+  }
+
+  function renderRanges(){
+    rangeList.innerHTML = "";
+    if(!ranges.length){
+      rangeList.innerHTML = `<div style="font-weight:800; color:#333;">No ranges added yet.</div>`;
+      return;
+    }
+
+    ranges.forEach((r, idx)=>{
+      const div = document.createElement("div");
+      div.className = "range-item";
+      div.innerHTML = `
+        <div class="meta">
+          <span><b>Range ${idx+1}:</b></span>
+          <code>${r.fromISO}</code>
+          <span>to</span>
+          <code>${r.toISO}</code>
+          <span>(Days: <b>${r.days}</b>)</span>
+        </div>
+        <div class="actions">
+          <button class="btn-mini" type="button" onclick="generateRange('${r.id}', true)">Append Rows</button>
+          <button class="btn-mini gray" type="button" onclick="generateRange('${r.id}', false)">Replace Rows</button>
+          <button class="btn-mini red" type="button" onclick="removeRange('${r.id}')">Remove</button>
+        </div>
+      `;
+      rangeList.appendChild(div);
+    });
+  }
+
+  // Generate rows for a specific range
+  // append=true -> add to existing; append=false -> replace table rows with this range only
+  function generateRange(id, append){
+    const r = ranges.find(x => x.id === id);
+    if(!r) return;
+
+    const from = parseDate(r.fromISO);
+    const to = parseDate(r.toISO);
+    const days = dayDiffInclusive(from, to);
+    if(!append) rowsEl.innerHTML = "";
+
+    const cur = new Date(from);
+    for(let i=0;i<days;i++){
+      const iso = toISO(cur);
+      const isLastDay = (i === days - 1);
+
+      addRow({
+        date: iso,
+        days: 1,
+        noHotel: isLastDay,
+        rangeId: r.id
+      });
+
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    sortRowsByDate();
+    recalc();
+  }
+
+  function generateAllRanges(){
+    if(!ranges.length) return;
+    rowsEl.innerHTML = "";
+    ranges.forEach(r => generateRange(r.id, true)); // append
+    sortRowsByDate();
+    recalc();
+  }
+
+  // ===== Rows / selection / journey day =====
   function addRow(prefill = {}){
     const tr = document.createElement("tr");
+
+    // no hotel flag & range id tracking
+    tr.dataset.nohotel = prefill.noHotel ? "1" : "0";
+    tr.dataset.rangeid = prefill.rangeId || "";
+
     tr.innerHTML = `
       <td><input type="date" value="${prefill.date || ""}" oninput="recalc()"></td>
       <td><input type="number" min="0" step="1" value="${prefill.days ?? 1}" oninput="recalc()"></td>
@@ -273,16 +508,81 @@
       <td><input type="number" min="0" step="0.01" value="${prefill.fare || ""}" oninput="recalc()"></td>
       <td class="total">0</td>
     `;
+
+    // click select row
+    tr.addEventListener("click", ()=>{
+      selectRow(tr);
+    });
+
+    // double-click hotel cell toggles no-hotel (useful after edits)
+    tr.querySelector(".hotel").addEventListener("dblclick", (e)=>{
+      e.stopPropagation();
+      tr.dataset.nohotel = (tr.dataset.nohotel === "1") ? "0" : "1";
+      recalc();
+    });
+
     rowsEl.appendChild(tr);
+    recalc();
+  }
+
+  function selectRow(tr){
+    if(selectedRow) selectedRow.classList.remove("sel");
+    selectedRow = tr;
+    selectedRow.classList.add("sel");
+  }
+
+  function duplicateSelected(){
+    if(!selectedRow) return;
+
+    const date = selectedRow.children[0].querySelector("input").value;
+    const days = selectedRow.children[1].querySelector("input").value;
+    const mode = selectedRow.children[5].querySelector("input").value;
+    const km   = selectedRow.children[6].querySelector("input").value;
+    const fare = selectedRow.children[7].querySelector("input").value;
+
+    // Journey day row: same date, default hotel same as original (but you can toggle)
+    addRow({
+      date,
+      days: Number(days || 1),
+      mode,
+      km,
+      fare,
+      noHotel: false,
+      rangeId: selectedRow.dataset.rangeid || ""
+    });
+
+    sortRowsByDate();
+    recalc();
+  }
+
+  function deleteSelected(){
+    if(!selectedRow) return;
+    selectedRow.remove();
+    selectedRow = null;
     recalc();
   }
 
   function clearRows(){
     rowsEl.innerHTML = "";
+    selectedRow = null;
     // keep 3 blank rows like sheet feel
     addRow(); addRow(); addRow();
   }
 
+  function sortRowsByDate(){
+    const trs = Array.from(rowsEl.querySelectorAll("tr"));
+    trs.sort((a,b)=>{
+      const da = a.children[0].querySelector("input").value || "9999-12-31";
+      const db = b.children[0].querySelector("input").value || "9999-12-31";
+      if(da < db) return -1;
+      if(da > db) return 1;
+      return 0; // same date -> keep insertion order (journey days remain grouped)
+    });
+    rowsEl.innerHTML = "";
+    trs.forEach(tr => rowsEl.appendChild(tr));
+  }
+
+  // ===== Calculation =====
   function recalc(){
     let gDA = 0, gHotel = 0, gTDA = 0, gFare = 0, gAll = 0;
 
@@ -291,12 +591,19 @@
       const fare = Number(tr.children[7].querySelector("input").value || 0);
 
       const da = days * DA_RATE;
-      const hotel = days * HOTEL_RATE;
+
+      const noHotel = tr.dataset.nohotel === "1";
+      const hotel = noHotel ? 0 : (days * HOTEL_RATE);
+
       const tda = da + hotel;
       const total = tda + fare;
 
       tr.querySelector(".da").textContent = money(da);
+
+      // hotel mark
       tr.querySelector(".hotel").textContent = money(hotel);
+      tr.querySelector(".hotel").title = noHotel ? "No Hotel (toggled / last day)" : "Double-tap to toggle No-Hotel";
+
       tr.querySelector(".tda").textContent = money(tda);
       tr.querySelector(".total").textContent = money(total);
 
@@ -322,9 +629,10 @@
     }
   });
 
-  // Start: 3 rows
+  // Start: 3 empty rows + range list init
   addRow(); addRow(); addRow();
-  updateRates(); // set badge
+  updateRates();
+  renderRanges();
 </script>
 
 </body>
