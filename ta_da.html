@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>TA/DA Calculation Sheet (Multi Tour + 1 Page PDF + Excel)</title>
 
+<!-- Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+<!-- PDF deps -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -23,9 +26,7 @@
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);font-family:Arial,system-ui;padding:10px}
-
-  /* ✅ responsive wrap (full usable width) */
-  .wrap{max-width:100%;margin:auto}
+  .wrap{max-width:1200px;margin:auto}
 
   /* Anything with .no-export will not be included in PDF */
   .pdf-export .no-export{display:none !important}
@@ -90,6 +91,7 @@
   }
   .rangesHead .title{font-weight:900;font-size:13px}
 
+  /* side-by-side */
   #rangesContainer{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
   .rangeRow{
     display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
@@ -105,31 +107,31 @@
   #taDaSheet{
     background:var(--card);border:1px solid var(--border);
     padding:10px;border-radius:8px;
-    /* ✅ allow viewing on small screens without breaking layout */
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
   }
 
-  /* ✅ tighter table so it fits */
-  table{width:100%;border-collapse:collapse;table-layout:fixed}
-
+  table{width:100%;border-collapse:collapse}
   .header-grid td{
     border:1px solid var(--border);
-    padding:5px;
-    font-size:11px;
+    padding:6px;
+    font-size:12px;
   }
   .header-title{
-    text-align:center;font-weight:900;font-size:13px;background:var(--head);
+    text-align:center;font-weight:900;font-size:14px;background:var(--head);
   }
 
+  .main{
+    table-layout:fixed;
+  }
   .main th,.main td{
     border:1px solid var(--border);
     text-align:center;
-    padding:2px 3px;          /* ✅ reduced */
-    font-size:10px;           /* ✅ reduced */
-    line-height:1.05;         /* ✅ tighter */
+    padding:3px 4px;
+    font-size:11px;
+    line-height:1.1;
     vertical-align:middle;
-    white-space:nowrap;       /* ✅ prevents ugly wraps */
+    white-space:nowrap;
   }
   .main th{background:var(--head);font-weight:900}
 
@@ -138,23 +140,23 @@
     border:none;
     background:transparent;
     text-align:center;
-    font-size:10px;
+    font-size:11px;
     padding:0;
-    height:16px;              /* ✅ reduced */
+    height:18px;
     outline:none;
     color:#000;
     -webkit-text-fill-color:#000;
     opacity:1;
   }
-  .main td{height:20px}       /* ✅ reduced */
+  .main td{height:22px}
   .right{text-align:right}
 
   .footer{
     display:flex;justify-content:space-between;gap:10px;
-    margin-top:8px;font-size:10px;
+    margin-top:8px;font-size:11px;
   }
   .line{
-    border-bottom:1px solid #000;display:inline-block;min-width:160px;height:12px;vertical-align:bottom;
+    border-bottom:1px solid #000;display:inline-block;min-width:180px;height:12px;vertical-align:bottom;
   }
 
   /* Compact while capturing PDF */
@@ -166,19 +168,21 @@
   .pdf-compact .footer{font-size:9px;margin-top:6px}
   .pdf-compact .line{min-width:150px}
 
-  /* ✅ super small devices: reduce padding a bit more */
-  @media (max-width: 520px){
-    body{padding:6px}
-    #taDaSheet{padding:8px}
-    .main th,.main td{font-size:9px;padding:2px 2px}
-    .main input,.main select{font-size:9px}
-  }
+  /* ✅ PDF: flexible columns (auto distribute width) */
+  .pdf-flex table{ width:100% !important; }
+  .pdf-flex .main{ table-layout:auto !important; }
+  .pdf-flex .main th,
+  .pdf-flex .main td{ width:auto !important; }
+  .pdf-flex .main input,
+  .pdf-flex .main select{ min-width:0 !important; }
+
 </style>
 </head>
 
 <body>
 <div class="wrap">
 
+  <!-- toolbar NOT exported -->
   <div class="toolbar no-export">
     <div class="field">
       <label>नाम / Name</label>
@@ -244,6 +248,7 @@
     <div class="hint">✅ PDF = only sheet (no toolbar) • ✅ Always landscape, 1 page • ✅ Blank stays blank</div>
   </div>
 
+  <!-- EXPORT AREA -->
   <div id="taDaSheet">
     <table class="header-grid">
       <tr>
@@ -268,16 +273,15 @@
     <table class="main" id="tadaTable">
       <thead>
         <tr>
-          <!-- ✅ tighter column widths -->
-          <th style="width:92px">Date</th>
-          <th style="width:70px">No. of DA</th>
-          <th style="width:65px">DA</th>
-          <th style="width:75px">Hotel Bill</th>
-          <th style="width:78px">Total DA</th>
-          <th style="width:76px">Mode</th>
-          <th style="width:62px">K.M.</th>
-          <th style="width:78px">Total Fare</th>
-          <th style="width:82px">Grand Total</th>
+          <th style="width:110px">Date</th>
+          <th style="width:85px">No. of DA</th>
+          <th style="width:80px">DA</th>
+          <th style="width:90px">Hotel Bill</th>
+          <th style="width:95px">Total DA</th>
+          <th style="width:90px">Mode</th>
+          <th style="width:85px">K.M.</th>
+          <th style="width:95px">Total Fare</th>
+          <th style="width:95px">Grand Total</th>
         </tr>
       </thead>
 
@@ -722,11 +726,13 @@ function makeFileName(prefix, ext){
   return `${prefix}_${nm}${des?("_"+des):""}.${ext}`;
 }
 
+/* ✅ PDF: A4 landscape, STRICTLY 1 page (fit-to-page) + flexible columns */
 async function exportPDFSinglePage(){
   const sheet = document.getElementById("taDaSheet");
 
   document.body.classList.add("pdf-export");
   sheet.classList.add("pdf-compact");
+  sheet.classList.add("pdf-flex");     // ✅ flexible columns during capture
 
   try{
     const canvas = await html2canvas(sheet, {
@@ -774,11 +780,13 @@ async function exportPDFSinglePage(){
     alert("PDF export failed. Reload once and try again.");
     console.error(e);
   } finally {
+    sheet.classList.remove("pdf-flex");
     sheet.classList.remove("pdf-compact");
     document.body.classList.remove("pdf-export");
   }
 }
 
+/* ===== Excel ===== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
   const aoa = [];
