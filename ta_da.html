@@ -3,18 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>TA/DA Calculation Sheet</title>
+<title>TA/DA CALCULATION SHEET</title>
 
-<!-- Excel Export (SheetJS) -->
+<!-- Excel Export -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <style>
   :root{
-    --border:#000;
     --bg:#f3f5f7;
-    --card:#fff;
+    --card:#ffffff;
+    --ink:#0b1220;
     --muted:#64748b;
+    --border:#000;
+    --soft:#e2e8f0;
     --accent:#2563eb;
+    --danger:#ef4444;
   }
   *{box-sizing:border-box}
   body{
@@ -22,31 +25,34 @@
     padding:16px;
     background:var(--bg);
     font-family: Arial, Helvetica, sans-serif;
-    color:#111;
+    color:var(--ink);
   }
   .sheet{
-    max-width: 1250px;
+    max-width: 1280px;
     margin:auto;
     background:var(--card);
     border:1px solid #cfd6df;
-    box-shadow:0 10px 30px rgba(0,0,0,.06);
+    box-shadow:0 10px 28px rgba(0,0,0,.06);
     padding:14px;
   }
 
-  .topbar{
+  .top{
     display:flex;
-    gap:10px;
+    gap:12px;
     align-items:flex-start;
     justify-content:space-between;
     margin-bottom:10px;
   }
   .title{
+    flex:1;
     text-align:center;
     font-weight:800;
+    font-size:15px;
     line-height:1.25;
-    font-size:16px;
-    flex:1;
   }
+  .title .sub{ font-weight:800; }
+  .title .muted{ color:var(--muted); font-weight:700; font-size:12px; }
+
   .controls{
     display:flex;
     gap:8px;
@@ -59,18 +65,18 @@
     background:#fff;
     padding:7px 10px;
     font-size:12.5px;
-    font-weight:700;
-    border-radius:8px;
+    font-weight:800;
+    border-radius:10px;
     cursor:pointer;
     user-select:none;
   }
   .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
-  .btn.danger{ background:#ef4444; color:#fff; border-color:#ef4444; }
-  .btn:active{ transform: translateY(1px); }
+  .btn.danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
+  .btn:active{ transform:translateY(1px); }
 
   .meta{
     display:grid;
-    grid-template-columns: 1.2fr 1fr 1fr 0.9fr 0.9fr;
+    grid-template-columns: 1.2fr 1fr 1fr 0.9fr 0.7fr;
     gap:6px;
     margin:10px 0 10px;
   }
@@ -81,24 +87,52 @@
     gap:8px;
     align-items:center;
     min-height:34px;
+    background:#fff;
   }
   .label{
-    font-weight:700;
+    font-weight:800;
     font-size:12px;
     white-space:nowrap;
   }
-  .input{
-    border:none;
-    outline:none;
-    font-size:12.5px;
-    width:100%;
-  }
-  .select{
+  .input, .select{
     width:100%;
     border:none;
     outline:none;
     font-size:12.5px;
     background:transparent;
+  }
+
+  .ranges{
+    border:1px solid var(--border);
+    padding:10px;
+    margin-bottom:10px;
+  }
+  .ranges h4{
+    margin:0 0 8px;
+    font-size:13px;
+  }
+  .range-row{
+    display:grid;
+    grid-template-columns: 1fr 1fr 0.9fr 0.9fr 0.8fr 0.5fr;
+    gap:8px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .range-row .mini{
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    padding:7px 8px;
+    font-size:12.5px;
+    width:100%;
+    outline:none;
+    background:#fff;
+  }
+  .range-row .mini[type="number"]{ text-align:center; }
+  .hint{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    margin-top:4px;
   }
 
   table{
@@ -116,9 +150,13 @@
     word-wrap:break-word;
     white-space:normal;
   }
-  th{
-    font-weight:800;
+  thead th{
+    font-weight:900;
     background:#f1f5f9;
+  }
+  .colnum th{
+    background:#ffffff;
+    font-weight:900;
   }
 
   td input, td select{
@@ -126,35 +164,35 @@
     border:none;
     outline:none;
     font-size:11px;
-    padding:2px 3px;
+    padding:2px 2px;
     background:transparent;
     text-align:center;
   }
-  td input[type="number"]{ appearance:textfield; }
   td .ro{
     display:block;
-    font-weight:800;
+    font-weight:900;
   }
+
   tfoot td{
     font-weight:900;
     background:#f8fafc;
   }
 
-  .footer-line{
+  .footline{
     margin-top:14px;
     display:flex;
     justify-content:space-between;
     gap:12px;
     font-size:12px;
+    font-weight:700;
   }
-  .muted{ color:var(--muted); font-weight:700; }
 
-  /* ===== PRINT: readable, A4 landscape ===== */
+  /* PRINT */
   @media print{
-    @page{ size: A4 landscape; margin: 10mm; }
+    @page{ size:A4 landscape; margin:10mm; }
     body{ background:#fff; padding:0; margin:0; }
     .sheet{ box-shadow:none; border:none; padding:0; max-width:100%; }
-    .controls{ display:none !important; }
+    .controls, .no-print{ display:none !important; }
     table{ font-size:10.5px; }
     tr{ page-break-inside:avoid; }
     table{ page-break-inside:avoid; }
@@ -165,265 +203,358 @@
 <body>
 <div class="sheet" id="sheet">
 
-  <div class="topbar">
+  <div class="top">
     <div class="title">
-      दौरा भत्ता / दैनिक भत्ता गणना शीट<br/>
-      <span class="muted">TA / DA CALCULATION SHEET</span>
+      दौरा भत्ता / दैनिक भत्ता गणना शीट @ <span class="sub">TA/DA CALCULATION SHEET</span>
+      <div class="muted">Range-wise auto rows + last day hotel = 0 + PDF/Excel</div>
     </div>
 
     <div class="controls no-print">
-      <button class="btn" onclick="addRow()">+ Add Row</button>
+      <button class="btn" onclick="addRange()">+ Add Range</button>
+      <button class="btn" onclick="generateFromRanges()">Generate Rows</button>
+      <button class="btn" onclick="addManualRow()">+ Manual Row</button>
       <button class="btn danger" onclick="removeSelectedRows()">Remove Selected</button>
-      <button class="btn" onclick="recalcAll()">Recalculate</button>
       <button class="btn primary" onclick="generatePDF()">Generate PDF</button>
       <button class="btn primary" onclick="exportExcel()">Export Excel</button>
     </div>
   </div>
 
+  <!-- HEADER FIELDS (YOUR SHEET) -->
   <div class="meta">
-    <div class="field">
-      <div class="label">नाम / Name</div>
-      <input id="name" class="input" placeholder="Enter name" />
-    </div>
+    <div class="field"><span class="label">नाम/Name-</span><input id="name" class="input" placeholder="Enter name"></div>
+    <div class="field"><span class="label">पदनाम/Designation-</span><input id="designation" class="input" placeholder="Enter designation"></div>
+    <div class="field"><span class="label">स्थान/Place-</span><input id="place" class="input" placeholder="Enter place"></div>
+    <div class="field"><span class="label">माह/Month-</span><select id="month" class="select"></select></div>
+    <div class="field"><span class="label">वर्ष/Year-</span><input id="year" class="input" type="number" value="2026" min="2000" max="2100"></div>
+  </div>
 
-    <div class="field">
-      <div class="label">पदनाम / Designation</div>
-      <input id="designation" class="input" placeholder="Enter designation" />
-    </div>
-
-    <div class="field">
-      <div class="label">स्थान / Place</div>
-      <input id="place" class="input" placeholder="Enter place" />
-    </div>
-
-    <div class="field">
-      <div class="label">Month</div>
-      <select id="month" class="select" onchange="generateMonthRows()"></select>
-    </div>
-
-    <div class="field">
-      <div class="label">Year</div>
-      <input id="year" class="input" type="number" min="2000" max="2100" value="2026" onchange="generateMonthRows()" />
+  <!-- RANGE LOGIC (MULTIPLE RANGES) -->
+  <div class="ranges no-print">
+    <h4>Tour Ranges (multiple allowed)</h4>
+    <div id="rangesWrap"></div>
+    <div class="hint">
+      ✅ Each date inside range becomes a separate row. ✅ On last day of each range: <b>Hotel = 0</b>. ✅ You can override any value manually.
     </div>
   </div>
 
+  <!-- TABLE WITH YOUR ORIGINAL HEADERS -->
   <table id="tadaTable">
     <thead>
+      <!-- Main grouped headers (YOUR FORMAT) -->
       <tr>
-        <th style="width:3.8%">Sel</th>
-        <th style="width:7%">Date</th>
-        <th style="width:8%">No. of DA</th>
+        <th rowspan="3" style="width:4%">Sel</th>
+        <th rowspan="2" style="width:8%">Date</th>
+        <th rowspan="2" style="width:10%">No. of DA</th>
+
+        <th colspan="3">DA Details</th>
+        <th colspan="3">Travelling Details</th>
+        <th rowspan="2" style="width:10%">Total<br>(5+8)</th>
+      </tr>
+
+      <!-- Sub headers (YOUR FORMAT) -->
+      <tr>
         <th style="width:8%">DA</th>
         <th style="width:10%">Hotel Bill</th>
-        <th style="width:10%">Total DA</th>
-        <th style="width:12%">Mode</th>
+        <th style="width:12%">Total DA<br>(3+4)</th>
+
+        <th style="width:10%">Mode</th>
         <th style="width:8%">K.M.</th>
-        <th style="width:10%">Rate/KM</th>
-        <th style="width:10%">Total Fare</th>
-        <th style="width:13%">Grand Total</th>
+        <th style="width:12%">Total Fare</th>
+      </tr>
+
+      <!-- Column numbers row (YOUR 1–9 style) -->
+      <tr class="colnum">
+        <th>1</th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5</th>
+        <th>6</th>
+        <th>7</th>
+        <th>8</th>
+        <th>9</th>
       </tr>
     </thead>
 
-    <tbody id="tbody">
-      <!-- rows auto generated -->
-    </tbody>
+    <tbody id="tbody"></tbody>
 
     <tfoot>
       <tr>
         <td colspan="2">Grand Total</td>
-        <td id="sumDAcount">0</td>
-        <td id="sumDA">0</td>
-        <td id="sumHotel">0</td>
-        <td id="sumTotalDA">0</td>
+        <td id="gt_daCount">0</td>
+        <td id="gt_da">0</td>
+        <td id="gt_hotel">0</td>
+        <td id="gt_totalDA">0</td>
         <td></td>
         <td></td>
-        <td></td>
-        <td id="sumFare">0</td>
-        <td id="sumGrand">0</td>
+        <td id="gt_fare">0</td>
+        <td id="gt_total">0</td>
       </tr>
     </tfoot>
   </table>
 
-  <div class="footer-line">
-    <div>दिनांक: ____________________</div>
+  <div class="footline">
+    <div>दिनांक:- ____________________</div>
     <div>संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</div>
   </div>
+
 </div>
 
 <script>
-/* ===================== DEFAULTS ===================== */
+/* ===================== DEFAULTS (YOUR LOGIC) ===================== */
 const DEFAULT_DA = 500;
 const DEFAULT_HOTEL = 750;
-const DEFAULT_RATE_KM = 0; // keep 0 by default; user can enter (or you can set e.g. 10)
 
 const MODES = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Walk", "Other"];
 
-function money(n){
-  const x = Number(n || 0);
-  return (Math.round(x * 100) / 100).toString();
-}
-
-function daysInMonth(year, monthIndex){
-  // monthIndex: 0-11
-  return new Date(year, monthIndex + 1, 0).getDate();
-}
-
-/* ===================== BUILD MONTH DROPDOWN ===================== */
+/* ===================== MONTHS ===================== */
 (function initMonth(){
-  const m = document.getElementById("month");
-  const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
-  months.forEach((name,i)=>{
+  const monthSel = document.getElementById("month");
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  months.forEach((m,i)=>{
     const opt = document.createElement("option");
     opt.value = i;
-    opt.textContent = name;
-    m.appendChild(opt);
+    opt.textContent = m;
+    monthSel.appendChild(opt);
   });
-  // set current month by default
   const now = new Date();
-  m.value = now.getMonth();
+  monthSel.value = now.getMonth();
   document.getElementById("year").value = now.getFullYear();
-  generateMonthRows();
+  addRange(); // one default range row
 })();
 
-/* ===================== ROW TEMPLATE ===================== */
-function rowHTML(dateStr=""){
-  const modeOptions = MODES.map(v => `<option value="${v}">${v || "—"}</option>`).join("");
-  return `
-    <tr>
-      <td><input type="checkbox" class="rowSel" /></td>
-      <td><input type="text" class="date" value="${dateStr}" placeholder="DD" /></td>
+/* ===================== RANGE UI ===================== */
+function addRange(){
+  const wrap = document.getElementById("rangesWrap");
+  const idx = wrap.children.length + 1;
 
-      <td><input type="number" class="daCount" min="0" value="1" oninput="recalcRow(this)" /></td>
-      <td><input type="number" class="da" min="0" value="${DEFAULT_DA}" oninput="recalcRow(this)" /></td>
-      <td><input type="number" class="hotel" min="0" value="${DEFAULT_HOTEL}" oninput="recalcRow(this)" /></td>
-
-      <td><span class="ro totalDA">0</span></td>
-
-      <td>
-        <select class="mode" onchange="recalcRow(this)">${modeOptions}</select>
-      </td>
-
-      <td><input type="number" class="km" min="0" value="0" oninput="recalcRow(this)" /></td>
-      <td><input type="number" class="rate" min="0" value="${DEFAULT_RATE_KM}" oninput="recalcRow(this)" /></td>
-
-      <td><span class="ro fare">0</span></td>
-      <td><span class="ro grand">0</span></td>
-    </tr>
+  const row = document.createElement("div");
+  row.className = "range-row";
+  row.innerHTML = `
+    <input class="mini r_from" type="date" />
+    <input class="mini r_to" type="date" />
+    <input class="mini r_da" type="number" min="0" value="${DEFAULT_DA}" title="DA amount per day" />
+    <input class="mini r_hotel" type="number" min="0" value="${DEFAULT_HOTEL}" title="Hotel amount (auto 0 on last day)" />
+    <input class="mini r_mode" list="modesList" placeholder="Mode" />
+    <button class="btn danger" type="button" onclick="this.closest('.range-row').remove()">X</button>
   `;
+  wrap.appendChild(row);
 }
 
-/* ===================== GENERATE MONTH ROWS ===================== */
-function generateMonthRows(){
+/* datalist for mode input */
+(function addModesList(){
+  const dl = document.createElement("datalist");
+  dl.id = "modesList";
+  dl.innerHTML = MODES.filter(Boolean).map(m=>`<option value="${m}"></option>`).join("");
+  document.body.appendChild(dl);
+})();
+
+/* ===================== DATE HELPERS ===================== */
+function parseISO(d){ // yyyy-mm-dd
+  const [y,m,dd] = d.split("-").map(Number);
+  return new Date(y, m-1, dd);
+}
+function fmtDD(d){
+  const dd = String(d.getDate()).padStart(2,"0");
+  return dd;
+}
+function addDays(date, n){
+  const d = new Date(date);
+  d.setDate(d.getDate()+n);
+  return d;
+}
+function sameYMD(a,b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+/* ===================== TABLE ROW TEMPLATE ===================== */
+function rowHTML({dateDD="", daCount=1, da=DEFAULT_DA, hotel=DEFAULT_HOTEL, mode="", km=0, fare=0, totalDA=0, total=0}){
+  const modeOptions = MODES.map(v => `<option value="${v}">${v || "—"}</option>`).join("");
+
+  return `
+  <tr>
+    <td><input type="checkbox" class="rowSel"></td>
+    <td><input class="date" type="text" value="${dateDD}" placeholder="DD"></td>
+    <td><input class="daCount" type="number" min="0" value="${daCount}" oninput="recalcRow(this)"></td>
+
+    <td><input class="da" type="number" min="0" value="${da}" oninput="recalcRow(this)"></td>
+    <td><input class="hotel" type="number" min="0" value="${hotel}" oninput="recalcRow(this)"></td>
+    <td><span class="ro totalDA">${totalDA}</span></td>
+
+    <td>
+      <select class="mode" onchange="recalcRow(this)">
+        ${modeOptions}
+      </select>
+    </td>
+
+    <td><input class="km" type="number" min="0" value="${km}" oninput="recalcRow(this)"></td>
+    <td><input class="fareIn" type="number" min="0" value="${fare}" oninput="recalcRow(this)" title="Total Fare"></td>
+
+    <td><span class="ro total">${total}</span></td>
+  </tr>`;
+}
+
+/* ===================== GENERATE ROWS FROM RANGES (YOUR LOGIC) ===================== */
+function generateFromRanges(){
   const monthIndex = Number(document.getElementById("month").value);
   const year = Number(document.getElementById("year").value || new Date().getFullYear());
 
-  const totalDays = daysInMonth(year, monthIndex);
   const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
+  tbody.innerHTML = ""; // regenerate fresh
 
-  // NOTE: If you truly want ONE PAGE ALWAYS, keep rows limited.
-  // Here we generate full month but print will overflow if too many rows.
-  for(let d=1; d<=totalDays; d++){
-    tbody.insertAdjacentHTML("beforeend", rowHTML(String(d).padStart(2,"0")));
-  }
-  recalcAll();
+  // build a map by date within selected month/year: {hotel, da, mode}
+  const dateMap = new Map(); // key = yyyy-mm-dd -> {da, hotel, mode}
+
+  document.querySelectorAll("#rangesWrap .range-row").forEach(rr=>{
+    const fromVal = rr.querySelector(".r_from").value;
+    const toVal = rr.querySelector(".r_to").value;
+    if(!fromVal || !toVal) return;
+
+    let from = parseISO(fromVal);
+    let to = parseISO(toVal);
+    if(from > to){ const tmp = from; from = to; to = tmp; }
+
+    const rDA = Number(rr.querySelector(".r_da").value || DEFAULT_DA);
+    const rHotel = Number(rr.querySelector(".r_hotel").value || DEFAULT_HOTEL);
+    const rMode = (rr.querySelector(".r_mode").value || "").trim();
+
+    // iterate inclusive
+    let cur = new Date(from);
+    while(cur <= to){
+      // only create rows for selected month/year (user asked multiple ranges in month)
+      if(cur.getFullYear()===year && cur.getMonth()===monthIndex){
+        const key = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,"0")}-${String(cur.getDate()).padStart(2,"0")}`;
+
+        const isLastDay = sameYMD(cur, to);
+        const hotelVal = isLastDay ? 0 : rHotel;
+
+        // if duplicate date happens due to multiple ranges:
+        // keep hotel 750 if ANY range needs hotel that day (i.e., not last day in all ranges)
+        const prev = dateMap.get(key);
+        if(!prev){
+          dateMap.set(key, {da:rDA, hotel:hotelVal, mode:rMode});
+        }else{
+          prev.da = prev.da || rDA;
+          prev.mode = prev.mode || rMode;
+          prev.hotel = Math.max(Number(prev.hotel||0), Number(hotelVal||0));
+          dateMap.set(key, prev);
+        }
+      }
+      cur = addDays(cur, 1);
+    }
+  });
+
+  // sort keys by date
+  const keys = Array.from(dateMap.keys()).sort();
+  keys.forEach(key=>{
+    const d = parseISO(key);
+    const dd = fmtDD(d);
+    const info = dateMap.get(key);
+    tbody.insertAdjacentHTML("beforeend", rowHTML({
+      dateDD: dd,
+      daCount: 1,
+      da: info.da ?? DEFAULT_DA,
+      hotel: info.hotel ?? DEFAULT_HOTEL,
+      mode: info.mode ?? "",
+      km: 0,
+      fare: 0,
+      totalDA: 0,
+      total: 0
+    }));
+    // set mode selected
+    const lastRow = tbody.lastElementChild;
+    const sel = lastRow.querySelector(".mode");
+    if(sel && info.mode) sel.value = info.mode;
+    recalcRow(lastRow);
+  });
+
+  // if nothing generated, keep one manual row
+  if(!tbody.children.length) addManualRow();
+  recalcTotals();
 }
 
-/* ===================== ADD / REMOVE ROWS ===================== */
-function addRow(){
-  document.getElementById("tbody").insertAdjacentHTML("beforeend", rowHTML(""));
-  recalcAll();
+/* ===================== MANUAL ROWS ===================== */
+function addManualRow(){
+  const tbody = document.getElementById("tbody");
+  tbody.insertAdjacentHTML("beforeend", rowHTML({dateDD:"", daCount:1, da:DEFAULT_DA, hotel:DEFAULT_HOTEL, mode:"", km:0, fare:0, totalDA:0, total:0}));
+  recalcRow(tbody.lastElementChild);
+  recalcTotals();
 }
-
 function removeSelectedRows(){
   const tbody = document.getElementById("tbody");
-  const rows = Array.from(tbody.querySelectorAll("tr"));
-  rows.forEach(r=>{
-    const chk = r.querySelector(".rowSel");
-    if(chk && chk.checked) r.remove();
+  Array.from(tbody.querySelectorAll("tr")).forEach(tr=>{
+    const chk = tr.querySelector(".rowSel");
+    if(chk && chk.checked) tr.remove();
   });
-  recalcAll();
+  recalcTotals();
 }
 
-/* ===================== CALCULATIONS ===================== */
+/* ===================== CALC LOGIC (YOUR TOTALS) ===================== */
 /*
-  Logic:
-  TotalDA = (NoOfDA * DA) + Hotel
-  Fare = KM * Rate/KM   (or user keeps 0 and enters km only; still OK)
-  Grand = TotalDA + Fare
+  Total DA (5) = (No of DA * DA) + Hotel
+  Total Fare (8) = Fare input (user enters directly)
+  Total (9) = (5 + 8)
 */
 function recalcRow(el){
-  const tr = el.closest("tr");
+  const tr = (el.tagName==="TR") ? el : el.closest("tr");
   if(!tr) return;
 
   const daCount = Number(tr.querySelector(".daCount")?.value || 0);
   const da = Number(tr.querySelector(".da")?.value || 0);
   const hotel = Number(tr.querySelector(".hotel")?.value || 0);
-
-  const km = Number(tr.querySelector(".km")?.value || 0);
-  const rate = Number(tr.querySelector(".rate")?.value || 0);
+  const fare = Number(tr.querySelector(".fareIn")?.value || 0);
 
   const totalDA = (daCount * da) + hotel;
-  const fare = km * rate;
-  const grand = totalDA + fare;
+  const total = totalDA + fare;
 
-  tr.querySelector(".totalDA").textContent = money(totalDA);
-  tr.querySelector(".fare").textContent = money(fare);
-  tr.querySelector(".grand").textContent = money(grand);
+  tr.querySelector(".totalDA").textContent = round2(totalDA);
+  tr.querySelector(".total").textContent = round2(total);
 
   recalcTotals();
 }
 
-function recalcAll(){
-  document.querySelectorAll("#tbody tr").forEach(tr=>{
-    recalcRow(tr); // works because recalcRow uses closest tr; passing tr is fine if handled
-  });
-  // If passing tr, closest("tr") will return itself? Not for element that isn't inside itself.
-  // So we call recalcRow with a child element instead:
-  document.querySelectorAll("#tbody tr").forEach(tr=>{
-    recalcRow(tr.querySelector("input,select") || tr);
-  });
+function round2(n){
+  const x = Number(n||0);
+  return (Math.round(x*100)/100).toString();
 }
 
 function recalcTotals(){
-  let sumDAcount = 0;
-  let sumDA = 0;
-  let sumHotel = 0;
-  let sumTotalDA = 0;
-  let sumFare = 0;
-  let sumGrand = 0;
+  let sDaCount=0, sDa=0, sHotel=0, sTotalDA=0, sFare=0, sTotal=0;
 
   document.querySelectorAll("#tbody tr").forEach(tr=>{
-    sumDAcount += Number(tr.querySelector(".daCount")?.value || 0);
-    sumDA += Number(tr.querySelector(".da")?.value || 0) * Number(tr.querySelector(".daCount")?.value || 0);
-    sumHotel += Number(tr.querySelector(".hotel")?.value || 0);
-    sumTotalDA += Number(tr.querySelector(".totalDA")?.textContent || 0);
-    sumFare += Number(tr.querySelector(".fare")?.textContent || 0);
-    sumGrand += Number(tr.querySelector(".grand")?.textContent || 0);
+    const daCount = Number(tr.querySelector(".daCount")?.value || 0);
+    const da = Number(tr.querySelector(".da")?.value || 0);
+    const hotel = Number(tr.querySelector(".hotel")?.value || 0);
+    const fare = Number(tr.querySelector(".fareIn")?.value || 0);
+
+    const totalDA = Number(tr.querySelector(".totalDA")?.textContent || 0);
+    const total = Number(tr.querySelector(".total")?.textContent || 0);
+
+    sDaCount += daCount;
+    sDa += (daCount * da);
+    sHotel += hotel;
+    sTotalDA += totalDA;
+    sFare += fare;
+    sTotal += total;
   });
 
-  document.getElementById("sumDAcount").textContent = money(sumDAcount);
-  document.getElementById("sumDA").textContent = money(sumDA);
-  document.getElementById("sumHotel").textContent = money(sumHotel);
-  document.getElementById("sumTotalDA").textContent = money(sumTotalDA);
-  document.getElementById("sumFare").textContent = money(sumFare);
-  document.getElementById("sumGrand").textContent = money(sumGrand);
+  document.getElementById("gt_daCount").textContent = round2(sDaCount);
+  document.getElementById("gt_da").textContent = round2(sDa);
+  document.getElementById("gt_hotel").textContent = round2(sHotel);
+  document.getElementById("gt_totalDA").textContent = round2(sTotalDA);
+  document.getElementById("gt_fare").textContent = round2(sFare);
+  document.getElementById("gt_total").textContent = round2(sTotal);
 }
 
-/* ===================== PDF (PRINT) ===================== */
+/* ===================== PDF ===================== */
 function generatePDF(){
-  // Uses browser print dialog (Save as PDF). Print CSS ensures readability.
-  window.print();
+  window.print(); // Print dialog -> Save as PDF
 }
 
-/* ===================== EXCEL EXPORT ===================== */
+/* ===================== EXCEL EXPORT (WITH YOUR HEADERS) ===================== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
 
-  // Header info
   const meta = [
     ["TA/DA CALCULATION SHEET"],
     ["Name", document.getElementById("name").value || ""],
@@ -433,9 +564,8 @@ function exportExcel(){
     []
   ];
 
-  // Table rows
   const data = [];
-  data.push(["Date","No. of DA","DA","Hotel Bill","Total DA","Mode","KM","Rate/KM","Total Fare","Grand Total"]);
+  data.push(["Date","No. of DA","DA","Hotel Bill","Total DA (3+4)","Mode","K.M.","Total Fare","Total (5+8)"]);
 
   document.querySelectorAll("#tbody tr").forEach(tr=>{
     data.push([
@@ -446,33 +576,32 @@ function exportExcel(){
       Number(tr.querySelector(".totalDA")?.textContent || 0),
       tr.querySelector(".mode")?.value || "",
       Number(tr.querySelector(".km")?.value || 0),
-      Number(tr.querySelector(".rate")?.value || 0),
-      Number(tr.querySelector(".fare")?.textContent || 0),
-      Number(tr.querySelector(".grand")?.textContent || 0),
+      Number(tr.querySelector(".fareIn")?.value || 0),
+      Number(tr.querySelector(".total")?.textContent || 0),
     ]);
   });
 
   data.push([]);
-  data.push(["Grand Total","","","","","","","","", Number(document.getElementById("sumGrand").textContent || 0)]);
+  data.push(["Grand Total",
+    document.getElementById("gt_daCount").textContent,
+    document.getElementById("gt_da").textContent,
+    document.getElementById("gt_hotel").textContent,
+    document.getElementById("gt_totalDA").textContent,
+    "",
+    "",
+    document.getElementById("gt_fare").textContent,
+    document.getElementById("gt_total").textContent
+  ]);
 
-  const ws1 = XLSX.utils.aoa_to_sheet(meta.concat(data));
-  XLSX.utils.book_append_sheet(wb, ws1, "TA_DA");
+  const ws = XLSX.utils.aoa_to_sheet(meta.concat(data));
+  XLSX.utils.book_append_sheet(wb, ws, "TA_DA");
 
   const fileName = `TA_DA_${document.getElementById("month").selectedOptions[0].textContent}_${document.getElementById("year").value}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
 
-/* ===================== SMALL FIX: recalcRow when passed TR ===================== */
-const _recalcRow = recalcRow;
-recalcRow = function(el){
-  // allow passing TR directly
-  if(el && el.tagName === "TR"){
-    const first = el.querySelector("input,select,span") || el;
-    return _recalcRow(first);
-  }
-  return _recalcRow(el);
-};
+/* ===================== START WITH ONE MANUAL ROW ===================== */
+addManualRow();
 </script>
-
 </body>
 </html>
