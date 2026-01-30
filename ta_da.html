@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TA/DA Calculation Sheet (Multi Tour Range + PDF + Excel)</title>
+<title>TA/DA Calculation Sheet (Multi Tour Range + Single-Page PDF)</title>
 
 <!-- PDF + Excel libs (NO PRINT) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -25,6 +25,7 @@
   body{margin:0;background:var(--bg);font-family:Arial,system-ui;padding:10px}
   .wrap{max-width:1500px;margin:auto}
 
+  /* ===== Toolbar ===== */
   .toolbar{
     display:flex;flex-wrap:wrap;gap:8px;
     background:var(--card);border:1px solid var(--border);
@@ -52,6 +53,7 @@
   .btn{
     height:34px;border:none;border-radius:6px;
     padding:0 12px;color:#fff;font-weight:800;cursor:pointer;font-size:13px;
+    white-space:nowrap;
   }
   .btn.primary{background:var(--btn)}
   .btn.success{background:var(--btn2)}
@@ -67,7 +69,7 @@
   }
   .rateBadge b{font-size:12px}
 
-  /* Multi range area */
+  /* ===== Multi range panel ===== */
   .ranges{
     width:100%;
     border:1px dashed #b8c0cc;
@@ -84,17 +86,26 @@
   .rangesHead .title{
     font-weight:900;font-size:13px;
   }
+
+  /* ✅ IMPORTANT: ranges shown NEXT TO previous (horizontal) */
+  #rangesContainer{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+
   .rangeRow{
     display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;
     padding:8px;border:1px solid #e3e7ee;border-radius:8px;background:#fafbfc;
   }
-  .rangeRow .field input{min-width:160px}
+  .rangeRow .field input{min-width:150px}
   .rangeTag{
     font-size:12px;font-weight:900;background:#eef2ff;border:1px solid #c7d2fe;
     padding:6px 10px;border-radius:999px;height:34px;display:flex;align-items:center;
   }
 
-  /* Sheet */
+  /* ===== Sheet ===== */
   #taDaSheet{
     background:var(--card);border:1px solid var(--border);
     padding:10px;border-radius:8px;
@@ -144,10 +155,17 @@
     border-bottom:1px solid #000;display:inline-block;min-width:180px;height:12px;vertical-align:bottom;
   }
 
-  .pdf-compact .main td{height:20px}
-  .pdf-compact .main input,.pdf-compact .main select{height:16px;font-size:10px}
-  .pdf-compact .main th{font-size:10px}
-  .pdf-compact .main td{font-size:10px}
+  /* ===== Single-page PDF compact mode ===== */
+  .pdf-compact .header-grid td{padding:4px;font-size:10px}
+  .pdf-compact .header-title{font-size:12px}
+  .pdf-compact .main th,.pdf-compact .main td{font-size:9px;padding:2px 3px}
+  .pdf-compact .main td{height:18px}
+  .pdf-compact .main input,.pdf-compact .main select{height:14px;font-size:9px}
+  .pdf-compact .footer{font-size:9px;margin-top:6px}
+  .pdf-compact .line{min-width:150px}
+
+  /* (optional) if user uses browser print later */
+  @page { size: A4 landscape; margin: 5mm; }
 </style>
 </head>
 
@@ -207,10 +225,9 @@
         <div class="title">Multi Tour Ranges</div>
         <button class="btn gray" type="button" onclick="addRangeUI()">+ Add Range</button>
         <div style="font-size:12px;color:#333">
-          Tip: Same date can appear in multiple ranges → multiple rows (supports multiple journeys).
+          Ranges will add <b>next to previous</b> (not replace).
         </div>
       </div>
-
       <div id="rangesContainer"></div>
     </div>
 
@@ -218,11 +235,11 @@
     <button class="btn gray" onclick="addRow()">+ Add Row</button>
     <button class="btn gray" onclick="clearAll()">Clear</button>
 
-    <button class="btn primary" onclick="exportPDF()">⬇️ PDF</button>
+    <button class="btn primary" onclick="exportPDFSinglePage()">⬇️ PDF (1 Page)</button>
     <button class="btn primary" onclick="exportExcel()">⬇️ Excel</button>
 
     <div class="hint">
-      ✅ Multi tour ranges • ✅ End-date row fixed (timezone safe) • ✅ Blank stays blank • ✅ Save/Restore
+      ✅ Multi ranges shown side-by-side • ✅ PDF forced to 1 page landscape (auto-fit) • ✅ Blank stays blank
     </div>
   </div>
 
@@ -288,17 +305,17 @@
 
 <script>
 /* =========================
-   MULTI TOUR RANGE VERSION
-   - Multiple ranges UI
-   - Generate rows per range (duplicates allowed)
-   - Auto Hotel per range: last day blank
-   - Blank stays blank
-   - To-date timezone safe dates
+   MULTI TOUR RANGE + 1 PAGE PDF
+   - Multiple ranges add next to previous (horizontal)
+   - Generate rows for each range (duplicates allowed)
+   - Hotel auto per range: last day blank
+   - Blank stays blank if no entry
+   - PDF export: ALWAYS 1 page landscape (auto fit)
    ========================= */
 
-const LS_KEY = "tada_sheet_multi_ranges_v1";
+const LS_KEY = "tada_sheet_multi_ranges_v2_onepage";
 
-/* Designation-wise rates */
+/* Designation-wise rates (as provided) */
 const DESIGNATION_RATES = {
   "Senior Statistical Officer": { da: 1000, hotel: 960 },
   "Survey Supervisor":         { da: 500,  hotel: 750 },
@@ -325,6 +342,8 @@ function toLocalISO(d){
   return `${y}-${m}-${day}`;
 }
 
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
 /* ===== header ===== */
 function setHeaderFromInputs(){
   const name = document.getElementById("name").value.trim() || "-";
@@ -334,9 +353,8 @@ function setHeaderFromInputs(){
   document.getElementById("hDesig").textContent = desig;
   document.getElementById("hPlace").textContent = place;
 
-  // month/year from first valid range-from; else today
-  const ranges = getRanges();
-  const firstFrom = (ranges.find(r=>r.from)?.from) || "";
+  const ranges = getRanges().filter(r=>r.from);
+  const firstFrom = ranges[0]?.from || "";
   const d = firstFrom ? new Date(firstFrom + "T00:00:00") : new Date();
   document.getElementById("hMonth").textContent = d.toLocaleString("en-US",{month:"long"});
   document.getElementById("hYear").textContent = d.getFullYear();
@@ -365,17 +383,13 @@ function applyDesignationRates(){
 }
 
 /* ===== ranges UI ===== */
-function uid(){
-  return Math.random().toString(16).slice(2) + Date.now().toString(16);
-}
-
 function addRangeUI(prefill={from:"",to:""}){
   const id = uid();
-  const wrap = document.createElement("div");
-  wrap.className = "rangeRow";
-  wrap.dataset.rangeId = id;
+  const row = document.createElement("div");
+  row.className = "rangeRow";
+  row.dataset.rangeId = id;
 
-  wrap.innerHTML = `
+  row.innerHTML = `
     <div class="rangeTag">Range</div>
     <div class="field small">
       <label>From</label>
@@ -388,19 +402,18 @@ function addRangeUI(prefill={from:"",to:""}){
     <button class="btn danger" type="button" title="Remove range">Remove</button>
   `;
 
-  const btnRemove = wrap.querySelector(".btn.danger");
-  btnRemove.addEventListener("click", ()=>{
-    wrap.remove();
+  row.querySelector(".btn.danger").addEventListener("click", ()=>{
+    row.remove();
     setHeaderFromInputs();
     saveAll();
   });
 
-  wrap.querySelectorAll("input").forEach(inp=>{
+  row.querySelectorAll("input").forEach(inp=>{
     inp.addEventListener("input", ()=>{ setHeaderFromInputs(); saveAll(); });
     inp.addEventListener("change", ()=>{ setHeaderFromInputs(); saveAll(); });
   });
 
-  document.getElementById("rangesContainer").appendChild(wrap);
+  document.getElementById("rangesContainer").appendChild(row);
   setHeaderFromInputs();
   saveAll();
 }
@@ -408,12 +421,12 @@ function addRangeUI(prefill={from:"",to:""}){
 function getRanges(){
   return [...document.querySelectorAll("#rangesContainer .rangeRow")].map((row, idx)=>({
     id: row.dataset.rangeId || String(idx+1),
-    from: row.querySelector(".rg_from").value || "",
-    to: row.querySelector(".rg_to").value || ""
+    from: row.querySelector(".rg_from")?.value || "",
+    to: row.querySelector(".rg_to")?.value || ""
   }));
 }
 
-/* timezone-safe range list */
+/* timezone-safe date range */
 function dateRange(from, to){
   const out=[];
   if(!from || !to) return out;
@@ -443,10 +456,8 @@ function renderModeOptions(selected){
 
 function makeRow(data={}){
   const tr = document.createElement("tr");
-
-  // link row to a range + range end date for "last day hotel blank"
   tr.dataset.rangeId = data.rangeId || "";
-  tr.dataset.rangeEnd = data.rangeEnd || ""; // ISO yyyy-mm-dd
+  tr.dataset.rangeEnd = data.rangeEnd || "";
   tr.dataset.hotelManual = data.hotelManual ? "1" : "0";
 
   tr.innerHTML = `
@@ -477,15 +488,15 @@ function makeRow(data={}){
   return tr;
 }
 
-/* per-row last day (based on that row's rangeEnd) */
 function isRowLastDay(tr, dateISO){
   const end = tr.dataset.rangeEnd || "";
-  if(!end || !dateISO) return false;
-  return dateISO === end;
+  return !!(end && dateISO && end === dateISO);
 }
+
 function shouldAutoHotel(tr){
   return document.getElementById("autoHotel").checked && tr.dataset.hotelManual !== "1";
 }
+
 function applyAutoHotelIfNeeded(tr){
   if(!shouldAutoHotel(tr)) return;
 
@@ -511,8 +522,7 @@ function recalcRow(tr){
   if(isBlank(noDAraw) || parseNum(noDAraw) <= 0){
     setValIfDifferent(tr.querySelector(".r_DA"), "");
   }else{
-    const computedDA = parseNum(noDAraw) * rateDA;
-    setValIfDifferent(tr.querySelector(".r_DA"), String(computedDA));
+    setValIfDifferent(tr.querySelector(".r_DA"), String(parseNum(noDAraw) * rateDA));
   }
 
   applyAutoHotelIfNeeded(tr);
@@ -567,7 +577,7 @@ function addRow(prefill={}){
   saveAll();
 }
 
-/* ===== generate rows for all ranges ===== */
+/* ===== Generate rows for ALL ranges (do not replace, append) ===== */
 function generateRows(){
   const ranges = getRanges().filter(r=>r.from && r.to);
   if(!ranges.length){
@@ -578,15 +588,15 @@ function generateRows(){
 
   document.getElementById("rows").innerHTML = "";
 
-  // IMPORTANT: duplicates allowed
-  ranges.forEach((rg, i)=>{
+  ranges.forEach(rg=>{
     const list = dateRange(rg.from, rg.to);
-    const endISO = rg.to; // already yyyy-mm-dd
+    const endISO = rg.to;
+
     list.forEach(d=>{
       const iso = toLocalISO(d);
       addRow({
         date: iso,
-        noDA: 1,              // default 1 (you can clear -> becomes blank)
+        noDA: 1,
         rangeId: rg.id,
         rangeEnd: endISO,
         hotelManual: 0
@@ -606,7 +616,7 @@ function clearAll(){
   saveAll();
 }
 
-/* ===== save/restore ===== */
+/* ===== Save/Restore ===== */
 function saveAll(){
   const payload = {
     meta:{
@@ -659,7 +669,6 @@ function loadAll(){
     const ranges = data.ranges || [];
     if(ranges.length){
       ranges.forEach(r=> addRangeUI({from:r.from||"", to:r.to||""}));
-      // keep same ids? we regenerate new ids; not needed
     }else{
       addRangeUI();
     }
@@ -694,7 +703,7 @@ function loadAll(){
   }
 }
 
-/* ===== bindings ===== */
+/* ===== Bind meta ===== */
 function bindMeta(){
   ["name","place","rateDA","rateHotel"].forEach(id=>{
     const el = document.getElementById(id);
@@ -730,29 +739,56 @@ function bindMeta(){
   });
 }
 
-/* ===== PDF ===== */
+/* ===== Export helpers ===== */
 function makeFileName(prefix, ext){
   const nm = (document.getElementById("name").value || "User").trim().replace(/\s+/g,"_");
   const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
   return `${prefix}_${nm}${des?("_"+des):""}.${ext}`;
 }
-function exportPDF(){
+
+/* ✅ SINGLE PAGE PDF (landscape) - always 1 page, auto-fit */
+async function exportPDFSinglePage(){
   const sheet = document.getElementById("taDaSheet");
   sheet.classList.add("pdf-compact");
 
-  const opt = {
-    margin: 5,
-    filename: makeFileName("TA_DA_Sheet", "pdf"),
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-    pagebreak: { mode: ["avoid-all"] }
-  };
+  try{
+    // use html2canvas from html2pdf bundle
+    const canvas = await html2canvas(sheet, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0
+    });
 
-  html2pdf().set(opt).from(sheet).save().finally(()=> sheet.classList.remove("pdf-compact"));
+    // jsPDF from html2pdf bundle
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+    // fit image into ONE page
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+
+    const ratio = Math.min(pageW / imgW, pageH / imgH);
+    const w = imgW * ratio;
+    const h = imgH * ratio;
+
+    const x = (pageW - w) / 2;
+    const y = (pageH - h) / 2;
+
+    pdf.addImage(imgData, "JPEG", x, y, w, h, undefined, "FAST");
+    pdf.save(makeFileName("TA_DA_Sheet_OnePage", "pdf"));
+  } finally {
+    sheet.classList.remove("pdf-compact");
+  }
 }
 
-/* ===== EXCEL ===== */
+/* ===== Excel ===== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
   const aoa = [];
@@ -766,7 +802,6 @@ function exportExcel(){
   const rateDA = parseNum(document.getElementById("rateDA").value);
   const rateHotel = parseNum(document.getElementById("rateHotel").value);
 
-  // add ranges summary
   const ranges = getRanges().filter(r=>r.from && r.to);
   const rangesText = ranges.length ? ranges.map((r,i)=>`R${i+1}:${r.from}→${r.to}`).join(" | ") : "-";
 
@@ -818,15 +853,11 @@ function exportExcel(){
 /* ===== INIT ===== */
 (function init(){
   bindMeta();
-
   const ok = loadAll();
   if(!ok){
-    // start with 1 range row by default
-    addRangeUI();
-    // and 1 empty claim row
-    addRow({});
+    addRangeUI();   // first range
+    addRow({});     // one empty row
   }
-
   setHeaderFromInputs();
   applyDesignationRates();
   recalcTotals();
