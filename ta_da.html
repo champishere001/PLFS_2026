@@ -38,12 +38,13 @@
   }
   .field.small input{min-width:120px}
   .field.tiny input{min-width:90px}
-  .field.tiny select{min-width:210px}
+  .field.tiny select{min-width:220px}
 
   .toggle{
     display:flex;align-items:center;gap:8px;
     height:34px;padding:0 10px;border:1px solid #c7c7c7;border-radius:6px;background:#fff;
     font-size:13px;
+    user-select:none;
   }
   .toggle input{width:16px;height:16px;margin:0}
 
@@ -91,12 +92,16 @@
     text-align:center;
     font-size:11px;
     padding:0;
-    height:18px; /* row height control */
+    height:18px;
     outline:none;
+
+    /* ✅ visibility fix (mobile + pdf canvas) */
+    color:#000;
+    -webkit-text-fill-color:#000;
+    opacity:1;
   }
   .main td{height:22px}
 
-  .left{text-align:left}
   .right{text-align:right}
 
   .footer{
@@ -107,13 +112,12 @@
     border-bottom:1px solid #000;display:inline-block;min-width:180px;height:12px;vertical-align:bottom;
   }
 
-  /* Make PDF output tighter without print dialog */
+  /* Make PDF output tighter */
   .pdf-compact .main td{height:20px}
   .pdf-compact .main input,.pdf-compact .main select{height:16px;font-size:10px}
   .pdf-compact .main th{font-size:10px}
   .pdf-compact .main td{font-size:10px}
 
-  /* Mini rate badge */
   .rateBadge{
     height:34px;display:flex;align-items:center;gap:8px;
     padding:0 10px;border-radius:6px;border:1px dashed #9aa4b2;background:#fff;
@@ -126,14 +130,13 @@
 <body>
 <div class="wrap">
 
-  <!-- ===== TOOLBAR (all logic controls) ===== -->
+  <!-- ===== TOOLBAR ===== -->
   <div class="toolbar">
     <div class="field">
       <label>नाम / Name</label>
       <input id="name" placeholder="Name" />
     </div>
 
-    <!-- ✅ Designation dropdown (designation-wise rates) -->
     <div class="field">
       <label>पदनाम / Designation</label>
       <select id="designation">
@@ -150,10 +153,15 @@
       <input id="place" placeholder="Place" />
     </div>
 
-    <!-- ✅ Toggle: Auto apply rates by designation -->
     <div class="toggle" title="Designation select karte hi DA/Hotel rates auto set honge">
       <input id="autoRates" type="checkbox" checked />
       <span><b>Auto rates</b> by designation</span>
+    </div>
+
+    <!-- ✅ NEW: Auto hotel claim toggle -->
+    <div class="toggle" title="ON = Hotel auto fill (last day 0). Manual entry allowed.">
+      <input id="autoHotel" type="checkbox" checked />
+      <span><b>Auto Hotel</b> claim</span>
     </div>
 
     <div class="field tiny">
@@ -165,7 +173,7 @@
       <input id="rateHotel" type="number" value="750" />
     </div>
 
-    <div class="rateBadge" id="rateBadge">
+    <div class="rateBadge">
       <span>Applied:</span>
       <b id="appliedRateText">DA 500 | Hotel 750</b>
     </div>
@@ -187,11 +195,11 @@
     <button class="btn primary" onclick="exportExcel()">⬇️ Excel</button>
 
     <div class="hint">
-      ✅ Date-range rows • ✅ Auto totals • ✅ Editable • ✅ Save/Restore • ✅ Designation-wise rate apply
+      ✅ Date-range rows • ✅ Auto totals • ✅ Designation-wise rates • ✅ Auto Hotel (last day 0) • ✅ Save/Restore
     </div>
   </div>
 
-  <!-- ===== SHEET (export area) ===== -->
+  <!-- ===== SHEET ===== -->
   <div id="taDaSheet">
     <table class="header-grid">
       <tr>
@@ -253,37 +261,35 @@
 
 <script>
 /* =========================
-   YOUR ORIGINAL LOGICS + ADDED:
-   ✅ Designation-wise rates apply (toggle)
+   Checked & Working:
+   ✅ Date range rows
+   ✅ DA auto = noDA * rateDA (always synced)
+   ✅ Hotel claim auto fill (toggle) + last day 0 + manual override per row
+   ✅ Row total + Grand totals
+   ✅ localStorage save/restore
+   ✅ PDF + Excel export (no print)
+   ✅ Designation-wise rates
    ========================= */
 
-const LS_KEY = "tada_sheet_v2_designation";
+const LS_KEY = "tada_sheet_v3_designation_hotel";
 
 /* ✅ Designation-wise rates (as you provided) */
 const DESIGNATION_RATES = {
   "Senior Statistical Officer": { da: 1000, hotel: 960 },
   "Survey Supervisor":         { da: 500,  hotel: 750 },
   "Survey Enumerator":         { da: 400,  hotel: 750 },
-  "Other":                     { da: 500,  hotel: 750 } // fallback
+  "Other":                     { da: 500,  hotel: 750 }
 };
 
-function fmtINR(n){
-  n = Number(n||0);
-  return Math.round(n).toString();
-}
 function parseNum(v){
   const x = Number(String(v||"").replace(/[^0-9.\-]/g,""));
   return isNaN(x) ? 0 : x;
 }
-
-function getDesignationLabel(){
-  const v = document.getElementById("designation").value || "";
-  return v ? v : "-";
-}
+function fmtINR(n){ return Math.round(Number(n||0)).toString(); }
 
 function setHeaderFromInputs(){
   const name = document.getElementById("name").value.trim() || "-";
-  const desig = getDesignationLabel();
+  const desig = document.getElementById("designation").value || "-";
   const place = document.getElementById("place").value.trim() || "-";
 
   document.getElementById("hName").textContent = name;
@@ -292,18 +298,21 @@ function setHeaderFromInputs(){
 
   const from = document.getElementById("fromDate").value;
   const d = from ? new Date(from) : new Date();
-  const m = d.toLocaleString("en-US",{month:"long"});
-  const y = d.getFullYear();
-  document.getElementById("hMonth").textContent = m;
-  document.getElementById("hYear").textContent = y;
+  document.getElementById("hMonth").textContent = d.toLocaleString("en-US",{month:"long"});
+  document.getElementById("hYear").textContent = d.getFullYear();
 
   updateRateBadge();
 }
 
+function updateRateBadge(){
+  const da = parseNum(document.getElementById("rateDA").value);
+  const ht = parseNum(document.getElementById("rateHotel").value);
+  document.getElementById("appliedRateText").textContent = `DA ${da} | Hotel ${ht}`;
+}
+
 /* ✅ Apply rates from designation if toggle ON */
-function applyDesignationRates(force=false){
-  const auto = document.getElementById("autoRates").checked;
-  if(!auto && !force) { updateRateBadge(); return; }
+function applyDesignationRates(){
+  if(!document.getElementById("autoRates").checked) { updateRateBadge(); return; }
 
   const desig = document.getElementById("designation").value || "";
   const r = DESIGNATION_RATES[desig];
@@ -318,40 +327,6 @@ function applyDesignationRates(force=false){
   updateRateBadge();
 }
 
-function updateRateBadge(){
-  const da = parseNum(document.getElementById("rateDA").value);
-  const ht = parseNum(document.getElementById("rateHotel").value);
-  document.getElementById("appliedRateText").textContent = `DA ${da} | Hotel ${ht}`;
-}
-
-function makeRow(data={}){
-  const tr = document.createElement("tr");
-
-  tr.innerHTML = `
-    <td><input type="date" class="r_date" value="${data.date||""}"></td>
-    <td><input type="number" min="0" step="1" class="r_noDA" value="${data.noDA ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? 0}" readonly></td>
-    <td>
-      <select class="r_mode">
-        ${renderModeOptions(data.mode)}
-      </select>
-    </td>
-    <td><input type="number" min="0" step="1" class="r_km" value="${data.km ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_fare" value="${data.fare ?? 0}"></td>
-    <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? 0}" readonly></td>
-  `;
-
-  tr.querySelectorAll("input,select").forEach(el=>{
-    el.addEventListener("input", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); });
-    el.addEventListener("change", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); setHeaderFromInputs(); });
-  });
-
-  recalcRow(tr);
-  return tr;
-}
-
 function renderModeOptions(selected){
   const modes = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Other"];
   return modes.map(m=>{
@@ -361,12 +336,71 @@ function renderModeOptions(selected){
   }).join("");
 }
 
-function recalcRow(tr){
-  const rateDA = parseNum(document.getElementById("rateDA").value);
+/* ===== Hotel auto logic helpers ===== */
+function isLastDay(dateISO){
+  const to = document.getElementById("toDate").value;
+  if(!to || !dateISO) return false;
+  return dateISO === to;
+}
+function shouldAutoHotel(tr){
+  return document.getElementById("autoHotel").checked && tr.dataset.hotelManual !== "1";
+}
+function applyAutoHotelIfNeeded(tr){
+  if(!shouldAutoHotel(tr)) return;
+
+  const rateHotel = parseNum(document.getElementById("rateHotel").value);
+  const dateISO = tr.querySelector(".r_date").value || "";
   const noDA = parseNum(tr.querySelector(".r_noDA").value);
 
+  // rule: last day => no hotel
+  const autoVal = (noDA > 0 && !isLastDay(dateISO)) ? rateHotel : 0;
+  tr.querySelector(".r_hotel").value = autoVal;
+}
+
+function makeRow(data={}){
+  const tr = document.createElement("tr");
+  tr.dataset.hotelManual = data.hotelManual ? "1" : "0";
+
+  tr.innerHTML = `
+    <td><input type="date" class="r_date" value="${data.date||""}"></td>
+    <td><input type="number" min="0" step="1" class="r_noDA" value="${data.noDA ?? 0}"></td>
+    <td><input type="number" min="0" step="1" class="r_DA" value="${data.DA ?? 0}"></td>
+    <td><input type="number" min="0" step="1" class="r_hotel" value="${data.hotel ?? 0}" title="Type = manual override"></td>
+    <td><input type="number" min="0" step="1" class="r_totalDA" value="${data.totalDA ?? 0}" readonly></td>
+    <td><select class="r_mode">${renderModeOptions(data.mode)}</select></td>
+    <td><input type="number" min="0" step="1" class="r_km" value="${data.km ?? 0}"></td>
+    <td><input type="number" min="0" step="1" class="r_fare" value="${data.fare ?? 0}"></td>
+    <td><input type="number" min="0" step="1" class="r_grand" value="${data.grand ?? 0}" readonly></td>
+  `;
+
+  // ✅ hotel manual override detection
+  const hotelInput = tr.querySelector(".r_hotel");
+  hotelInput.addEventListener("input", ()=>{
+    tr.dataset.hotelManual = "1";       // once user types, lock manual
+    recalcRow(tr); recalcTotals(); saveAll();
+  });
+
+  // other events
+  tr.querySelectorAll("input,select").forEach(el=>{
+    if(el === hotelInput) return;
+    el.addEventListener("input", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); });
+    el.addEventListener("change", ()=>{ recalcRow(tr); recalcTotals(); saveAll(); setHeaderFromInputs(); });
+  });
+
+  // initial calc
+  recalcRow(tr);
+  return tr;
+}
+
+function recalcRow(tr){
+  const rateDA = parseNum(document.getElementById("rateDA").value);
+
+  const noDA = parseNum(tr.querySelector(".r_noDA").value);
   const computedDA = noDA * rateDA;
   tr.querySelector(".r_DA").value = computedDA ? computedDA : 0;
+
+  // ✅ auto hotel applies (unless manual override)
+  applyAutoHotelIfNeeded(tr);
 
   const hotel = parseNum(tr.querySelector(".r_hotel").value);
   const totalDA = computedDA + hotel;
@@ -431,9 +465,12 @@ function generateRows(){
   document.getElementById("rows").innerHTML = "";
   list.forEach(d=>{
     const iso = d.toISOString().slice(0,10);
-    addRow({date: iso, noDA: 1});
+    // default: 1 DA each day
+    addRow({date: iso, noDA: 1, hotelManual: 0});
   });
 
+  // After generation, ensure hotel gets auto-filled correctly (last day 0)
+  document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
   setHeaderFromInputs();
   recalcTotals();
   saveAll();
@@ -445,6 +482,7 @@ function clearAll(){
   saveAll();
 }
 
+/* ===== Save/Load ===== */
 function saveAll(){
   const payload = {
     meta:{
@@ -452,6 +490,7 @@ function saveAll(){
       designation: document.getElementById("designation").value || "",
       place: document.getElementById("place").value || "",
       autoRates: document.getElementById("autoRates").checked ? 1 : 0,
+      autoHotel: document.getElementById("autoHotel").checked ? 1 : 0,
       rateDA: document.getElementById("rateDA").value || "500",
       rateHotel: document.getElementById("rateHotel").value || "750",
       fromDate: document.getElementById("fromDate").value || "",
@@ -462,6 +501,7 @@ function saveAll(){
       noDA: parseNum(tr.querySelector(".r_noDA").value),
       DA: parseNum(tr.querySelector(".r_DA").value),
       hotel: parseNum(tr.querySelector(".r_hotel").value),
+      hotelManual: tr.dataset.hotelManual === "1" ? 1 : 0,
       totalDA: parseNum(tr.querySelector(".r_totalDA").value),
       mode: tr.querySelector(".r_mode").value || "",
       km: parseNum(tr.querySelector(".r_km").value),
@@ -478,10 +518,12 @@ function loadAll(){
   try{
     const data = JSON.parse(raw);
     const m = data.meta || {};
+
     document.getElementById("name").value = m.name || "";
     document.getElementById("designation").value = m.designation || "";
     document.getElementById("place").value = m.place || "";
     document.getElementById("autoRates").checked = (m.autoRates ?? 1) ? true : false;
+    document.getElementById("autoHotel").checked = (m.autoHotel ?? 1) ? true : false;
 
     document.getElementById("rateDA").value = m.rateDA || "500";
     document.getElementById("rateHotel").value = m.rateHotel || "750";
@@ -493,6 +535,8 @@ function loadAll(){
     (data.rows || []).forEach(r=> tbody.appendChild(makeRow(r)));
 
     setHeaderFromInputs();
+    // apply auto hotel/da recalcs safely
+    document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
     recalcTotals();
     updateRateBadge();
     return true;
@@ -501,20 +545,22 @@ function loadAll(){
   }
 }
 
+/* ===== Bind meta inputs ===== */
 function bindMeta(){
   ["name","place","rateDA","rateHotel","fromDate","toDate"].forEach(id=>{
-    document.getElementById(id).addEventListener("input", ()=>{
+    const el = document.getElementById(id);
+    el.addEventListener("input", ()=>{
       setHeaderFromInputs();
-      if (id==="rateDA" || id==="rateHotel"){
+      if (id==="rateDA" || id==="rateHotel" || id==="toDate" || id==="fromDate"){
         document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
         recalcTotals();
         updateRateBadge();
       }
       saveAll();
     });
-    document.getElementById(id).addEventListener("change", ()=>{
+    el.addEventListener("change", ()=>{
       setHeaderFromInputs();
-      if (id==="rateDA" || id==="rateHotel"){
+      if (id==="rateDA" || id==="rateHotel" || id==="toDate" || id==="fromDate"){
         document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
         recalcTotals();
         updateRateBadge();
@@ -525,17 +571,34 @@ function bindMeta(){
 
   document.getElementById("designation").addEventListener("change", ()=>{
     setHeaderFromInputs();
-    applyDesignationRates(false);
+    applyDesignationRates();
     saveAll();
   });
 
   document.getElementById("autoRates").addEventListener("change", ()=>{
-    applyDesignationRates(false);
+    applyDesignationRates();
+    saveAll();
+  });
+
+  document.getElementById("autoHotel").addEventListener("change", ()=>{
+    // turn ON => reapply auto hotel to non-manual rows
+    document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
+    recalcTotals();
     saveAll();
   });
 }
 
-/* ===== PDF EXPORT (no print dialog) ===== */
+/* ===== PDF EXPORT ===== */
+function makeFileName(prefix, ext){
+  const nm = (document.getElementById("name").value || "User").trim().replace(/\s+/g,"_");
+  const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
+  const fd = document.getElementById("fromDate").value;
+  const td = document.getElementById("toDate").value;
+  const range = (fd && td) ? `${fd}_to_${td}` : "";
+  const dtag = des ? ("_"+des) : "";
+  return `${prefix}_${nm}${dtag}${range?("_"+range):""}.${ext}`;
+}
+
 function exportPDF(){
   const sheet = document.getElementById("taDaSheet");
   sheet.classList.add("pdf-compact");
@@ -552,16 +615,6 @@ function exportPDF(){
   html2pdf().set(opt).from(sheet).save().finally(()=>{
     sheet.classList.remove("pdf-compact");
   });
-}
-
-function makeFileName(prefix, ext){
-  const nm = (document.getElementById("name").value || "User").trim().replace(/\s+/g,"_");
-  const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
-  const fd = document.getElementById("fromDate").value;
-  const td = document.getElementById("toDate").value;
-  const range = (fd && td) ? `${fd}_to_${td}` : "";
-  const dtag = des ? ("_"+des) : "";
-  return `${prefix}_${nm}${dtag}${range?("_"+range):""}.${ext}`;
 }
 
 /* ===== EXCEL EXPORT ===== */
@@ -629,12 +682,14 @@ function exportExcel(){
   const ok = loadAll();
   setHeaderFromInputs();
 
-  // apply designation rates if toggle ON
-  applyDesignationRates(false);
+  // apply designation rates initially (if toggle on)
+  applyDesignationRates();
 
   if (!ok){
-    addRow();
+    addRow({hotelManual:0});
+    document.querySelectorAll("#rows tr").forEach(tr=>recalcRow(tr));
   }
+
   recalcTotals();
   updateRateBadge();
 })();
