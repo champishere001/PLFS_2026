@@ -185,51 +185,63 @@
   }
 
   /* ================= PRINT FIXES (ADDED) ================= */
-  @media print{
-    /* force A4 landscape always */
-    @page{
-      size: A4 landscape;
-      margin: 6mm;
-    }
+  @media print {
 
-    body{
-      background:#fff;
-      padding:0;
-      margin:0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    .sheet{
-      max-width:none;
-      width:100%;
-      box-shadow:none;
-      border:none;
-      padding:0;
-      margin:0;
-    }
-
-    /* hide action buttons + saved ranges */
-    .actionsbar, .ranges{ display:none !important; }
-
-    /* hide TOUR RANGE row + APPLIED RATES row (ONLY in print) */
-    tr.print-hide{ display:none !important; }
-
-    /* fit to one page */
-    table{
-      width:100%;
-      table-layout:fixed;
-      font-size:10px;        /* make tighter for print */
-    }
-    td, th{
-      padding:3px 3px !important;
-    }
-
-    /* try to avoid breaking rows */
-    table, tr, td, th{
-      page-break-inside: avoid !important;
-    }
+  /* 1️⃣ Force A4 Landscape ALWAYS */
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
   }
+
+  /* 2️⃣ Kill browser margins & backgrounds */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 3️⃣ Fit EVERYTHING into ONE page */
+  body {
+    transform: scale(0.82);          /* 🔑 key for single page */
+    transform-origin: top left;
+    width: 120%;
+  }
+
+  .sheet {
+    max-width: none !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 4️⃣ Hide non-print sections */
+  .actionsbar,
+  .ranges,
+  tr.print-hide {
+    display: none !important;
+  }
+
+  /* 5️⃣ Tighten table for print */
+  table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 10px !important;
+  }
+
+  th, td {
+    padding: 3px 3px !important;
+  }
+
+  /* 6️⃣ HARD STOP on page breaks */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
 </style>
 </head>
 
