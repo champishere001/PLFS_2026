@@ -184,10 +184,51 @@
     font-weight:900;
   }
 
+  /* ================= PRINT FIXES (ADDED) ================= */
   @media print{
-    body{ background:#fff; padding:0; }
-    .sheet{ box-shadow:none; border:none; padding:0; }
-    .actionsbar, .ranges{ display:none; }
+    /* force A4 landscape always */
+    @page{
+      size: A4 landscape;
+      margin: 6mm;
+    }
+
+    body{
+      background:#fff;
+      padding:0;
+      margin:0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .sheet{
+      max-width:none;
+      width:100%;
+      box-shadow:none;
+      border:none;
+      padding:0;
+      margin:0;
+    }
+
+    /* hide action buttons + saved ranges */
+    .actionsbar, .ranges{ display:none !important; }
+
+    /* hide TOUR RANGE row + APPLIED RATES row (ONLY in print) */
+    tr.print-hide{ display:none !important; }
+
+    /* fit to one page */
+    table{
+      width:100%;
+      table-layout:fixed;
+      font-size:10px;        /* make tighter for print */
+    }
+    td, th{
+      padding:3px 3px !important;
+    }
+
+    /* try to avoid breaking rows */
+    table, tr, td, th{
+      page-break-inside: avoid !important;
+    }
   }
 </style>
 </head>
@@ -249,8 +290,8 @@
       </td>
     </tr>
 
-    <!-- Multi Range Controller (inside sheet, same feel) -->
-    <tr>
+    <!-- Multi Range Controller -->
+    <tr class="print-hide">
       <td colspan="9" class="hdrline left">
         <div class="mini">
           <span><b>Tour Range:</b></span>
@@ -270,7 +311,7 @@
       </td>
     </tr>
 
-    <tr>
+    <tr class="print-hide">
       <td colspan="9" class="rate-badge">
         Applied Rates:
         <span id="rateText">DA ₹0 | Hotel ₹0</span>
