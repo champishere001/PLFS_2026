@@ -1,607 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>TA/DA CALCULATION SHEET</title>
+<meta charset="UTF-8">
+<title>TA / DA Calculation Sheet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Excel Export -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
 <style>
-  :root{
-    --bg:#f3f5f7;
-    --card:#ffffff;
-    --ink:#0b1220;
-    --muted:#64748b;
-    --border:#000;
-    --soft:#e2e8f0;
-    --accent:#2563eb;
-    --danger:#ef4444;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    padding:16px;
-    background:var(--bg);
-    font-family: Arial, Helvetica, sans-serif;
-    color:var(--ink);
-  }
-  .sheet{
-    max-width: 1280px;
-    margin:auto;
-    background:var(--card);
-    border:1px solid #cfd6df;
-    box-shadow:0 10px 28px rgba(0,0,0,.06);
-    padding:14px;
-  }
+@page{ size:A4 landscape; margin:10mm; }
 
-  .top{
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-    justify-content:space-between;
-    margin-bottom:10px;
-  }
-  .title{
-    flex:1;
-    text-align:center;
-    font-weight:800;
-    font-size:15px;
-    line-height:1.25;
-  }
-  .title .sub{ font-weight:800; }
-  .title .muted{ color:var(--muted); font-weight:700; font-size:12px; }
+*{ box-sizing:border-box }
+body{
+  margin:0; padding:14px;
+  background:#f3f5f7;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.sheet{
+  background:#fff;
+  border:1px solid #cfd6df;
+  padding:12px;
+}
+.title{
+  text-align:center;
+  font-weight:800;
+  font-size:15px;
+  margin-bottom:8px;
+}
+.meta{
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr 1fr 0.7fr;
+  gap:6px;
+  margin-bottom:8px;
+}
+.field{
+  border:1px solid #000;
+  padding:5px 6px;
+  display:flex;
+  gap:6px;
+  align-items:center;
+}
+.label{ font-weight:700; font-size:12px; white-space:nowrap }
+.input,.select{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:12px;
+  background:transparent;
+}
 
-  .controls{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-    min-width: 320px;
-  }
-  .btn{
-    border:1px solid #cbd5e1;
-    background:#fff;
-    padding:7px 10px;
-    font-size:12.5px;
-    font-weight:800;
-    border-radius:10px;
-    cursor:pointer;
-    user-select:none;
-  }
-  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
-  .btn.danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
-  .btn:active{ transform:translateY(1px); }
+.controls{
+  margin:8px 0;
+  display:flex;
+  gap:6px;
+}
+button{
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
 
-  .meta{
-    display:grid;
-    grid-template-columns: 1.2fr 1fr 1fr 0.9fr 0.7fr;
-    gap:6px;
-    margin:10px 0 10px;
-  }
-  .field{
-    border:1px solid var(--border);
-    padding:6px 8px;
-    display:flex;
-    gap:8px;
-    align-items:center;
-    min-height:34px;
-    background:#fff;
-  }
-  .label{
-    font-weight:800;
-    font-size:12px;
-    white-space:nowrap;
-  }
-  .input, .select{
-    width:100%;
-    border:none;
-    outline:none;
-    font-size:12.5px;
-    background:transparent;
-  }
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:11px;
+}
+th,td{
+  border:1px solid #000;
+  padding:4px 5px;
+  text-align:center;
+  vertical-align:middle;
+}
+th{ font-weight:800; }
+.colnum th{ font-weight:700; background:#fff; }
 
-  .ranges{
-    border:1px solid var(--border);
-    padding:10px;
-    margin-bottom:10px;
-  }
-  .ranges h4{
-    margin:0 0 8px;
-    font-size:13px;
-  }
-  .range-row{
-    display:grid;
-    grid-template-columns: 1fr 1fr 0.9fr 0.9fr 0.8fr 0.5fr;
-    gap:8px;
-    align-items:center;
-    margin-bottom:8px;
-  }
-  .range-row .mini{
-    border:1px solid #cbd5e1;
-    border-radius:10px;
-    padding:7px 8px;
-    font-size:12.5px;
-    width:100%;
-    outline:none;
-    background:#fff;
-  }
-  .range-row .mini[type="number"]{ text-align:center; }
-  .hint{
-    font-size:12px;
-    color:var(--muted);
-    font-weight:700;
-    margin-top:4px;
-  }
+td input, td select{
+  width:100%;
+  border:none;
+  outline:none;
+  font-size:11px;
+  background:transparent;
+  text-align:center;
+}
+.ro{ font-weight:800 }
 
-  table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-    font-size:11px;
-  }
-  th, td{
-    border:1px solid var(--border);
-    padding:4px 5px;
-    text-align:center;
-    vertical-align:middle;
-    line-height:1.25;
-    word-wrap:break-word;
-    white-space:normal;
-  }
-  thead th{
-    font-weight:900;
-    background:#f1f5f9;
-  }
-  .colnum th{
-    background:#ffffff;
-    font-weight:900;
-  }
+tfoot td{ font-weight:900 }
 
-  td input, td select{
-    width:100%;
-    border:none;
-    outline:none;
-    font-size:11px;
-    padding:2px 2px;
-    background:transparent;
-    text-align:center;
-  }
-  td .ro{
-    display:block;
-    font-weight:900;
-  }
-
-  tfoot td{
-    font-weight:900;
-    background:#f8fafc;
-  }
-
-  .footline{
-    margin-top:14px;
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-    font-size:12px;
-    font-weight:700;
-  }
-
-  /* PRINT */
-  @media print{
-    @page{ size:A4 landscape; margin:10mm; }
-    body{ background:#fff; padding:0; margin:0; }
-    .sheet{ box-shadow:none; border:none; padding:0; max-width:100%; }
-    .controls, .no-print{ display:none !important; }
-    table{ font-size:10.5px; }
-    tr{ page-break-inside:avoid; }
-    table{ page-break-inside:avoid; }
-  }
+@media print{
+  body{ background:#fff; padding:0 }
+  .controls{ display:none }
+}
 </style>
 </head>
 
 <body>
-<div class="sheet" id="sheet">
+<div class="sheet">
 
-  <div class="top">
-    <div class="title">
-      दौरा भत्ता / दैनिक भत्ता गणना शीट @ <span class="sub">TA/DA CALCULATION SHEET</span>
-      <div class="muted">Range-wise auto rows + last day hotel = 0 + PDF/Excel</div>
-    </div>
+<div class="title">
+  दौरा भत्ता / दैनिक भत्ता गणना शीट @ TA / DA CALCULATION SHEET
+</div>
 
-    <div class="controls no-print">
-      <button class="btn" onclick="addRange()">+ Add Range</button>
-      <button class="btn" onclick="generateFromRanges()">Generate Rows</button>
-      <button class="btn" onclick="addManualRow()">+ Manual Row</button>
-      <button class="btn danger" onclick="removeSelectedRows()">Remove Selected</button>
-      <button class="btn primary" onclick="generatePDF()">Generate PDF</button>
-      <button class="btn primary" onclick="exportExcel()">Export Excel</button>
-    </div>
+<!-- HEADER -->
+<div class="meta">
+  <div class="field"><span class="label">नाम/Name-</span><input class="input"></div>
+
+  <div class="field">
+    <span class="label">पदनाम/Designation-</span>
+    <select class="select">
+      <option value=""></option>
+      <option>Senior Statistical Officer</option>
+      <option>Survey Supervisor</option>
+      <option>Survey Enumerator</option>
+    </select>
   </div>
 
-  <!-- HEADER FIELDS (YOUR SHEET) -->
-  <div class="meta">
-    <div class="field"><span class="label">नाम/Name-</span><input id="name" class="input" placeholder="Enter name"></div>
-    <div class="field"><span class="label">पदनाम/Designation-</span><input id="designation" class="input" placeholder="Enter designation"></div>
-    <div class="field"><span class="label">स्थान/Place-</span><input id="place" class="input" placeholder="Enter place"></div>
-    <div class="field"><span class="label">माह/Month-</span><select id="month" class="select"></select></div>
-    <div class="field"><span class="label">वर्ष/Year-</span><input id="year" class="input" type="number" value="2026" min="2000" max="2100"></div>
-  </div>
+  <div class="field"><span class="label">स्थान/Place-</span><input class="input"></div>
+  <div class="field"><span class="label">माह/Month-</span><input class="input"></div>
+  <div class="field"><span class="label">वर्ष/Year-</span><input class="input"></div>
+</div>
 
-  <!-- RANGE LOGIC (MULTIPLE RANGES) -->
-  <div class="ranges no-print">
-    <h4>Tour Ranges (multiple allowed)</h4>
-    <div id="rangesWrap"></div>
-    <div class="hint">
-      ✅ Each date inside range becomes a separate row. ✅ On last day of each range: <b>Hotel = 0</b>. ✅ You can override any value manually.
-    </div>
-  </div>
+<div class="controls">
+  <button onclick="addRow()">+ Row</button>
+  <button onclick="print()">Generate PDF</button>
+  <button onclick="exportExcel()">Export Excel</button>
+</div>
 
-  <!-- TABLE WITH YOUR ORIGINAL HEADERS -->
-  <table id="tadaTable">
-    <thead>
-      <!-- Main grouped headers (YOUR FORMAT) -->
-      <tr>
-        <th rowspan="3" style="width:4%">Sel</th>
-        <th rowspan="2" style="width:8%">Date</th>
-        <th rowspan="2" style="width:10%">No. of DA</th>
+<table id="tbl">
+<thead>
+<tr>
+  <th rowspan="3">Date</th>
+  <th rowspan="3">No. of DA</th>
+  <th colspan="3">DA Details</th>
+  <th colspan="3">Travelling Details</th>
+  <th rowspan="3">Total<br>(5+8)</th>
+</tr>
+<tr>
+  <th>DA</th>
+  <th>Hotel</th>
+  <th>Total DA<br>(3+4)</th>
+  <th>Mode</th>
+  <th>KM</th>
+  <th>Total Fare</th>
+</tr>
+<tr class="colnum">
+  <th>1</th><th>2</th><th>3</th><th>4</th>
+  <th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+</tr>
+</thead>
 
-        <th colspan="3">DA Details</th>
-        <th colspan="3">Travelling Details</th>
-        <th rowspan="2" style="width:10%">Total<br>(5+8)</th>
-      </tr>
+<tbody id="body"></tbody>
 
-      <!-- Sub headers (YOUR FORMAT) -->
-      <tr>
-        <th style="width:8%">DA</th>
-        <th style="width:10%">Hotel Bill</th>
-        <th style="width:12%">Total DA<br>(3+4)</th>
+<tfoot>
+<tr>
+  <td colspan="1">Grand Total</td>
+  <td id="g_daCnt"></td>
+  <td></td>
+  <td></td>
+  <td id="g_da"></td>
+  <td></td>
+  <td></td>
+  <td id="g_fare"></td>
+  <td id="g_total"></td>
+</tr>
+</tfoot>
+</table>
 
-        <th style="width:10%">Mode</th>
-        <th style="width:8%">K.M.</th>
-        <th style="width:12%">Total Fare</th>
-      </tr>
-
-      <!-- Column numbers row (YOUR 1–9 style) -->
-      <tr class="colnum">
-        <th>1</th>
-        <th>2</th>
-        <th>3</th>
-        <th>4</th>
-        <th>5</th>
-        <th>6</th>
-        <th>7</th>
-        <th>8</th>
-        <th>9</th>
-      </tr>
-    </thead>
-
-    <tbody id="tbody"></tbody>
-
-    <tfoot>
-      <tr>
-        <td colspan="2">Grand Total</td>
-        <td id="gt_daCount">0</td>
-        <td id="gt_da">0</td>
-        <td id="gt_hotel">0</td>
-        <td id="gt_totalDA">0</td>
-        <td></td>
-        <td></td>
-        <td id="gt_fare">0</td>
-        <td id="gt_total">0</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <div class="footline">
-    <div>दिनांक:- ____________________</div>
-    <div>संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</div>
-  </div>
+<div style="margin-top:14px; font-size:12px">
+  दिनांक: _____________
+  <span style="float:right">संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</span>
+</div>
 
 </div>
 
 <script>
-/* ===================== DEFAULTS (YOUR LOGIC) ===================== */
-const DEFAULT_DA = 500;
-const DEFAULT_HOTEL = 750;
+function val(x){ return x==="" ? "" : Number(x)||0 }
 
-const MODES = ["", "Bus", "Taxi", "Train", "Own Vehicle", "Walk", "Other"];
-
-/* ===================== MONTHS ===================== */
-(function initMonth(){
-  const monthSel = document.getElementById("month");
-  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  months.forEach((m,i)=>{
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = m;
-    monthSel.appendChild(opt);
-  });
-  const now = new Date();
-  monthSel.value = now.getMonth();
-  document.getElementById("year").value = now.getFullYear();
-  addRange(); // one default range row
-})();
-
-/* ===================== RANGE UI ===================== */
-function addRange(){
-  const wrap = document.getElementById("rangesWrap");
-  const idx = wrap.children.length + 1;
-
-  const row = document.createElement("div");
-  row.className = "range-row";
-  row.innerHTML = `
-    <input class="mini r_from" type="date" />
-    <input class="mini r_to" type="date" />
-    <input class="mini r_da" type="number" min="0" value="${DEFAULT_DA}" title="DA amount per day" />
-    <input class="mini r_hotel" type="number" min="0" value="${DEFAULT_HOTEL}" title="Hotel amount (auto 0 on last day)" />
-    <input class="mini r_mode" list="modesList" placeholder="Mode" />
-    <button class="btn danger" type="button" onclick="this.closest('.range-row').remove()">X</button>
-  `;
-  wrap.appendChild(row);
-}
-
-/* datalist for mode input */
-(function addModesList(){
-  const dl = document.createElement("datalist");
-  dl.id = "modesList";
-  dl.innerHTML = MODES.filter(Boolean).map(m=>`<option value="${m}"></option>`).join("");
-  document.body.appendChild(dl);
-})();
-
-/* ===================== DATE HELPERS ===================== */
-function parseISO(d){ // yyyy-mm-dd
-  const [y,m,dd] = d.split("-").map(Number);
-  return new Date(y, m-1, dd);
-}
-function fmtDD(d){
-  const dd = String(d.getDate()).padStart(2,"0");
-  return dd;
-}
-function addDays(date, n){
-  const d = new Date(date);
-  d.setDate(d.getDate()+n);
-  return d;
-}
-function sameYMD(a,b){
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-}
-
-/* ===================== TABLE ROW TEMPLATE ===================== */
-function rowHTML({dateDD="", daCount=1, da=DEFAULT_DA, hotel=DEFAULT_HOTEL, mode="", km=0, fare=0, totalDA=0, total=0}){
-  const modeOptions = MODES.map(v => `<option value="${v}">${v || "—"}</option>`).join("");
-
-  return `
+function addRow(){
+  body.insertAdjacentHTML("beforeend",`
   <tr>
-    <td><input type="checkbox" class="rowSel"></td>
-    <td><input class="date" type="text" value="${dateDD}" placeholder="DD"></td>
-    <td><input class="daCount" type="number" min="0" value="${daCount}" oninput="recalcRow(this)"></td>
-
-    <td><input class="da" type="number" min="0" value="${da}" oninput="recalcRow(this)"></td>
-    <td><input class="hotel" type="number" min="0" value="${hotel}" oninput="recalcRow(this)"></td>
-    <td><span class="ro totalDA">${totalDA}</span></td>
-
-    <td>
-      <select class="mode" onchange="recalcRow(this)">
-        ${modeOptions}
-      </select>
-    </td>
-
-    <td><input class="km" type="number" min="0" value="${km}" oninput="recalcRow(this)"></td>
-    <td><input class="fareIn" type="number" min="0" value="${fare}" oninput="recalcRow(this)" title="Total Fare"></td>
-
-    <td><span class="ro total">${total}</span></td>
-  </tr>`;
+    <td><input></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td class="ro totalDA"></td>
+    <td><input></td>
+    <td><input type="number"></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td class="ro grand"></td>
+  </tr>`);
 }
 
-/* ===================== GENERATE ROWS FROM RANGES (YOUR LOGIC) ===================== */
-function generateFromRanges(){
-  const monthIndex = Number(document.getElementById("month").value);
-  const year = Number(document.getElementById("year").value || new Date().getFullYear());
+function calc(el){
+  const tr = el.closest("tr");
+  const cnt = val(tr.cells[1].firstChild.value);
+  const da  = val(tr.cells[2].firstChild.value);
+  const h   = val(tr.cells[3].firstChild.value);
+  const fare= val(tr.cells[7].firstChild.value);
 
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = ""; // regenerate fresh
+  const totalDA = (cnt && da) ? (cnt*da + h) : "";
+  const grand   = (totalDA!=="" && fare!=="") ? (totalDA+fare) : "";
 
-  // build a map by date within selected month/year: {hotel, da, mode}
-  const dateMap = new Map(); // key = yyyy-mm-dd -> {da, hotel, mode}
+  tr.querySelector(".totalDA").textContent = totalDA;
+  tr.querySelector(".grand").textContent = grand;
 
-  document.querySelectorAll("#rangesWrap .range-row").forEach(rr=>{
-    const fromVal = rr.querySelector(".r_from").value;
-    const toVal = rr.querySelector(".r_to").value;
-    if(!fromVal || !toVal) return;
+  totals();
+}
 
-    let from = parseISO(fromVal);
-    let to = parseISO(toVal);
-    if(from > to){ const tmp = from; from = to; to = tmp; }
-
-    const rDA = Number(rr.querySelector(".r_da").value || DEFAULT_DA);
-    const rHotel = Number(rr.querySelector(".r_hotel").value || DEFAULT_HOTEL);
-    const rMode = (rr.querySelector(".r_mode").value || "").trim();
-
-    // iterate inclusive
-    let cur = new Date(from);
-    while(cur <= to){
-      // only create rows for selected month/year (user asked multiple ranges in month)
-      if(cur.getFullYear()===year && cur.getMonth()===monthIndex){
-        const key = `${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,"0")}-${String(cur.getDate()).padStart(2,"0")}`;
-
-        const isLastDay = sameYMD(cur, to);
-        const hotelVal = isLastDay ? 0 : rHotel;
-
-        // if duplicate date happens due to multiple ranges:
-        // keep hotel 750 if ANY range needs hotel that day (i.e., not last day in all ranges)
-        const prev = dateMap.get(key);
-        if(!prev){
-          dateMap.set(key, {da:rDA, hotel:hotelVal, mode:rMode});
-        }else{
-          prev.da = prev.da || rDA;
-          prev.mode = prev.mode || rMode;
-          prev.hotel = Math.max(Number(prev.hotel||0), Number(hotelVal||0));
-          dateMap.set(key, prev);
-        }
-      }
-      cur = addDays(cur, 1);
-    }
+function totals(){
+  let daCnt=0, da=0, fare=0, tot=0;
+  document.querySelectorAll("#body tr").forEach(tr=>{
+    daCnt += val(tr.cells[1].firstChild.value);
+    da += val(tr.querySelector(".totalDA").textContent);
+    fare += val(tr.cells[7].firstChild.value);
+    tot += val(tr.querySelector(".grand").textContent);
   });
-
-  // sort keys by date
-  const keys = Array.from(dateMap.keys()).sort();
-  keys.forEach(key=>{
-    const d = parseISO(key);
-    const dd = fmtDD(d);
-    const info = dateMap.get(key);
-    tbody.insertAdjacentHTML("beforeend", rowHTML({
-      dateDD: dd,
-      daCount: 1,
-      da: info.da ?? DEFAULT_DA,
-      hotel: info.hotel ?? DEFAULT_HOTEL,
-      mode: info.mode ?? "",
-      km: 0,
-      fare: 0,
-      totalDA: 0,
-      total: 0
-    }));
-    // set mode selected
-    const lastRow = tbody.lastElementChild;
-    const sel = lastRow.querySelector(".mode");
-    if(sel && info.mode) sel.value = info.mode;
-    recalcRow(lastRow);
-  });
-
-  // if nothing generated, keep one manual row
-  if(!tbody.children.length) addManualRow();
-  recalcTotals();
+  g_daCnt.textContent = daCnt||"";
+  g_da.textContent = da||"";
+  g_fare.textContent = fare||"";
+  g_total.textContent = tot||"";
 }
 
-/* ===================== MANUAL ROWS ===================== */
-function addManualRow(){
-  const tbody = document.getElementById("tbody");
-  tbody.insertAdjacentHTML("beforeend", rowHTML({dateDD:"", daCount:1, da:DEFAULT_DA, hotel:DEFAULT_HOTEL, mode:"", km:0, fare:0, totalDA:0, total:0}));
-  recalcRow(tbody.lastElementChild);
-  recalcTotals();
-}
-function removeSelectedRows(){
-  const tbody = document.getElementById("tbody");
-  Array.from(tbody.querySelectorAll("tr")).forEach(tr=>{
-    const chk = tr.querySelector(".rowSel");
-    if(chk && chk.checked) tr.remove();
-  });
-  recalcTotals();
-}
-
-/* ===================== CALC LOGIC (YOUR TOTALS) ===================== */
-/*
-  Total DA (5) = (No of DA * DA) + Hotel
-  Total Fare (8) = Fare input (user enters directly)
-  Total (9) = (5 + 8)
-*/
-function recalcRow(el){
-  const tr = (el.tagName==="TR") ? el : el.closest("tr");
-  if(!tr) return;
-
-  const daCount = Number(tr.querySelector(".daCount")?.value || 0);
-  const da = Number(tr.querySelector(".da")?.value || 0);
-  const hotel = Number(tr.querySelector(".hotel")?.value || 0);
-  const fare = Number(tr.querySelector(".fareIn")?.value || 0);
-
-  const totalDA = (daCount * da) + hotel;
-  const total = totalDA + fare;
-
-  tr.querySelector(".totalDA").textContent = round2(totalDA);
-  tr.querySelector(".total").textContent = round2(total);
-
-  recalcTotals();
-}
-
-function round2(n){
-  const x = Number(n||0);
-  return (Math.round(x*100)/100).toString();
-}
-
-function recalcTotals(){
-  let sDaCount=0, sDa=0, sHotel=0, sTotalDA=0, sFare=0, sTotal=0;
-
-  document.querySelectorAll("#tbody tr").forEach(tr=>{
-    const daCount = Number(tr.querySelector(".daCount")?.value || 0);
-    const da = Number(tr.querySelector(".da")?.value || 0);
-    const hotel = Number(tr.querySelector(".hotel")?.value || 0);
-    const fare = Number(tr.querySelector(".fareIn")?.value || 0);
-
-    const totalDA = Number(tr.querySelector(".totalDA")?.textContent || 0);
-    const total = Number(tr.querySelector(".total")?.textContent || 0);
-
-    sDaCount += daCount;
-    sDa += (daCount * da);
-    sHotel += hotel;
-    sTotalDA += totalDA;
-    sFare += fare;
-    sTotal += total;
-  });
-
-  document.getElementById("gt_daCount").textContent = round2(sDaCount);
-  document.getElementById("gt_da").textContent = round2(sDa);
-  document.getElementById("gt_hotel").textContent = round2(sHotel);
-  document.getElementById("gt_totalDA").textContent = round2(sTotalDA);
-  document.getElementById("gt_fare").textContent = round2(sFare);
-  document.getElementById("gt_total").textContent = round2(sTotal);
-}
-
-/* ===================== PDF ===================== */
-function generatePDF(){
-  window.print(); // Print dialog -> Save as PDF
-}
-
-/* ===================== EXCEL EXPORT (WITH YOUR HEADERS) ===================== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
-
-  const meta = [
-    ["TA/DA CALCULATION SHEET"],
-    ["Name", document.getElementById("name").value || ""],
-    ["Designation", document.getElementById("designation").value || ""],
-    ["Place", document.getElementById("place").value || ""],
-    ["Month", document.getElementById("month").selectedOptions[0].textContent, "Year", document.getElementById("year").value || ""],
-    []
-  ];
-
-  const data = [];
-  data.push(["Date","No. of DA","DA","Hotel Bill","Total DA (3+4)","Mode","K.M.","Total Fare","Total (5+8)"]);
-
-  document.querySelectorAll("#tbody tr").forEach(tr=>{
-    data.push([
-      tr.querySelector(".date")?.value || "",
-      Number(tr.querySelector(".daCount")?.value || 0),
-      Number(tr.querySelector(".da")?.value || 0),
-      Number(tr.querySelector(".hotel")?.value || 0),
-      Number(tr.querySelector(".totalDA")?.textContent || 0),
-      tr.querySelector(".mode")?.value || "",
-      Number(tr.querySelector(".km")?.value || 0),
-      Number(tr.querySelector(".fareIn")?.value || 0),
-      Number(tr.querySelector(".total")?.textContent || 0),
-    ]);
+  const data=[["TA/DA Sheet"]];
+  document.querySelectorAll("tr").forEach(r=>{
+    data.push([...r.cells].map(c=>c.innerText||c.querySelector("input,select")?.value||""));
   });
-
-  data.push([]);
-  data.push(["Grand Total",
-    document.getElementById("gt_daCount").textContent,
-    document.getElementById("gt_da").textContent,
-    document.getElementById("gt_hotel").textContent,
-    document.getElementById("gt_totalDA").textContent,
-    "",
-    "",
-    document.getElementById("gt_fare").textContent,
-    document.getElementById("gt_total").textContent
-  ]);
-
-  const ws = XLSX.utils.aoa_to_sheet(meta.concat(data));
-  XLSX.utils.book_append_sheet(wb, ws, "TA_DA");
-
-  const fileName = `TA_DA_${document.getElementById("month").selectedOptions[0].textContent}_${document.getElementById("year").value}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),"TA_DA");
+  XLSX.writeFile(wb,"TA_DA.xlsx");
 }
 
-/* ===================== START WITH ONE MANUAL ROW ===================== */
-addManualRow();
+addRow();
 </script>
 </body>
 </html>
