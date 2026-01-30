@@ -711,50 +711,72 @@ function makeFileName(prefix, ext){
   const des = (document.getElementById("designation").value || "").trim().replace(/\s+/g,"_");
   return `${prefix}_${nm}${des?("_"+des):""}.${ext}`;
 }
-
-/* ✅ PDF: always landscape, always 1 page, only sheet exported */
+/* ✅ PDF: A4 landscape, STRICTLY 1 page (fit-to-page) */
 async function exportPDFSinglePage(){
   const sheet = document.getElementById("taDaSheet");
-  document.body.classList.add("pdf-export");      // hides toolbar
-  sheet.classList.add("pdf-compact");             // tight layout
+
+  // hide toolbar etc + make compact
+  document.body.classList.add("pdf-export");
+  sheet.classList.add("pdf-compact");
 
   try{
+    // render DOM to canvas
     const canvas = await html2canvas(sheet, {
       scale: 2,
       useCORS: true,
       backgroundColor: "#ffffff",
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight
     });
 
+    // jsPDF
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
+    // ✅ A4 LANDSCAPE
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+      compress: true
+    });
+
+    // A4 landscape size in mm (jsPDF gives correct values)
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+    // convert canvas to image
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+    // ✅ Fit image into A4 (1 page) with margins
+    const margin = 5; // mm
+    const maxW = pageW - margin * 2;
+    const maxH = pageH - margin * 2;
 
     const imgW = canvas.width;
     const imgH = canvas.height;
-    const ratio = Math.min(pageW / imgW, pageH / imgH);
 
+    const ratio = Math.min(maxW / imgW, maxH / imgH);
     const w = imgW * ratio;
     const h = imgH * ratio;
+
     const x = (pageW - w) / 2;
     const y = (pageH - h) / 2;
 
     pdf.addImage(imgData, "JPEG", x, y, w, h, undefined, "FAST");
-    pdf.save(makeFileName("TA_DA_Sheet_OnePage", "pdf"));
+
+    // ✅ Always single page (no addPage)
+    pdf.save(makeFileName("TA_DA_A4_OnePage", "pdf"));
+
   } catch (e) {
-    alert("PDF export failed. Please check internet / reload page once.");
+    alert("PDF export failed. Reload once and try again.");
     console.error(e);
   } finally {
     sheet.classList.remove("pdf-compact");
     document.body.classList.remove("pdf-export");
   }
 }
-
 /* ===== Excel ===== */
 function exportExcel(){
   const wb = XLSX.utils.book_new();
