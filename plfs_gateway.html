@@ -417,7 +417,7 @@
             <div class="ico notes">📝</div>
             <h3>Inspection Notes (PDF)</h3>
           </div>
-          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). Metadata saved in separate Notes DB.</p>
+          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). PDFs go to Notes Storage, metadata to Notes RTDB.</p>
           <div class="btnrow">
             <button class="btn" type="button" onclick="event.stopPropagation(); openNotes()">⬆️ Upload Notes</button>
             <button class="btn secondary" type="button" onclick="event.stopPropagation(); loadRecent()">🔄 Refresh</button>
@@ -532,22 +532,25 @@ const config = {
   storageBucket: "action-plan-62fae.appspot.com"
 };
 firebase.initializeApp(config);
-const db = firebase.database();        // PLFS db (not used for notes meta)
-const storage = firebase.storage();    // PDFs stored here (same bucket)
+const db = firebase.database();
 
-/* SECOND (Inspection Notes separate RTDB) */
+/* ✅ SECOND (Inspection Notes separate RTDB + separate Storage) */
 const notesConfig = {
   apiKey: "AIzaSyA8GkqtLSg-cGAR8iUVOId4t_KkgHmZa7k",
   authDomain: "inspectionnote.firebaseapp.com",
   databaseURL: "https://inspectionnote-default-rtdb.firebaseio.com",
   projectId: "inspectionnote",
-  storageBucket: "inspectionnote.firebasestorage.app",
+
+  /* ✅ IMPORTANT FIX: compat SDK works reliably with *.appspot.com */
+  storageBucket: "inspectionnote.appspot.com",
+
   messagingSenderId: "1043782595459",
   appId: "1:1043782595459:web:ef1ce80fe9223362ebfcb6",
   measurementId: "G-VY3WQT64GQ"
 };
 const notesApp = firebase.initializeApp(notesConfig, "notesApp");
 const notesDb  = firebase.database(notesApp);
+const notesStorage = firebase.storage(notesApp); // ✅ IMPORTANT: use notes storage for PDFs
 
 /* ===================== SRO list (ONLY 4) ===================== */
 const ALLOWED_SROS = ["SRO SHIMLA","SRO HAMIRPUR","SRO DHARAMSHALA","SRO MANDI"];
@@ -574,6 +577,10 @@ function resetForm(){
   renderPreview([]);
   setStatus("Ready.");
   setProgress(0);
+
+  // upload default state
+  const up = document.getElementById("uploadBtn");
+  if(up) up.disabled = true;
 }
 
 /* ===================== helpers ===================== */
@@ -625,14 +632,17 @@ function extractSampleFromText(txt){
   const t = String(txt || "");
   const cleaned = t.replace(/\s+/g," ").trim();
 
+  // strong
   const p1 = /S\.?\s*No\.?\s*of\s*(the\s*)?sample\s*FSU\s*[:\-]?\s*([0-9]{4,10})/i;
   let m = cleaned.match(p1);
   if(m) return { sample: m[2], snippet: m[0] };
 
+  // generic
   const p2 = /(sample\s*(serial|s\.?no|no\.?|number|id)|serial\s*no\.?|s\.?\s*no\.?)\s*[:\-]?\s*([A-Z0-9\-\/]{2,30})/i;
   m = cleaned.match(p2);
   if(m) return { sample: m[3], snippet: m[0] };
 
+  // fsu near number
   const p3 = /FSU[^0-9]{0,24}([0-9]{4,10})/i;
   m = cleaned.match(p3);
   if(m) return { sample: m[1], snippet: m[0] };
@@ -646,6 +656,7 @@ async function detectSampleFromPdf_RETURN(file){
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     const page = await pdf.getPage(1);
 
+    // 1) text extraction
     let text = "";
     try{
       const tc = await page.getTextContent();
@@ -657,6 +668,7 @@ async function detectSampleFromPdf_RETURN(file){
       return { sample: String(found1.sample), source: "pdf-text", snippet: found1.snippet || "" };
     }
 
+    // 2) OCR (scanned)
     const viewport = page.getViewport({ scale: 2.0 });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d", { willReadFrequently:true });
@@ -695,9 +707,11 @@ async function detectSampleFromPdf(file){
     if(!inp.value.trim()) inp.value = __lastDetectedSample;
     setStatus(`✅ Sample No detected: <b>${escapeHtml(__lastDetectedSample)}</b> (${escapeHtml(__lastDetectSource)})`, "ok");
     setProgress(70);
+    return true;
   }else{
     setStatus("⚠️ Sample No not found on cover. Please type manually (single file only).", "bad");
     setProgress(0);
+    return false;
   }
 }
 
@@ -716,7 +730,7 @@ function loadSroDropdownOnly4(){
   if(sel.value) loadSroNotes();
 }
 
-/* ===================== Upload PDF(s): Storage + Notes RTDB meta ===================== */
+/* ===================== Upload PDF(s): Notes Storage + Notes RTDB meta ===================== */
 async function uploadPdf(){
   const sro = document.getElementById("sroSel").value.trim();
   const insDate = document.getElementById("insDate").value || "";
@@ -742,6 +756,7 @@ async function uploadPdf(){
     const tsBase = Date.now();
     const manualSample = document.getElementById("sampleNo").value.trim();
 
+    // if multi file, ensure detection finished
     if(files.length > 1 && (!__multiDetected || __multiDetected.length !== files.length)){
       setStatus("⚠️ Please wait for detection to finish (or reselect files).", "bad");
       btn.disabled = false;
@@ -792,7 +807,8 @@ async function uploadPdf(){
       const safeName = (file.name || "notes.pdf").replace(/[^\w.\-]/g,"_");
       const storagePath = `inspection_notes/${sroKey}/sample_${sampleKey}/${sampleKey}_${ts}_${safeName}`;
 
-      const ref = storage.ref(storagePath);
+      // ✅ IMPORTANT: upload to NOTES storage
+      const ref = notesStorage.ref(storagePath);
       const task = ref.put(file, { contentType:"application/pdf" });
 
       await new Promise((resolve, reject)=>{
@@ -830,6 +846,7 @@ async function uploadPdf(){
     await loadSroNotes();
     await loadRecent();
 
+    // reset after upload
     fileEl.value = "";
     document.getElementById("sampleNo").value = "";
     __multiDetected = [];
@@ -1033,6 +1050,10 @@ window.onload = () => {
   renderPreview([]);
   loadSroDropdownOnly4();
 
+  // by default: no file selected -> upload disabled
+  const up = document.getElementById("uploadBtn");
+  if(up) up.disabled = true;
+
   const f = document.getElementById("pdfFile");
   if(f){
     f.addEventListener("change", async ()=>{
@@ -1042,12 +1063,17 @@ window.onload = () => {
       __lastDetectSource = "";
       __lastDetectSnippet = "";
 
+      // disable upload while detecting
+      if(up) up.disabled = true;
+
       if(!files.length){
         renderPreview([]);
+        setStatus("Ready.");
+        setProgress(0);
         return;
       }
 
-      // placeholder
+      // placeholder preview
       renderPreview(files.map(x=>({name:x.name, sample:"", source:""})));
       setStatus(`🔎 Detecting Sample No for ${files.length} PDF(s)…`, "info");
       setProgress(2);
@@ -1088,6 +1114,12 @@ window.onload = () => {
       const found = __multiDetected.filter(x=>x.sample).length;
       setStatus(`✅ Detection done. Found Sample No in <b>${found}/${files.length}</b> file(s). Now click Upload.`, found? "ok" : "bad");
       setProgress(65);
+
+      // enable upload after detection (even if 0 found - still allow single file manual)
+      if(up){
+        if(files.length === 1) up.disabled = false;
+        else up.disabled = false; // multi allowed; files without sample will be skipped
+      }
     });
   }
 };
