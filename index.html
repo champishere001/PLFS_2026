@@ -27,6 +27,7 @@
       --shadow: 0 24px 90px rgba(0,0,0,.62);
       --shadow2: 0 18px 60px rgba(0,0,0,.45);
       --radius: 22px;
+      --rail:72px;
     }
 
     *{ box-sizing:border-box; }
@@ -37,7 +38,36 @@
       background: var(--bg);
       color: var(--text);
       overflow-x:hidden;
+      padding-left:var(--rail);
     }
+
+    /* ===== Left Rail (global) ===== */
+    .left-rail{
+      position:fixed; inset:0 auto 0 0;
+      width:var(--rail);
+      background:#0f172a;
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column; align-items:center;
+      padding-top:14px; gap:18px;
+      z-index:9999;
+    }
+    .left-rail a{
+      width:56px;
+      text-align:center;
+      font-size:11px;
+      font-weight:900;
+      text-decoration:none;
+      color:#fff;
+      padding:8px 6px;
+      border-radius:12px;
+      line-height:1.2;
+      transition:.2s ease;
+    }
+    .left-rail a:hover{ background:#1e293b; transform:translateX(2px); }
+    .left-rail a.hub{ color:var(--accent); }
+    .left-rail a.weekly{ color:var(--green); }
+    .left-rail a.monthly{ color:var(--green); }
+    .left-rail a.tada{ color:var(--amber); }
 
     /* ===== animated background ===== */
     .bg{
@@ -79,7 +109,6 @@
       50%{ transform: translate(24px,-18px) scale(1.06); }
     }
 
-    /* particles canvas sits on top of bg */
     #fx{
       position:fixed;
       inset:0;
@@ -88,40 +117,10 @@
       opacity:.75;
     }
 
-    /* ===== Left Rail (global) ===== */
-    .left-rail{
-      position:fixed; inset:0 auto 0 0;
-      width:72px;
-      background:#0f172a;
-      border-right:1px solid var(--border);
-      display:flex; flex-direction:column; align-items:center;
-      padding-top:14px; gap:18px;
-      z-index:9999;
-    }
-    .left-rail a{
-      width:56px;
-      text-align:center;
-      font-size:11px;
-      font-weight:900;
-      text-decoration:none;
-      color:#fff;
-      padding:8px 6px;
-      border-radius:12px;
-      line-height:1.2;
-      transition:.2s ease;
-    }
-    .left-rail a:hover{ background:#1e293b; transform:translateX(2px); }
-    .left-rail a.hub{ color:var(--accent); }
-    .left-rail a.weekly{ color:var(--green); }
-    .left-rail a.monthly{ color:var(--green); }
-    .left-rail a.tada{ color:var(--amber); }
-
-    /* ===== layout ===== */
     .wrap{
       max-width:1240px;
       margin:0 auto;
       padding:56px 18px 90px;
-      margin-left:72px;
     }
 
     .top{
@@ -131,12 +130,7 @@
       gap:18px;
       margin-bottom: 16px;
     }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
+    .brand{ display:flex; flex-direction:column; gap:10px; }
     .title{
       margin:0;
       font-size:38px;
@@ -199,7 +193,6 @@
       margin: 18px 0 0;
     }
 
-    /* ===== Section headers (premium, keeps visualization) ===== */
     .section{ margin-top: 22px; }
     .section-title{
       display:flex;
@@ -237,7 +230,6 @@
       margin: 14px 0 18px;
     }
 
-    /* ===== grid ===== */
     .grid{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -255,7 +247,6 @@
       .wrap{ padding-top: 38px; }
     }
 
-    /* ===== premium cards ===== */
     .card{
       position:relative;
       border-radius: var(--radius);
@@ -327,6 +318,7 @@
     .ico.tada{ background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.26); }
     .ico.docs{ background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.26); }
     .ico.arc{ background: rgba(148,163,184,.10); border-color: rgba(148,163,184,.26); }
+    .ico.sum{ background: rgba(56,189,248,.10); border-color: rgba(56,189,248,.22); }
 
     .card h3{
       margin:0;
@@ -374,7 +366,6 @@
       transition: transform .18s ease, background .18s ease, border-color .18s ease;
     }
     .btn:hover{ transform: translateZ(25px) translateY(-2px); }
-
     .btn.secondary{
       background: rgba(255,255,255,.06);
       color:#e5e7eb;
@@ -385,10 +376,10 @@
       background: rgba(255,255,255,.10);
       border-color: rgba(255,255,255,.18);
     }
-
     .btn.green{ background: var(--green); color:#00110a; box-shadow: 0 18px 35px rgba(16,185,129,.15); }
     .btn.violet{ background: var(--violet); color:#0b0620; box-shadow: 0 18px 35px rgba(167,139,250,.15); }
     .btn.amber{ background: var(--amber); color:#1b1100; box-shadow: 0 18px 35px rgba(245,158,11,.15); }
+    .btn.pink{ background: var(--pink); color:#2b0011; box-shadow: 0 18px 35px rgba(251,113,133,.15); }
 
     .foot{
       margin-top: 26px;
@@ -410,6 +401,7 @@
     <a href="plfs.html">📊 PLFS</a>
     <a href="ufs_weekly.html" class="weekly">🗓️ Weekly</a>
     <a href="ufs_monthly.html" class="monthly">📅 Monthly</a>
+    <a href="ufs_action.html" style="color:var(--amber);">📈 Action</a>
     <a href="ta_da.html" class="tada">🧮 TA/DA</a>
   </nav>
 
@@ -443,7 +435,6 @@
       </div>
     </div>
 
-    <!-- ========================= SECTION 1: SCHEMES ========================= -->
     <div class="section">
       <div class="section-title">
         <div class="left"><span>📊</span><div>Schemes</div></div>
@@ -452,7 +443,6 @@
       <div class="section-divider"></div>
 
       <div class="grid">
-        <!-- PLFS -->
         <div class="card" onclick="go('plfs.html')" role="button" aria-label="Open PLFS">
           <div class="card-head">
             <div class="ico plfs">📊</div>
@@ -465,21 +455,19 @@
           </div>
         </div>
 
-        <!-- UFS -->
         <div class="card" onclick="go('ufs_weekly.html')" role="button" aria-label="Open UFS">
           <div class="card-head">
             <div class="ico ufs">🗓️</div>
             <h3>UFS</h3>
           </div>
-          <p>Open weekly and monthly progress tools in one place.</p>
+          <p>Open weekly, monthly and action tools in one place.</p>
           <div class="btnrow">
             <a class="btn green" href="ufs_weekly.html" onclick="event.stopPropagation()">📅 Weekly</a>
             <a class="btn green" href="ufs_monthly.html" onclick="event.stopPropagation()">🗓️ Monthly</a>
-            <a class="btn secondary" href="ufs_weekly.html#reports" onclick="event.stopPropagation()">📈 Reports</a>
+            <a class="btn amber" href="ufs_action.html" onclick="event.stopPropagation()">📈 Action</a>
           </div>
         </div>
 
-        <!-- ASUSE -->
         <div class="card" onclick="go('asuse.html')" role="button" aria-label="Open ASUSE">
           <div class="card-head">
             <div class="ico asuse">🧾</div>
@@ -494,50 +482,47 @@
       </div>
     </div>
 
-    <!-- ========================= SECTION 2: TA/DA & DOCS ========================= -->
     <div class="section">
       <div class="section-title">
         <div class="left"><span>🧾</span><div>TA/DA Bills & Documents</div></div>
-        <div class="right">Sheet • Bills • Archive</div>
+        <div class="right">Sheet • Upload • Summary</div>
       </div>
       <div class="section-divider"></div>
 
       <div class="grid">
-        <!-- TA/DA -->
         <div class="card" onclick="go('ta_da.html')" role="button" aria-label="Open TA/DA">
           <div class="card-head">
             <div class="ico tada">🧮</div>
-            <h3>TA / DA Calculation</h3>
+            <h3>TA / DA Sheet</h3>
           </div>
-          <p>Designation-wise TA/DA with PDF & Excel export.</p>
+          <p>Designation-wise TA/DA calculation with PDF & Excel export.</p>
           <div class="btnrow">
             <a class="btn amber" href="ta_da.html" onclick="event.stopPropagation()">🧾 Open Sheet</a>
             <a class="btn secondary" href="ta_da.html#pdf" onclick="event.stopPropagation()">⬇️ PDF Export</a>
           </div>
         </div>
 
-        <!-- Bills -->
-        <div class="card" onclick="go('ta_da_bills.html')" role="button" aria-label="Open Bills">
+        <div class="card" onclick="go('tada_documents.html')" role="button" aria-label="Open TA/DA Documents">
           <div class="card-head">
-            <div class="ico docs">📄</div>
-            <h3>TA / DA Bills</h3>
+            <div class="ico docs">📁</div>
+            <h3>Bill Documents</h3>
           </div>
-          <p>Edit, attach, and verify TA/DA bill documents.</p>
+          <p>Upload / view TA bills, hotel bills, tickets, scanned PDFs, and supporting files.</p>
           <div class="btnrow">
-            <a class="btn amber" href="ta_da_bills.html" onclick="event.stopPropagation()">📄 Open Bills</a>
-            <a class="btn secondary" href="ta_da_bills.html#upload" onclick="event.stopPropagation()">⬆️ Upload</a>
+            <a class="btn pink" href="tada_documents.html" onclick="event.stopPropagation()">📂 Open Docs</a>
+            <a class="btn secondary" href="tada_documents.html#upload" onclick="event.stopPropagation()">⬆️ Upload</a>
           </div>
         </div>
 
-        <!-- Archive -->
-        <div class="card" onclick="go('ta_da_archive.html')" role="button" aria-label="Open Archive">
+        <div class="card" onclick="go('tada_summary.html')" role="button" aria-label="Open Claim Summary">
           <div class="card-head">
-            <div class="ico arc">🗂️</div>
-            <h3>Bill Archive</h3>
+            <div class="ico sum">📌</div>
+            <h3>Claim Summary</h3>
           </div>
-          <p>Past TA/DA claims and PDF records.</p>
+          <p>Designation-wise totals + monthly summary to verify claims quickly.</p>
           <div class="btnrow">
-            <a class="btn secondary" href="ta_da_archive.html" onclick="event.stopPropagation()">🗂️ View Archive</a>
+            <a class="btn" href="tada_summary.html" onclick="event.stopPropagation()">📊 View Summary</a>
+            <a class="btn secondary" href="tada_summary.html#month" onclick="event.stopPropagation()">🗓️ Month</a>
           </div>
         </div>
       </div>
@@ -550,10 +535,8 @@
   </div>
 
   <script>
-    // ===== Navigation helper (so card click works) =====
     function go(url){ window.location.href = url; }
 
-    // ===== Clock =====
     function pad(n){ return String(n).padStart(2,'0'); }
     function tick(){
       const d = new Date();
@@ -565,7 +548,6 @@
     }
     tick(); setInterval(tick, 1000);
 
-    // ===== Particles (lightweight, no library) =====
     const c = document.getElementById('fx');
     const ctx = c.getContext('2d');
     let W,H,particles=[];
@@ -587,7 +569,6 @@
     function draw(){
       ctx.clearRect(0,0,W,H);
 
-      // dots
       for(const p of particles){
         p.x += p.vx; p.y += p.vy;
         if(p.x < -20) p.x = W+20;
@@ -602,7 +583,6 @@
         ctx.fill();
       }
 
-      // lines (nearby)
       for(let i=0;i<particles.length;i++){
         for(let j=i+1;j<particles.length;j++){
           const a = particles[i], b = particles[j];
@@ -625,7 +605,6 @@
     }
     draw();
 
-    // ===== Micro-tilt on hover =====
     document.querySelectorAll('.card').forEach(card=>{
       let rect=null;
       card.addEventListener('mousemove', (e)=>{
