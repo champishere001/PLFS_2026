@@ -536,17 +536,9 @@ const db = firebase.database();
 
 /* ✅ SECOND (Inspection Notes separate RTDB + separate Storage) */
 const notesConfig = {
-  apiKey: "AIzaSyA8GkqtLSg-cGAR8iUVOId4t_KkgHmZa7k",
-  authDomain: "inspectionnote.firebaseapp.com",
-  databaseURL: "https://inspectionnote-default-rtdb.firebaseio.com",
-  projectId: "inspectionnote",
-
-  /* ✅ IMPORTANT FIX: compat SDK works reliably with *.appspot.com */
-  storageBucket: "inspectionnote.appspot.com",
-
-  messagingSenderId: "1043782595459",
-  appId: "1:1043782595459:web:ef1ce80fe9223362ebfcb6",
-  measurementId: "G-VY3WQT64GQ"
+  databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com",
+projectId: "inspection-notes",
+storageBucket: "inspection-notes.appspot.com",
 };
 const notesApp = firebase.initializeApp(notesConfig, "notesApp");
 const notesDb  = firebase.database(notesApp);
