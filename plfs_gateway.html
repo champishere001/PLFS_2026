@@ -16,31 +16,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 
-  <!-- ✅ OCR (for scanned PDF) -->
+  <!-- OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root{
-      --bg:#020617;
-      --panel:#0b1222;
-      --card1:#0f172a;
-      --card2:#111c33;
-      --border:#22304a;
-
-      --accent:#38bdf8;
-      --green:#10b981;
-      --amber:#f59e0b;
-      --pink:#fb7185;
-      --violet:#a78bfa;
-
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-
+      --bg:#020617; --panel:#0b1222; --card1:#0f172a; --card2:#111c33; --border:#22304a;
+      --accent:#38bdf8; --green:#10b981; --amber:#f59e0b; --pink:#fb7185; --violet:#a78bfa;
+      --text:#e5e7eb; --muted:#94a3b8;
       --shadow: 0 24px 90px rgba(0,0,0,.62);
       --shadow2: 0 18px 60px rgba(0,0,0,.45);
       --radius: 22px;
     }
-
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
@@ -62,17 +49,11 @@
     .noise{
       position:fixed; inset:0; z-index:-1;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
-      opacity:.16;
-      mix-blend-mode:overlay;
-      pointer-events:none;
+      opacity:.16; mix-blend-mode:overlay; pointer-events:none;
     }
     .blob{
-      position:fixed;
-      width:420px; height:420px;
-      border-radius:50%;
-      filter: blur(50px);
-      opacity:.22;
-      z-index:-1;
+      position:fixed; width:420px; height:420px; border-radius:50%;
+      filter: blur(50px); opacity:.22; z-index:-1;
       animation: float 9s ease-in-out infinite;
     }
     .b1{ left:-120px; top:80px; background: rgba(56,189,248,.8); }
@@ -82,91 +63,39 @@
       0%,100%{ transform: translate(0,0) scale(1); }
       50%{ transform: translate(24px,-18px) scale(1.06); }
     }
-    #fx{
-      position:fixed; inset:0; z-index:-0;
-      pointer-events:none; opacity:.75;
-    }
+    #fx{ position:fixed; inset:0; z-index:-0; pointer-events:none; opacity:.75; }
 
     .left-rail{
-      position:fixed; inset:0 auto 0 0;
-      width:72px;
-      background:#0f172a;
-      border-right:1px solid var(--border);
+      position:fixed; inset:0 auto 0 0; width:72px;
+      background:#0f172a; border-right:1px solid var(--border);
       display:flex; flex-direction:column; align-items:center;
-      padding-top:14px; gap:18px;
-      z-index:9999;
+      padding-top:14px; gap:18px; z-index:9999;
     }
     .left-rail a{
-      width:56px;
-      text-align:center;
-      font-size:11px;
-      font-weight:900;
-      text-decoration:none;
-      color:#fff;
-      padding:8px 6px;
-      border-radius:12px;
-      line-height:1.2;
-      transition:.2s ease;
+      width:56px; text-align:center; font-size:11px; font-weight:900;
+      text-decoration:none; color:#fff; padding:8px 6px; border-radius:12px;
+      line-height:1.2; transition:.2s ease;
     }
     .left-rail a:hover{ background:#1e293b; transform:translateX(2px); }
     .left-rail a.hub{ color:var(--accent); }
     .left-rail a.plfs{ color:var(--accent); }
     .left-rail a.action{ color:var(--green); }
 
-    .wrap{
-      max-width:1240px;
-      margin:0 auto;
-      padding:56px 18px 90px;
-      margin-left:72px;
-    }
+    .wrap{ max-width:1240px; margin:0 auto; padding:56px 18px 90px; margin-left:72px; }
 
-    .top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:18px;
-      margin-bottom: 16px;
-    }
-    .brand{ display:flex; flex-direction:column; gap:10px; }
+    .title{ margin:0; font-size:34px; font-weight:900; letter-spacing:.8px; line-height:1.05; }
+    .title .a{ color: var(--accent); } .title .b{ color:#cbeeff; }
+    .subtitle{ margin:10px 0 0; color:var(--muted); font-weight:600; font-size:14px; line-height:1.5; max-width:760px; }
 
-    .title{
-      margin:0;
-      font-size:34px;
-      font-weight:900;
-      letter-spacing:.8px;
-      line-height:1.05;
-    }
-    .title .a{ color: var(--accent); }
-    .title .b{ color: #cbeeff; }
-
-    .subtitle{
-      margin:0;
-      color: var(--muted);
-      font-weight:600;
-      font-size:14px;
-      line-height:1.5;
-      max-width: 760px;
-    }
-
-    .badge-row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 6px;
-    }
+    .badge-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
       border:1px solid rgba(34,48,74,.9);
       background: rgba(2,6,23,.55);
       backdrop-filter: blur(10px);
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      font-size:12px;
-      font-weight:800;
-      color: #dbeafe;
+      font-size:12px; font-weight:800; color:#dbeafe;
     }
 
     .spark{
@@ -176,53 +105,29 @@
       margin: 18px 0 0;
     }
 
-    .section{ margin-top: 22px; }
+    .section{ margin-top:22px; }
     .section-title{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding: 12px 16px;
-      border-radius: 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px 16px; border-radius:16px;
       border:1px solid rgba(34,48,74,.9);
       background: rgba(2,6,23,.45);
       backdrop-filter: blur(12px);
       box-shadow: 0 16px 40px rgba(0,0,0,.30);
     }
-    .section-title .left{
-      display:flex;align-items:center;gap:10px;
-      font-weight:900;letter-spacing:.3px;
-      color:#eaf6ff;
-    }
+    .section-title .left{ display:flex; align-items:center; gap:10px; font-weight:900; letter-spacing:.3px; color:#eaf6ff; }
     .section-title .left span{
-      width:34px;height:34px;border-radius:12px;
-      display:grid;place-items:center;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
+      width:34px; height:34px; border-radius:12px; display:grid; place-items:center;
+      border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
     }
-    .section-title .right{
-      font-size:12px;
-      font-weight:800;
-      color: rgba(148,163,184,.85);
-      white-space:nowrap;
-    }
+    .section-title .right{ font-size:12px; font-weight:800; color: rgba(148,163,184,.85); white-space:nowrap; }
     .section-divider{
       height:1px;
       background: linear-gradient(90deg, transparent, rgba(56,189,248,.45), transparent);
-      opacity:.7;
-      margin: 14px 0 18px;
+      opacity:.7; margin: 14px 0 18px;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:22px;
-      margin-top:18px;
-    }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      .section-title .right{ display:none; }
-    }
+    .grid{ display:grid; grid-template-columns:1.2fr .8fr; gap:22px; margin-top:18px; }
+    @media (max-width: 980px){ .grid{ grid-template-columns:1fr; } .section-title .right{ display:none; } }
 
     .card{
       position:relative;
@@ -237,52 +142,27 @@
       transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
     }
     .card::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
+      content:""; position:absolute; inset:-2px;
       background:
         radial-gradient(650px 260px at 15% 15%, rgba(56,189,248,.18), transparent 55%),
         radial-gradient(540px 240px at 88% 18%, rgba(16,185,129,.12), transparent 55%);
-      opacity:.9;
-      pointer-events:none;
+      opacity:.9; pointer-events:none;
     }
     .card::after{
-      content:"";
-      position:absolute;
-      top:-40%;
-      left:-60%;
-      width:60%;
-      height:180%;
+      content:""; position:absolute; top:-40%; left:-60%;
+      width:60%; height:180%;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
       transform: rotate(18deg);
-      opacity:0;
-      transition: opacity .35s ease;
+      opacity:0; transition: opacity .35s ease;
       pointer-events:none;
     }
-    .card:hover::after{ opacity:1; animation: sweep 1.2s ease; }
-    @keyframes sweep{
-      0%{ transform: translateX(0) rotate(18deg); }
-      100%{ transform: translateX(380%) rotate(18deg); }
-    }
-    .card:hover{
-      border-color: rgba(56,189,248,.55);
-      box-shadow: var(--shadow);
-      transform: translateY(-6px);
-    }
+    .card:hover::after{ opacity:1; animation:sweep 1.2s ease; }
+    @keyframes sweep{ 0%{ transform: translateX(0) rotate(18deg); } 100%{ transform: translateX(380%) rotate(18deg); } }
+    .card:hover{ border-color: rgba(56,189,248,.55); box-shadow: var(--shadow); transform: translateY(-6px); }
 
-    .card-head{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      position:relative;
-      z-index:1;
-      margin-bottom: 10px;
-    }
+    .card-head{ display:flex; align-items:center; gap:12px; position:relative; z-index:1; margin-bottom:10px; }
     .ico{
-      width:42px;height:42px;
-      border-radius: 14px;
-      display:grid; place-items:center;
-      font-size:20px;
+      width:42px; height:42px; border-radius:14px; display:grid; place-items:center; font-size:20px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.35);
       box-shadow: 0 12px 30px rgba(0,0,0,.25);
@@ -297,42 +177,28 @@
       font-weight:600;
       font-size:12.5px;
       line-height:1.5;
-      position:relative;
-      z-index:1;
+      position:relative; z-index:1;
     }
 
     .btnrow{ display:flex; gap:10px; flex-wrap:wrap; position:relative; z-index:1; margin-top: 10px; }
-
     .btn{
       appearance:none; border:none; cursor:pointer;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-weight:900;
-      font-size:12px;
-      letter-spacing:.3px;
-      color:#001019;
-      background: var(--accent);
+      padding: 10px 14px; border-radius: 12px;
+      font-weight:900; font-size:12px; letter-spacing:.3px;
+      color:#001019; background: var(--accent);
       box-shadow: 0 18px 35px rgba(56,189,248,.18);
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      text-decoration:none;
-      user-select:none;
+      display:inline-flex; align-items:center; gap:8px;
+      text-decoration:none; user-select:none;
       transform: translateZ(25px);
       transition: transform .18s ease, background .18s ease, border-color .18s ease;
     }
     .btn:hover{ transform: translateZ(25px) translateY(-2px); }
-
     .btn.secondary{
       background: rgba(255,255,255,.06);
-      color:#e5e7eb;
-      border:1px solid rgba(255,255,255,.10);
+      color:#e5e7eb; border:1px solid rgba(255,255,255,.10);
       box-shadow:none;
     }
-    .btn.secondary:hover{
-      background: rgba(255,255,255,.10);
-      border-color: rgba(255,255,255,.18);
-    }
+    .btn.secondary:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
     .btn.green{ background: var(--green); color:#00110a; box-shadow: 0 18px 35px rgba(16,185,129,.15); }
     .btn.violet{ background: var(--violet); color:#0b0620; box-shadow: 0 18px 35px rgba(167,139,250,.15); }
 
@@ -357,9 +223,7 @@
     }
     .mh{
       padding:16px 16px 12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      display:flex; justify-content:space-between; align-items:center;
       border-bottom:1px solid rgba(255,255,255,.08);
       gap:12px;
     }
@@ -375,30 +239,16 @@
     }
     .mb{ padding:16px; }
 
-    .form{
-      display:grid;
-      gap:10px;
-      position:relative;
-      z-index:1;
-    }
-    .row2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width: 680px){
-      .row2{ grid-template-columns:1fr; }
-    }
+    .form{ display:grid; gap:10px; position:relative; z-index:1; }
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 680px){ .row2{ grid-template-columns:1fr; } }
+
     label{
-      font-size:11px;
-      font-weight:900;
-      color:var(--muted);
-      letter-spacing:.2px;
-      text-transform:uppercase;
+      font-size:11px; font-weight:900; color:var(--muted);
+      letter-spacing:.2px; text-transform:uppercase;
     }
     .field{
-      margin-top:6px;
-      width:100%;
+      margin-top:6px; width:100%;
       background:rgba(0,0,0,.25);
       border:1px solid rgba(255,255,255,.10);
       color:var(--text);
@@ -437,14 +287,8 @@
       background:linear-gradient(90deg, rgba(16,185,129,.95), rgba(56,189,248,.92));
       transition:width .2s ease;
     }
-    .list{
-      margin-top:14px;
-      display:grid;
-      gap:10px;
-      max-height: 360px;
-      overflow:auto;
-      padding-right:4px;
-    }
+
+    .list{ margin-top:14px; display:grid; gap:10px; max-height: 360px; overflow:auto; padding-right:4px; }
     .item{
       border:1px solid rgba(255,255,255,.10);
       border-radius:18px;
@@ -455,25 +299,69 @@
       gap:12px;
       align-items:flex-start;
     }
-    .meta .a{
-      font-weight:900;
-      font-size:12px;
-      color:#fff;
-      margin-bottom:6px;
-    }
-    .meta .b{
-      color:var(--muted);
-      font-weight:800;
-      font-size:11px;
-      line-height:1.4;
-    }
-    .item a{
-      color:var(--accent);
-      font-weight:900;
-      text-decoration:none;
-      font-size:12px;
-    }
+    .meta .a{ font-weight:900; font-size:12px; color:#fff; margin-bottom:6px; }
+    .meta .b{ color:var(--muted); font-weight:800; font-size:11px; line-height:1.4; }
+    .item a{ color:var(--accent); font-weight:900; text-decoration:none; font-size:12px; }
     .item a:hover{ text-decoration:underline; }
+
+    /* multi preview */
+    .previewWrap{
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      background:rgba(0,0,0,.14);
+      overflow:hidden;
+    }
+    .previewHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      font-weight:900;
+      font-size:12px;
+      color:#eaf6ff;
+    }
+    .previewBody{
+      max-height:180px;
+      overflow:auto;
+      padding:6px 8px 10px;
+      display:grid;
+      gap:8px;
+    }
+    .prow{
+      display:grid;
+      grid-template-columns: 1.25fr .55fr .55fr;
+      gap:10px;
+      align-items:center;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+    }
+    .prow .fn{
+      font-weight:900;
+      font-size:11.5px;
+      color:#fff;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .prow .sm{
+      font-weight:900;
+      font-size:11.5px;
+      color:#dbeafe;
+      text-align:center;
+    }
+    .prow .st{
+      font-weight:900;
+      font-size:11px;
+      color:var(--muted);
+      text-align:right;
+      white-space:nowrap;
+    }
+    .tagOk{ color: rgba(16,185,129,.95); }
+    .tagBad{ color: rgba(239,68,68,.95); }
   </style>
 </head>
 
@@ -493,21 +381,17 @@
   <div class="blob b3"></div>
 
   <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <h1 class="title"><span class="a">PLFS</span> <span class="b">GATEWAY</span></h1>
-        <p class="subtitle">
-          Between HUB and PLFS: open <b>Action Plan</b> or upload <b>Inspection Notes (PDF)</b> SRO-wise with Sample No.
-        </p>
-        <div class="badge-row">
-          <div class="pill">⚡ Quick Access</div>
-          <div class="pill">📄 PDF Notes</div>
-          <div class="pill">☁️ Firebase Sync</div>
-          <div class="pill">🧠 SRO-wise Tracking</div>
-        </div>
-        <div class="spark"></div>
-      </div>
+    <h1 class="title"><span class="a">PLFS</span> <span class="b">GATEWAY</span></h1>
+    <p class="subtitle">
+      Between HUB and PLFS: open <b>Action Plan</b> or upload <b>Inspection Notes (PDF)</b> SRO-wise with Sample No.
+    </p>
+    <div class="badge-row">
+      <div class="pill">⚡ Quick Access</div>
+      <div class="pill">📄 PDF Notes</div>
+      <div class="pill">☁️ Firebase Sync</div>
+      <div class="pill">🧠 SRO-wise Tracking</div>
     </div>
+    <div class="spark"></div>
 
     <div class="section">
       <div class="section-title">
@@ -533,7 +417,7 @@
             <div class="ico notes">📝</div>
             <h3>Inspection Notes (PDF)</h3>
           </div>
-          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). Stored in Firebase Storage + RTDB metadata.</p>
+          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). Metadata saved in separate Notes DB.</p>
           <div class="btnrow">
             <button class="btn" type="button" onclick="event.stopPropagation(); openNotes()">⬆️ Upload Notes</button>
             <button class="btn secondary" type="button" onclick="event.stopPropagation(); loadRecent()">🔄 Refresh</button>
@@ -556,7 +440,7 @@
   <div class="modalMask" id="notesMask" onclick="closeNotes(event)">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="mh">
-        <div class="t">📝 Upload Inspection Notes (PDF) — HP SRO wise + Sample No (Auto Detect)</div>
+        <div class="t">📝 Upload Inspection Notes (PDF) — SRO wise + Sample No (Auto Detect)</div>
         <button class="xbtn" onclick="closeNotes()">✕ Close</button>
       </div>
       <div class="mb">
@@ -565,19 +449,19 @@
             <div class="ico notes">📄</div>
             <h3>Upload Panel</h3>
           </div>
-          <p>Select SRO (HP only), choose PDF. Sample No will be auto-detected from first page (you can override).</p>
+          <p>Select SRO, choose <b>one or multiple PDFs</b>. Sample No will be auto-detected from first page (manual allowed only for single PDF).</p>
 
           <div class="form">
             <div class="row2">
               <div>
-                <label>Select SRO (HP only)</label>
+                <label>Select SRO (Only 4)</label>
                 <select id="sroSel" class="field" onchange="loadSroNotes()">
                   <option value="">— Select SRO —</option>
                 </select>
               </div>
               <div>
-                <label>Sample No (auto detected from cover)</label>
-                <input id="sampleNo" class="field" placeholder="Auto-detected… (or type manually)" />
+                <label>Sample No (manual only for single PDF)</label>
+                <input id="sampleNo" class="field" placeholder="Auto-detected… (single file: you may type)" />
               </div>
             </div>
 
@@ -587,8 +471,8 @@
                 <input id="insDate" type="date" class="field" />
               </div>
               <div>
-                <label>Choose PDF File (auto detect)</label>
-                <input id="pdfFile" type="file" class="field" accept="application/pdf" />
+                <label>Choose PDF File(s) (auto detect)</label>
+                <input id="pdfFile" type="file" class="field" accept="application/pdf" multiple />
               </div>
             </div>
 
@@ -597,8 +481,18 @@
               <input id="remarks" class="field" placeholder="Officer name / place etc." />
             </div>
 
+            <div class="previewWrap">
+              <div class="previewHead">
+                <div>Selected Files Preview</div>
+                <div style="color:var(--muted);font-size:11px;">Sample detect results</div>
+              </div>
+              <div class="previewBody" id="previewBody">
+                <div class="status" style="margin:8px;">No file selected.</div>
+              </div>
+            </div>
+
             <div class="btnrow">
-              <button class="btn green" id="uploadBtn" onclick="uploadPdf()">⬆️ Upload PDF</button>
+              <button class="btn green" id="uploadBtn" onclick="uploadPdf()">⬆️ Upload PDF(s)</button>
               <button class="btn secondary" onclick="resetForm()">🧹 Clear</button>
               <button class="btn violet" onclick="loadRecent()">🔄 Refresh Recent</button>
             </div>
@@ -618,7 +512,7 @@
 
         <div class="status" style="margin-top:14px;">
           ✅ Storage Path: <b>inspection_notes/{SRO}/sample_{SAMPLE}/SAMPLE_timestamp_filename.pdf</b><br/>
-          ✅ RTDB Meta: <b>inspection_notes_meta/{SRO}/{noteId}</b>
+          ✅ Notes RTDB Meta: <b>inspection_notes_meta/{SRO}/{noteId}</b> (stored in inspectionnote-default-rtdb)
         </div>
       </div>
     </div>
@@ -629,6 +523,7 @@
 function go(url){ window.location.href = url; }
 
 /* ===================== Firebase ===================== */
+/* PRIMARY (existing PLFS project) */
 const config = {
   apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
   authDomain: "action-plan-62fae.firebaseapp.com",
@@ -637,19 +532,30 @@ const config = {
   storageBucket: "action-plan-62fae.appspot.com"
 };
 firebase.initializeApp(config);
-const db = firebase.database();
-const storage = firebase.storage();
+const db = firebase.database();        // PLFS db (not used for notes meta)
+const storage = firebase.storage();    // PDFs stored here (same bucket)
 
-/* ✅ Only HP */
-const HP_STATE_NAME = "HIMACHAL PRADESH";
-const FALLBACK_SROS_HP = [
-  "RO SHIMLA","SRO SHIMLA","SRO MANDI","SRO KANGRA","SRO HAMIRPUR","SRO SOLAN","SRO BILASPUR","SRO CHAMBA","SRO KULLU","SRO UNA","SRO SHIMLA (RURAL)"
-];
+/* SECOND (Inspection Notes separate RTDB) */
+const notesConfig = {
+  apiKey: "AIzaSyA8GkqtLSg-cGAR8iUVOId4t_KkgHmZa7k",
+  authDomain: "inspectionnote.firebaseapp.com",
+  databaseURL: "https://inspectionnote-default-rtdb.firebaseio.com",
+  projectId: "inspectionnote",
+  storageBucket: "inspectionnote.firebasestorage.app",
+  messagingSenderId: "1043782595459",
+  appId: "1:1043782595459:web:ef1ce80fe9223362ebfcb6",
+  measurementId: "G-VY3WQT64GQ"
+};
+const notesApp = firebase.initializeApp(notesConfig, "notesApp");
+const notesDb  = firebase.database(notesApp);
+
+/* ===================== SRO list (ONLY 4) ===================== */
+const ALLOWED_SROS = ["SRO SHIMLA","SRO HAMIRPUR","SRO DHARAMSHALA","SRO MANDI"];
 
 /* ===================== Modal ===================== */
 function openNotes(){
   document.getElementById("notesMask").style.display="flex";
-  loadSroDropdownHP();
+  loadSroDropdownOnly4();
   loadRecent();
 }
 function closeNotes(e){
@@ -664,6 +570,8 @@ function resetForm(){
   __lastDetectedSample = "";
   __lastDetectSource = "";
   __lastDetectSnippet = "";
+  __multiDetected = [];
+  renderPreview([]);
   setStatus("Ready.");
   setProgress(0);
 }
@@ -686,71 +594,68 @@ function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+/* ===================== Preview ===================== */
+function renderPreview(files){
+  const box = document.getElementById("previewBody");
+  if(!files || !files.length){
+    box.innerHTML = `<div class="status" style="margin:8px;">No file selected.</div>`;
+    return;
+  }
+  box.innerHTML = files.map(f=>{
+    const has = !!(f.sample && String(f.sample).trim());
+    const st = has ? `<span class="tagOk">OK</span>` : `<span class="tagBad">NOT FOUND</span>`;
+    const sm = has ? escapeHtml(f.sample) : "—";
+    return `
+      <div class="prow">
+        <div class="fn" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+        <div class="sm">${sm}</div>
+        <div class="st">${st}${f.source ? ` • ${escapeHtml(f.source)}` : ""}</div>
+      </div>
+    `;
+  }).join("");
+}
+
 /* ===================== Sample detection (PDF.js + OCR) ===================== */
 let __lastDetectedSample = "";
 let __lastDetectSource = "";
 let __lastDetectSnippet = "";
+let __multiDetected = []; // [{name,size,sample,source,snippet}]
 
 function extractSampleFromText(txt){
   const t = String(txt || "");
   const cleaned = t.replace(/\s+/g," ").trim();
 
-  // strong pattern for your shown cover: "S. No. of the sample FSU : 20208"
-  const p1 = /S\.?\s*No\.?\s*of\s*(the\s*)?sample\s*FSU\s*[:\-]?\s*([0-9]{4,8})/i;
+  const p1 = /S\.?\s*No\.?\s*of\s*(the\s*)?sample\s*FSU\s*[:\-]?\s*([0-9]{4,10})/i;
   let m = cleaned.match(p1);
   if(m) return { sample: m[2], snippet: m[0] };
 
-  // generic: Sample Serial/No/Number, Serial No, S.No, Sample ID
-  const p2 = /(sample\s*(serial|s\.?no|no\.?|number|id)|serial\s*no\.?|s\.?\s*no\.?)\s*[:\-]?\s*([A-Z0-9\-\/]{2,20})/i;
+  const p2 = /(sample\s*(serial|s\.?no|no\.?|number|id)|serial\s*no\.?|s\.?\s*no\.?)\s*[:\-]?\s*([A-Z0-9\-\/]{2,30})/i;
   m = cleaned.match(p2);
   if(m) return { sample: m[3], snippet: m[0] };
 
-  // fallback: if "FSU" appears and a near number exists
-  const p3 = /FSU[^0-9]{0,20}([0-9]{4,8})/i;
+  const p3 = /FSU[^0-9]{0,24}([0-9]{4,10})/i;
   m = cleaned.match(p3);
   if(m) return { sample: m[1], snippet: m[0] };
 
   return null;
 }
 
-async function detectSampleFromPdf(file){
-  if(!file) return;
-
-  setStatus("🔎 Detecting Sample No from PDF cover…", "info");
-  setProgress(5);
-
+async function detectSampleFromPdf_RETURN(file){
   try{
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     const page = await pdf.getPage(1);
 
-    // 1) try text layer extraction
     let text = "";
     try{
       const tc = await page.getTextContent();
       text = (tc.items || []).map(x => x.str || "").join(" ").trim();
-    }catch(e){ /* ignore */ }
+    }catch(e){}
 
     const found1 = extractSampleFromText(text);
     if(found1 && found1.sample){
-      __lastDetectedSample = String(found1.sample);
-      __lastDetectSource = "pdf-text";
-      __lastDetectSnippet = found1.snippet || "";
-      setProgress(40);
-
-      const inp = document.getElementById("sampleNo");
-      if(!inp.value.trim()){
-        inp.value = __lastDetectedSample;
-      }
-
-      setStatus(`✅ Sample No detected: <b>${escapeHtml(__lastDetectedSample)}</b> (from PDF text)`, "ok");
-      setProgress(60);
-      return;
+      return { sample: String(found1.sample), source: "pdf-text", snippet: found1.snippet || "" };
     }
-
-    // 2) OCR for scanned PDFs
-    setStatus("🧠 PDF seems scanned. Running OCR on first page…", "info");
-    setProgress(30);
 
     const viewport = page.getViewport({ scale: 2.0 });
     const canvas = document.createElement("canvas");
@@ -760,172 +665,189 @@ async function detectSampleFromPdf(file){
 
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    setProgress(45);
-
     const dataUrl = canvas.toDataURL("image/png");
-    const ocr = await Tesseract.recognize(
-      dataUrl,
-      "eng",
-      {
-        logger: m => {
-          if(m && m.progress != null){
-            const p = 45 + Math.round(m.progress * 45);
-            setProgress(p);
-          }
-        }
-      }
-    );
-
+    const ocr = await Tesseract.recognize(dataUrl, "eng");
     const ocrText = (ocr && ocr.data && ocr.data.text) ? ocr.data.text : "";
+
     const found2 = extractSampleFromText(ocrText);
-
     if(found2 && found2.sample){
-      __lastDetectedSample = String(found2.sample);
-      __lastDetectSource = "ocr";
-      __lastDetectSnippet = found2.snippet || "";
-
-      const inp = document.getElementById("sampleNo");
-      if(!inp.value.trim()){
-        inp.value = __lastDetectedSample;
-      }
-
-      setStatus(`✅ Sample No detected: <b>${escapeHtml(__lastDetectedSample)}</b> (OCR)`, "ok");
-      setProgress(95);
-      return;
+      return { sample: String(found2.sample), source: "ocr", snippet: found2.snippet || "" };
     }
 
-    setStatus("⚠️ Sample No not found on cover. Please type manually.", "bad");
-    setProgress(0);
+    return { sample: "", source: "", snippet: "" };
   }catch(err){
-    console.error(err);
-    setStatus(`❌ Sample detect failed: ${escapeHtml(err.message || err)}`, "bad");
+    console.error("detectSampleFromPdf_RETURN error:", err);
+    return { sample: "", source: "error", snippet: String(err.message || err) };
+  }
+}
+
+async function detectSampleFromPdf(file){
+  if(!file) return;
+  setStatus("🔎 Detecting Sample No from PDF cover…", "info");
+  setProgress(5);
+
+  const det = await detectSampleFromPdf_RETURN(file);
+  if(det && det.sample){
+    __lastDetectedSample = String(det.sample);
+    __lastDetectSource = det.source || "";
+    __lastDetectSnippet = det.snippet || "";
+    const inp = document.getElementById("sampleNo");
+    if(!inp.value.trim()) inp.value = __lastDetectedSample;
+    setStatus(`✅ Sample No detected: <b>${escapeHtml(__lastDetectedSample)}</b> (${escapeHtml(__lastDetectSource)})`, "ok");
+    setProgress(70);
+  }else{
+    setStatus("⚠️ Sample No not found on cover. Please type manually (single file only).", "bad");
     setProgress(0);
   }
 }
 
-/* ===================== Load SRO dropdown (HP only from PLFS roster) ===================== */
-async function loadSroDropdownHP(){
+/* ===================== Load SRO dropdown (ONLY 4) ===================== */
+function loadSroDropdownOnly4(){
   const sel = document.getElementById("sroSel");
   const prev = sel.value || "";
   sel.innerHTML = `<option value="">— Select SRO —</option>`;
-
-  try{
-    const snap = await db.ref(`plfs_roster/${HP_STATE_NAME}`).once("value");
-    let set = new Set();
-
-    if(snap.exists()){
-      const obj = snap.val() || {};
-      Object.values(obj).forEach(r=>{
-        if(r && r.sro) set.add(String(r.sro).trim());
-      });
-    }
-
-    const list = [...set].filter(Boolean).sort();
-    const final = list.length ? list : FALLBACK_SROS_HP;
-
-    final.forEach(s=>{
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      sel.appendChild(opt);
-    });
-
-    if(prev && final.includes(prev)) sel.value = prev;
-  }catch(err){
-    FALLBACK_SROS_HP.forEach(s=>{
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      sel.appendChild(opt);
-    });
-  }
-
+  ALLOWED_SROS.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+  if(prev && ALLOWED_SROS.includes(prev)) sel.value = prev;
   if(sel.value) loadSroNotes();
 }
 
-/* ===================== Upload PDF (Storage + RTDB meta) ===================== */
+/* ===================== Upload PDF(s): Storage + Notes RTDB meta ===================== */
 async function uploadPdf(){
   const sro = document.getElementById("sroSel").value.trim();
-  let sample = document.getElementById("sampleNo").value.trim();
   const insDate = document.getElementById("insDate").value || "";
   const remarks = document.getElementById("remarks").value.trim();
   const fileEl = document.getElementById("pdfFile");
-  const file = fileEl.files[0];
+  const files = Array.from(fileEl.files || []);
 
   if(!sro) { setStatus("❌ Please select SRO.", "bad"); return; }
-  if(!file){ setStatus("❌ Please choose a PDF file.", "bad"); return; }
-  if(file.type !== "application/pdf"){ setStatus("❌ Only PDF allowed.", "bad"); return; }
-
-  // ✅ If user didn't type sample, use detected
-  if(!sample && __lastDetectedSample){
-    sample = __lastDetectedSample;
-    document.getElementById("sampleNo").value = sample;
+  if(!files.length){ setStatus("❌ Please choose PDF file(s).", "bad"); return; }
+  for(const f of files){
+    if(f.type !== "application/pdf"){
+      setStatus(`❌ Only PDF allowed. Invalid: ${escapeHtml(f.name)}`, "bad");
+      return;
+    }
   }
-  if(!sample){ setStatus("❌ Sample No not found. Please enter Sample No.", "bad"); return; }
 
   const btn = document.getElementById("uploadBtn");
   btn.disabled = true;
-
   setProgress(0);
-  setStatus("Uploading...");
 
   try{
     const sroKey = safeKey(sro);
-    const sampleKey = safeSample(sample);
-    const ts = Date.now();
-    const safeName = (file.name || "notes.pdf").replace(/[^\w.\-]/g,"_");
+    const tsBase = Date.now();
+    const manualSample = document.getElementById("sampleNo").value.trim();
 
-    // ✅ label file with sample in name
-    const storagePath = `inspection_notes/${sroKey}/sample_${sampleKey}/${sampleKey}_${ts}_${safeName}`;
-    const ref = storage.ref(storagePath);
-    const task = ref.put(file, { contentType:"application/pdf" });
+    if(files.length > 1 && (!__multiDetected || __multiDetected.length !== files.length)){
+      setStatus("⚠️ Please wait for detection to finish (or reselect files).", "bad");
+      btn.disabled = false;
+      return;
+    }
 
-    task.on("state_changed", (snap)=>{
-      const p = (snap.bytesTransferred / snap.totalBytes) * 100;
-      setProgress(p);
-      setStatus(`Uploading... ${Math.round(p)}%`);
-    });
+    let okCount = 0, failCount = 0;
 
-    await task;
-    const url = await ref.getDownloadURL();
+    for(let i=0;i<files.length;i++){
+      const file = files[i];
+      const ts = tsBase + i;
 
-    const noteId = `${ts}_${Math.random().toString(16).slice(2)}`;
-    const meta = {
-      sro,
-      state: HP_STATE_NAME,
-      sampleNo: sample,
-      sampleAutoDetected: (!!__lastDetectedSample && sample === __lastDetectedSample),
-      sampleDetectSource: __lastDetectSource || "",
-      sampleDetectSnippet: __lastDetectSnippet || "",
-      inspectionDate: insDate,
-      remarks,
-      fileName: file.name,
-      storagePath,
-      url,
-      createdAt: ts
-    };
+      let sample = "", detectSource = "", detectSnippet = "", sampleAuto = false;
 
-    await db.ref(`inspection_notes_meta/${sroKey}/${noteId}`).set(meta);
+      if(files.length === 1){
+        if(manualSample){
+          sample = manualSample; sampleAuto = false;
+        }else if(__lastDetectedSample){
+          sample = __lastDetectedSample;
+          detectSource = __lastDetectSource || "";
+          detectSnippet = __lastDetectSnippet || "";
+          sampleAuto = true;
+        }else{
+          setStatus(`🔎 Detecting Sample No: <b>${escapeHtml(file.name)}</b>`, "info");
+          const det = await detectSampleFromPdf_RETURN(file);
+          sample = det.sample || "";
+          detectSource = det.source || "";
+          detectSnippet = det.snippet || "";
+          sampleAuto = !!sample;
+        }
+      }else{
+        const det = __multiDetected[i] || {};
+        sample = (det.sample || "").trim();
+        detectSource = det.source || "";
+        detectSnippet = det.snippet || "";
+        sampleAuto = !!sample;
+      }
+
+      if(!sample){
+        failCount++;
+        setStatus(`❌ Sample No not found for: <b>${escapeHtml(file.name)}</b> (skip)`, "bad");
+        continue;
+      }
+
+      setStatus(`⬆️ Uploading (${i+1}/${files.length}): <b>${escapeHtml(file.name)}</b> | Sample: <b>${escapeHtml(sample)}</b>`, "info");
+
+      const sampleKey = safeSample(sample);
+      const safeName = (file.name || "notes.pdf").replace(/[^\w.\-]/g,"_");
+      const storagePath = `inspection_notes/${sroKey}/sample_${sampleKey}/${sampleKey}_${ts}_${safeName}`;
+
+      const ref = storage.ref(storagePath);
+      const task = ref.put(file, { contentType:"application/pdf" });
+
+      await new Promise((resolve, reject)=>{
+        task.on("state_changed", (snap)=>{
+          const base = (i / files.length) * 100;
+          const local = (snap.bytesTransferred / snap.totalBytes) * (100 / files.length);
+          setProgress(Math.min(99, base + local));
+        }, reject, resolve);
+      });
+
+      const url = await ref.getDownloadURL();
+
+      const noteId = `${ts}_${Math.random().toString(16).slice(2)}`;
+      const meta = {
+        sro,
+        sampleNo: sample,
+        sampleAutoDetected: sampleAuto,
+        sampleDetectSource: detectSource,
+        sampleDetectSnippet: detectSnippet,
+        inspectionDate: insDate,
+        remarks,
+        fileName: file.name,
+        storagePath,
+        url,
+        createdAt: ts
+      };
+
+      await notesDb.ref(`inspection_notes_meta/${sroKey}/${noteId}`).set(meta);
+      okCount++;
+    }
 
     setProgress(100);
-    setStatus(
-      `✅ Uploaded successfully.<br/>SRO: <b>${escapeHtml(sro)}</b> | Sample No: <b>${escapeHtml(sample)}</b>`,
-      "ok"
-    );
+    setStatus(`✅ Upload completed. Success: <b>${okCount}</b> | Failed/Skipped: <b>${failCount}</b>`, okCount ? "ok" : "bad");
 
     await loadSroNotes();
     await loadRecent();
 
     fileEl.value = "";
+    document.getElementById("sampleNo").value = "";
+    __multiDetected = [];
+    __lastDetectedSample = "";
+    __lastDetectSource = "";
+    __lastDetectSnippet = "";
+    renderPreview([]);
+
   }catch(err){
     console.error(err);
     setStatus(`❌ Upload failed: ${escapeHtml(err.message || err)}`, "bad");
+    setProgress(0);
   }finally{
     btn.disabled = false;
   }
 }
 
-/* ===================== Load notes list for selected SRO ===================== */
+/* ===================== Load notes list for selected SRO (Notes RTDB) ===================== */
 async function loadSroNotes(){
   const sro = document.getElementById("sroSel").value.trim();
   const box = document.getElementById("sroList");
@@ -939,7 +861,8 @@ async function loadSroNotes(){
   const sroKey = safeKey(sro);
 
   try{
-    const snap = await db.ref(`inspection_notes_meta/${sroKey}`).orderByChild("createdAt").limitToLast(60).once("value");
+    const snap = await notesDb.ref(`inspection_notes_meta/${sroKey}`)
+      .orderByChild("createdAt").limitToLast(60).once("value");
 
     if(!snap.exists()){
       box.innerHTML = `<div class="status">No notes uploaded for this SRO yet.</div>`;
@@ -960,8 +883,12 @@ async function loadSroNotes(){
       return `
         <div class="item">
           <div class="meta">
-            <div class="a">Sample No: ${escapeHtml(sample)} • ${escapeHtml(n.fileName || "PDF")} <span style="color:var(--muted);font-weight:900;">(${badge})</span></div>
-            <div class="b">Inspection Date: <b style="color:#fff">${escapeHtml(idate)}</b><br/>Uploaded: ${escapeHtml(dt)}<br/>Remarks: ${escapeHtml(rmk)}</div>
+            <div class="a">Sample No: ${escapeHtml(sample)} • ${escapeHtml(n.fileName || "PDF")}
+              <span style="color:var(--muted);font-weight:900;">(${badge})</span>
+            </div>
+            <div class="b">Inspection Date: <b style="color:#fff">${escapeHtml(idate)}</b><br/>
+              Uploaded: ${escapeHtml(dt)}<br/>Remarks: ${escapeHtml(rmk)}
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
             <a href="${n.url}" target="_blank" rel="noopener">Open PDF ↗</a>
@@ -975,13 +902,13 @@ async function loadSroNotes(){
   }
 }
 
-/* ===================== Recent list (all SRO) ===================== */
+/* ===================== Recent list (all SRO) Notes RTDB ===================== */
 async function loadRecent(){
   const recentBox = document.getElementById("recentList");
   recentBox.innerHTML = `<div class="status">Loading…</div>`;
 
   try{
-    const root = await db.ref("inspection_notes_meta").once("value");
+    const root = await notesDb.ref("inspection_notes_meta").once("value");
     let all = [];
 
     if(root.exists()){
@@ -1025,7 +952,7 @@ async function loadRecent(){
   }
 }
 
-/* ===================== FX: particles (same) ===================== */
+/* ===================== FX: particles ===================== */
 const c = document.getElementById('fx');
 const ctx = c.getContext('2d');
 let W,H,particles=[];
@@ -1034,8 +961,7 @@ function resize(){
   W = c.width = window.innerWidth;
   H = c.height = window.innerHeight;
   particles = Array.from({length: 70}, () => ({
-    x: Math.random()*W,
-    y: Math.random()*H,
+    x: Math.random()*W, y: Math.random()*H,
     r: Math.random()*1.6 + 0.4,
     vx: (Math.random()*0.6 + 0.2) * (Math.random()<0.5?-1:1),
     vy: (Math.random()*0.6 + 0.2) * (Math.random()<0.5?-1:1),
@@ -1082,7 +1008,7 @@ function draw(){
 }
 draw();
 
-/* ===================== hover tilt (same) ===================== */
+/* ===================== hover tilt ===================== */
 document.querySelectorAll('.card').forEach(card=>{
   let rect=null;
   card.addEventListener('mousemove', (e)=>{
@@ -1104,20 +1030,64 @@ document.querySelectorAll('.card').forEach(card=>{
 /* ===================== Boot ===================== */
 window.onload = () => {
   loadRecent();
+  renderPreview([]);
+  loadSroDropdownOnly4();
 
-  // ✅ auto-detect on file choose
   const f = document.getElementById("pdfFile");
   if(f){
     f.addEventListener("change", async ()=>{
-      const file = f.files && f.files[0];
-      if(file){
-        // reset previous detected if user is choosing new file
-        __lastDetectedSample = "";
-        __lastDetectSource = "";
-        __lastDetectSnippet = "";
-        // do detect
-        await detectSampleFromPdf(file);
+      const files = Array.from(f.files || []);
+      __multiDetected = [];
+      __lastDetectedSample = "";
+      __lastDetectSource = "";
+      __lastDetectSnippet = "";
+
+      if(!files.length){
+        renderPreview([]);
+        return;
       }
+
+      // placeholder
+      renderPreview(files.map(x=>({name:x.name, sample:"", source:""})));
+      setStatus(`🔎 Detecting Sample No for ${files.length} PDF(s)…`, "info");
+      setProgress(2);
+
+      // detect sequential for stability
+      for(let i=0;i<files.length;i++){
+        const file = files[i];
+        setStatus(`🔎 Detecting (${i+1}/${files.length}) : <b>${escapeHtml(file.name)}</b>`, "info");
+
+        const det = await detectSampleFromPdf_RETURN(file);
+
+        __multiDetected.push({
+          name: file.name,
+          size: file.size,
+          sample: det.sample || "",
+          source: det.source || "",
+          snippet: det.snippet || ""
+        });
+
+        renderPreview(__multiDetected.map(x=>({name:x.name, sample:x.sample, source:x.source})));
+        const pct = Math.round(((i+1)/files.length)*60);
+        setProgress(Math.min(60, pct));
+      }
+
+      // single file auto-fill
+      if(files.length === 1){
+        const one = __multiDetected[0];
+        if(one && one.sample && !document.getElementById("sampleNo").value.trim()){
+          document.getElementById("sampleNo").value = one.sample;
+          __lastDetectedSample = one.sample;
+          __lastDetectSource = one.source;
+          __lastDetectSnippet = one.snippet;
+        }else{
+          await detectSampleFromPdf(files[0]);
+        }
+      }
+
+      const found = __multiDetected.filter(x=>x.sample).length;
+      setStatus(`✅ Detection done. Found Sample No in <b>${found}/${files.length}</b> file(s). Now click Upload.`, found? "ok" : "bad");
+      setProgress(65);
     });
   }
 };
