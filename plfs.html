@@ -1,552 +1,900 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PLFS | Command Dashboard 2026</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
+  <title>PLFS | Command Dashboard 2026</title>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    <style>
-        :root { 
-            --bg: #020617; --sidebar: #0f172a; --card: #1e293b; --border: #334155;
-            --accent: #38bdf8; --v1: #10b981; --text: #f8fafc; --text-dim: #94a3b8;
-            --glass: rgba(15, 23, 42, 0.95); --sb-width: 300px;
-            --header-dark: #0f172a; --danger: #ef4444; --warning: #f59e0b;
-            --rail:72px;
-        }
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-        * { box-sizing: border-box; transition: all 0.2s ease; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh; height: 100dvh;
-            display: flex;
-            overflow: hidden;
-            padding-left: var(--rail);
-        }
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-        /* Left Rail (global) */
-        .left-rail{
-            position:fixed; inset:0 auto 0 0;
-            width:var(--rail);
-            background: var(--sidebar);
-            border-right:1px solid var(--border);
-            display:flex; flex-direction:column; align-items:center;
-            padding-top:14px; gap:18px;
-            z-index:30000;
-        }
-        .left-rail a{
-            width:56px;
-            text-align:center;
-            font-size:11px;
-            font-weight:900;
-            text-decoration:none;
-            color:#fff;
-            padding:8px 6px;
-            border-radius:12px;
-            line-height:1.2;
-        }
-        .left-rail a:hover{ background:#1e293b; transform:translateX(2px); }
-        .left-rail a.hub{ color:var(--accent); }
-        .left-rail a.weekly{ color:var(--v1); }
-        .left-rail a.monthly{ color:var(--v1); }
+  <style>
+    :root{
+      --bg:#020617; --panel:#0b1222; --panel2:#0f172a; --card:#111c33;
+      --border:#22304a; --border2:#334155;
+      --accent:#38bdf8; --green:#10b981; --amber:#f59e0b; --danger:#ef4444;
+      --muted:#94a3b8; --text:#f8fafc;
+      --shadow: 0 24px 90px rgba(0,0,0,.62);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Plus Jakarta Sans",system-ui,Segoe UI,Arial,sans-serif;
+      background:
+        radial-gradient(900px 420px at 20% 10%, rgba(56,189,248,.14), transparent 55%),
+        radial-gradient(800px 400px at 90% 20%, rgba(16,185,129,.10), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
 
-        /* Sidebar */
-        .sidebar {
-            width: var(--sb-width);
-            min-width: var(--sb-width);
-            background: var(--sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            z-index: 2000;
-        }
-        .sidebar-header {
-            padding: 25px;
-            font-weight: 800;
-            font-size: 18px;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
-            letter-spacing: 1px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:10px;
-        }
-        .nav-scroll { flex: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; }
-        .overlay-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1800; backdrop-filter: blur(4px); }
+    .app{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      min-height:100vh;
+      gap:14px;
+      padding:14px;
+    }
 
-        /* Mobile menu */
-        @media (max-width: 1024px) {
-            body{ padding-left: var(--rail); }
-            .sidebar {
-                position: fixed;
-                left: calc(-1 * var(--sb-width));
-                top: 0; bottom: 0;
-                width: 280px;
-                min-width: 280px;
-                transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                z-index: 25000;
-            }
-            .sidebar.open { left: var(--rail); } /* keep rail visible */
-            .overlay-mask.active { display: block; }
-            .mobile-menu-btn{ display:inline-flex !important; }
-        }
+    /* Sidebar */
+    .sidebar{
+      background: linear-gradient(180deg, rgba(17,28,51,.88), rgba(11,18,34,.88));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: calc(100vh - 28px);
+    }
+    .sb-top{
+      padding:16px 16px 12px;
+      border-bottom:1px solid rgba(34,48,74,.7);
+    }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logo{
+      width:42px; height:42px; border-radius:14px;
+      background: radial-gradient(circle at 30% 25%, rgba(56,189,248,.9), rgba(56,189,248,.2));
+      border:1px solid rgba(56,189,248,.35);
+      box-shadow:0 10px 30px rgba(56,189,248,.15);
+    }
+    .brand h1{ font-size:14px; margin:0; font-weight:900; letter-spacing:.2px; }
+    .brand p{ margin:2px 0 0; font-size:12px; color:var(--muted); }
 
-        .zone-title { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.6; }
-        .zone-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-        .state-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .st-btn { height: 42px; border-radius: 8px; border: 1px solid var(--border); background: rgba(30, 41, 59, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); }
-        .st-btn.active { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); color: #fff; }
-        .st-btn.has-data { border-left: 3px solid var(--v1); }
+    .sb-actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      border:1px solid rgba(56,189,248,.28);
+      background: rgba(56,189,248,.10);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.15s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(56,189,248,.5); }
+    .btn.secondary{ border:1px solid rgba(148,163,184,.25); background: rgba(148,163,184,.08); }
+    .btn.danger{ border:1px solid rgba(239,68,68,.30); background: rgba(239,68,68,.12); }
 
-        .sub-menu-container { grid-column: span 2; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; margin-top: 5px; border: 1px solid var(--border); }
-        .pill-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-        .pill { padding: 8px; font-size: 9px; font-weight: 700; text-align: center; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; color: var(--text-dim); background: var(--sidebar); }
-        .pill.active { background: var(--v1); color: #fff; border-color: var(--v1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
-        .pill.all-btn { grid-column: span 2; border-color: var(--accent); color: var(--accent); }
-        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+    .sb-scroll{ padding:12px; overflow:auto; flex:1; }
+    .zone-title{
+      font-size:12px; font-weight:900; color:rgba(226,232,240,.9);
+      margin:14px 4px 8px; letter-spacing:.35px; text-transform:uppercase;
+    }
+    .state-grid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+    .st-btn{
+      background: rgba(2,6,23,.35);
+      border:1px solid rgba(51,65,85,.35);
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition:.15s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .st-btn:hover{ border-color: rgba(56,189,248,.35); transform: translateY(-1px); }
+    .st-btn.active{
+      border-color: rgba(56,189,248,.55);
+      background: rgba(56,189,248,.10);
+      box-shadow: 0 16px 40px rgba(56,189,248,.08);
+    }
+    .st-btn.has-data::after{
+      content:"";
+      position:absolute; top:12px; right:12px;
+      width:8px; height:8px; border-radius:50%;
+      background: var(--green);
+      box-shadow:0 0 0 4px rgba(16,185,129,.12);
+    }
+    .st-btn > div{ font-size:13px; font-weight:800; }
 
-        /* Main */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #020617;
-            height: 100vh;
-        }
-        .fixed-header-group {
-            flex-shrink: 0;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-        }
-        .top-bar {
-            padding: 12px 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
+    .sub-menu-container{
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px dashed rgba(148,163,184,.25);
+      background: rgba(2,6,23,.35);
+    }
+    .pill-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+    .month-grid{
+      display:flex; flex-wrap:wrap; gap:8px;
+      margin-top:10px; padding-top:10px;
+      border-top:1px solid rgba(51,65,85,.35);
+    }
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      border:1px solid rgba(51,65,85,.45);
+      background: rgba(15,23,42,.55);
+      transition:.15s ease;
+      user-select:none;
+    }
+    .pill:hover{ border-color: rgba(56,189,248,.35); transform: translateY(-1px); }
+    .pill.active{ border-color: rgba(56,189,248,.6); background: rgba(56,189,248,.14); }
+    .pill.all-btn{ border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.10); }
 
-        .date-picker-wrap { display: flex; align-items: center; gap: 8px; background: rgba(56,189,248,0.1); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent); }
-        .date-picker-wrap input { background: transparent; border: none; color: var(--accent); font-weight: 800; font-size: 11px; outline: none; cursor: pointer; color-scheme: dark; }
-        .search-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px 15px; border-radius: 8px; font-size: 13px; outline: none; }
+    /* Main */
+    .main{
+      background: linear-gradient(180deg, rgba(11,18,34,.86), rgba(15,23,42,.86));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height: calc(100vh - 28px);
+      display:flex;
+      flex-direction:column;
+    }
+    .topbar{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(34,48,74,.7);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .title-block h2{ margin:0; font-size:16px; font-weight:900; }
+    .title-block p{ margin:4px 0 0; font-size:12px; color:var(--muted); font-weight:600; }
+    .top-controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .chip{
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid rgba(51,65,85,.45);
+      background: rgba(2,6,23,.35);
+      color:rgba(226,232,240,.95);
+      display:flex; gap:8px; align-items:center;
+    }
+    .chip b{ color: var(--text); }
 
-        .info-panel { padding: 15px 25px; display: grid; grid-template-columns: auto 1fr auto; gap: 30px; align-items: center; }
-        .sro-box { background: #1e293b; border: 1px solid var(--accent); padding: 10px 20px; border-radius: 10px; min-width: 200px; }
-        .sro-label { font-size: 9px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .sro-name { font-size: 16px; font-weight: 700; color: #fff; }
+    .content{ padding:14px; overflow:auto; flex:1; }
+    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap:12px; }
 
-        .timeline-container { background: rgba(15, 23, 42, 0.4); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); min-width: 350px; }
-        .line-group { margin-bottom: 8px; }
-        .line-label { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
-        .line-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; position: relative; overflow: hidden; }
-        .line-fill { height: 100%; border-radius: 4px; position: absolute; left: 0; transition: width 1s ease; }
+    .card{
+      grid-column: span 3;
+      background: rgba(17,28,51,.60);
+      border:1px solid rgba(51,65,85,.35);
+      border-radius:16px;
+      padding:14px;
+    }
+    .card h3{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+    }
+    .card .big{ margin-top:6px; font-size:22px; font-weight:900; letter-spacing:.2px; }
+    .card .sub{ margin-top:6px; font-size:12px; color:rgba(226,232,240,.85); font-weight:700; }
 
-        .visit-segmented { display: flex; background: rgba(0,0,0,0.4); border-radius: 14px; padding: 4px; border: 1px solid var(--border); min-width: 260px; }
-        .v-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 800; font-size: 11px; color: var(--text-dim); background: transparent; }
-        .v-btn.active-v1 { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
-        .v-btn.active-v2 { background: var(--v1); color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+    .card.wide{ grid-column: span 12; padding:0; overflow:hidden; }
+    .table-head{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(51,65,85,.35);
+    }
+    .table-head .left{ display:flex; flex-direction:column; gap:3px; }
+    .table-head .left .t1{ font-weight:900; font-size:13px; }
+    .table-head .left .t2{ font-size:12px; color:var(--muted); font-weight:700; }
+    .table-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
-        .workspace { flex: 1; padding: 20px; padding-bottom: 100px; overflow-y: auto; scrollbar-width: thin; }
-        .table-wrap { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
-        th { background: var(--header-dark); color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 18px 15px; text-align: left; border-bottom: 3px solid var(--accent); position: sticky; top:0; z-index: 10; }
-        td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
+    .table-wrap{ overflow:auto; max-height: calc(100vh - 360px); }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-size:12px;
+      background: rgba(2,6,23,.15);
+    }
+    thead th{
+      position:sticky; top:0; z-index:2;
+      background: rgba(15,23,42,.95);
+      border-bottom:1px solid rgba(51,65,85,.6);
+      color:rgba(226,232,240,.95);
+      padding:10px 8px;
+      font-weight:900;
+      text-align:left;
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:9px 8px;
+      border-bottom:1px solid rgba(51,65,85,.25);
+      color:rgba(226,232,240,.92);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    tbody tr:hover{ background: rgba(56,189,248,.07); }
+    .right{text-align:right}
+    .center{text-align:center}
 
-        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; }
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--v1); border-color: var(--v1); }
-        .badge-pending { background: rgba(255, 255, 255, 0.05); color: var(--text-dim); border-color: var(--border); }
-        .badge-late { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
-        .badge-future { background: rgba(245, 158, 11, 0.10); color: var(--warning); border-color: var(--warning); }
+    .footer{
+      padding:10px 14px;
+      border-top:1px solid rgba(34,48,74,.7);
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
 
-        .fsu-badge { font-family: 'Monaco', monospace; font-weight: 800; color: #fff; background: rgba(56, 189, 248, 0.1); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      z-index:99;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      background: rgba(15,23,42,.96);
+      border:1px solid rgba(51,65,85,.55);
+      border-radius:18px;
+      box-shadow:0 30px 120px rgba(0,0,0,.6);
+      overflow:hidden;
+    }
+    .modal-h{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(51,65,85,.35);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .modal-h b{ font-size:14px; font-weight:900; }
+    .modal-c{ padding:14px; }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    .field label{ font-size:12px; color:var(--muted); font-weight:800; }
+    .field input{
+      height:42px; border-radius:12px; padding:0 12px;
+      border:1px solid rgba(51,65,85,.5);
+      background: rgba(2,6,23,.35);
+      color:var(--text);
+      outline:none;
+      font-weight:800;
+    }
+    .modal-actions{ display:flex; gap:10px; flex-wrap:wrap; padding:0 14px 14px; }
 
-        /* ✅ added: input-field (you use it in HTML) */
-        .input-field{
-          background:#000;
-          border:1px solid rgba(255,255,255,.12);
-          color:#fff;
-          padding:8px 10px;
-          border-radius:8px;
-          font-weight:800;
-          font-size:12px;
-          outline:none;
-          color-scheme: dark;
-        }
-
-        #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 50000; flex-direction: column; align-items: center; justify-content: center; color: var(--accent); }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(56, 189, 248, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+    @media(max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+      .sidebar{ min-height:auto; }
+      .table-wrap{ max-height: 55vh; }
+      .card{ grid-column: span 6; }
+    }
+    @media(max-width: 560px){
+      .card{ grid-column: span 12; }
+      thead th, tbody td{ font-size:11px; }
+    }
+  </style>
 </head>
 
 <body>
-<nav class="left-rail">
-  <a href="index.html" class="hub">🏠 HUB</a>
-  <a href="plfs.html">📊 PLFS</a>
-  <a href="ufs_weekly.html" class="weekly">🗓️ Weekly</a>
-  <a href="ufs_action.html" style="color:var(--warning)">📈 Action</a>
-  <a href="ufs_monthly.html" class="monthly">📅 Monthly</a>
-</nav>
-
-<div id="loadingOverlay">
-    <div class="spinner"></div>
-    <div id="loadingText" style="font-weight: 800; letter-spacing: 2px; font-size: 11px;">SYNCING...</div>
-</div>
-
-<div class="overlay-mask" id="mask" onclick="toggleMenu()"></div>
-
-<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index: 60000; align-items:center; justify-content:center; backdrop-filter: blur(8px);">
-    <div style="background:var(--sidebar); padding:40px; border-radius:20px; border:1px solid var(--border); text-align:center; width:320px;">
-        <h3 style="color:var(--accent); margin-bottom:20px">ADMIN ACCESS</h3>
-        <input type="password" id="passInput" class="input-field" placeholder="PASSCODE" style="text-align: center; font-size: 18px; letter-spacing: 5px; margin-bottom:20px;">
-        <button onclick="verifyAdmin()" style="width:100%; background:var(--accent); border:none; padding:12px; border-radius:8px; font-weight:800; cursor:pointer; color:#000;">UNLOCK</button>
-        <button onclick="document.getElementById('loginModal').style.display='none'" style="margin-top:15px; background:transparent; color:var(--text-dim); border:none; cursor:pointer;">Cancel</button>
-    </div>
-</div>
-
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        PLFS COMMAND
-        <span onclick="toggleMenu()" style="cursor:pointer; font-size:20px; display:none;" class="mobile-menu-btn">✕</span>
-    </div>
-
-    <div class="nav-scroll" id="navScroll"></div>
-
-    <div style="padding:15px; border-top:1px solid var(--border); display: grid; gap: 8px;">
-        <button id="adminBtn" class="btn" style="background:var(--card); color:#fff; width:100%; border:none; padding:10px; border-radius:8px; cursor:pointer; font-size:12px;" onclick="document.getElementById('loginModal').style.display='flex'">🔐 Global Admin</button>
-
-        <label class="admin-locked" style="display:none; width:100%; background:var(--accent); padding:10px; color:#000; border-radius:8px; font-weight:700; cursor:pointer; text-align:center; font-size:12px;">
-          📂 Import Master
-          <input type="file" hidden onchange="handleExcel(this)">
-        </label>
-
-        <button onclick="lockSession()" style="background:var(--danger); color:#fff; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">🔒 LOCK SESSION</button>
-    </div>
-</aside>
-
-<main class="main">
-    <div class="fixed-header-group">
-        <header class="top-bar">
-            <button class="mobile-menu-btn" style="display:none; background:var(--accent); border:none; padding:8px 12px; border-radius:6px; font-weight:800;" onclick="toggleMenu()">☰</button>
-
-            <div class="date-picker-wrap">
-                <input type="date" id="sysCalendar" onchange="updateSysDate(this.value)">
-            </div>
-
-            <input type="text" class="search-input" placeholder="🔍 Search FSU, Location..." onkeyup="doSearch(this.value)">
-
-            <div style="display:flex; gap:8px;">
-                <button class="btn" style="background:transparent; border:1px solid var(--v1); color:var(--v1); padding:8px 12px; border-radius:6px; cursor:pointer;" onclick="exportCSV()">📥</button>
-                <button class="btn" style="background:var(--accent); border:none; color:#000; padding:8px 15px; border-radius:6px; font-weight:700; cursor:pointer;" onclick="syncToCloud()">☁️ Sync</button>
-            </div>
-        </header>
-
-        <div class="info-panel" id="activeHeader" style="visibility: hidden;">
-            <div class="sro-box">
-                <div class="sro-label" id="vSt">STATE</div>
-                <div class="sro-name" id="vSro">SRO OFFICE</div>
-            </div>
-
-            <div class="timeline-container">
-                <div class="line-group">
-                    <div class="line-label" style="color:var(--accent)"><span>Allotted Units</span><span id="txtAllotted">0</span></div>
-                    <div class="line-track"><div id="allottedLine" class="line-fill" style="background:var(--accent); width:100%;"></div></div>
-                </div>
-                <div class="line-group">
-                    <div class="line-label" style="color:var(--v1)"><span>Completed Tasks</span><span id="txtCompleted">0</span></div>
-                    <div class="line-track"><div id="completedLine" class="line-fill" style="background:var(--v1); width:0%;"></div></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                    <span style="font-size:9px; color:var(--text-dim); font-weight:700;">LIVE PROGRESS</span>
-                    <span id="targetStatus" style="font-size:18px; font-weight:800; color:var(--text);">0%</span>
-                </div>
-            </div>
-
-            <div class="visit-segmented">
-                <button id="btnV1" class="v-btn" onclick="setVisit(1)"><span>🎯</span> VISIT 1</button>
-                <button id="btnV2" class="v-btn" onclick="setVisit(2)"><span>🔄</span> REVISITS</button>
-            </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sb-top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>PLFS | Dashboard 2026</h1>
+            <p>State → SRO → Month filters (fixed)</p>
+          </div>
         </div>
-    </div>
-
-    <div class="workspace">
-        <div class="table-wrap">
-            <table>
-              <thead><tr id="tableHeader"></tr></thead>
-              <tbody id="dataBody"></tbody>
-            </table>
+        <div class="sb-actions">
+          <button class="btn" onclick="autoFetch(true)">🔄 Refresh</button>
+          <button class="btn secondary" onclick="openAuth()">🔐 Login</button>
+          <button class="btn secondary" onclick="openImport()">📥 Import</button>
+          <button class="btn danger" onclick="hardReset()">🧹 Reset</button>
         </div>
-    </div>
-</main>
+      </div>
+      <div class="sb-scroll" id="navScroll"></div>
+    </aside>
 
-<script>
-    const config = {
-      apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
-      authDomain: "action-plan-62fae.firebaseapp.com",
-      databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com",
-      projectId: "action-plan-62fae"
+    <main class="main">
+      <div class="topbar">
+        <div class="title-block">
+          <h2 id="pageTitle">PLFS Progress</h2>
+          <p id="pageSub">Live data + filters + export + import</p>
+        </div>
+        <div class="top-controls">
+          <div class="chip">State: <b id="chipState">—</b></div>
+          <div class="chip">SRO: <b id="chipSro">—</b></div>
+          <div class="chip">Month: <b id="chipMonth">—</b></div>
+          <div class="chip">Role: <b id="chipRole">Guest</b></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="grid">
+          <div class="card">
+            <h3>Total Records</h3>
+            <div class="big" id="kpiRecords">0</div>
+            <div class="sub" id="kpiRecordsSub">Filtered rows</div>
+          </div>
+          <div class="card">
+            <h3>Sum Target</h3>
+            <div class="big" id="kpiTarget">0</div>
+            <div class="sub">Auto-sum numeric fields</div>
+          </div>
+          <div class="card">
+            <h3>Sum Achievement</h3>
+            <div class="big" id="kpiAch">0</div>
+            <div class="sub">Auto-sum numeric fields</div>
+          </div>
+          <div class="card">
+            <h3>% Achievement</h3>
+            <div class="big" id="kpiPct">0%</div>
+            <div class="sub">Ach / Target</div>
+          </div>
+
+          <div class="card wide">
+            <div class="table-head">
+              <div class="left">
+                <div class="t1">Monthly Table</div>
+                <div class="t2" id="tableHint">Use sidebar filters. Export anytime.</div>
+              </div>
+              <div class="table-actions">
+                <button class="btn secondary" onclick="exportCSV()">⬇️ CSV</button>
+                <button class="btn secondary" onclick="exportXLSX()">⬇️ Excel</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="dataTable">
+                <thead id="thead"></thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Cache: <span id="cacheStatus">—</span></div>
+        <div id="lastSync">Last Sync: —</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-backdrop" id="authBackdrop">
+    <div class="modal">
+      <div class="modal-h">
+        <b>Login (for SRO selection)</b>
+        <button class="btn secondary" onclick="closeAuth()">✕</button>
+      </div>
+      <div class="modal-c">
+        <div class="field">
+          <label>User ID</label>
+          <input id="authUser" placeholder="e.g. JSO3_0209002" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="authPass" type="password" placeholder="e.g. nrsc123" />
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <input id="authRole" placeholder="ADMIN / USER" />
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;">
+          Tip: If role is ADMIN, you can select any SRO. Otherwise only ALL SRO's.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="doLogin()">✅ Save</button>
+        <button class="btn secondary" onclick="closeAuth()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT MODAL -->
+  <div class="modal-backdrop" id="importBackdrop">
+    <div class="modal">
+      <div class="modal-h">
+        <b>Import Excel</b>
+        <button class="btn secondary" onclick="closeImport()">✕</button>
+      </div>
+      <div class="modal-c">
+        <div class="field">
+          <label>Select Excel file</label>
+          <input id="importFile" type="file" accept=".xlsx,.xls" />
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;">
+          Import updates cache + table. If your Excel headers differ, edit <b>mapImportedRow()</b>.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="importExcel()">📥 Import</button>
+        <button class="btn secondary" onclick="closeImport()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**********************
+     * 1) CONFIG
+     **********************/
+    const firebaseConfig = {
+      // ✅ PUT YOUR REAL CONFIG HERE
+      apiKey: "YOUR_KEY",
+      authDomain: "YOUR_DOMAIN",
+      databaseURL: "YOUR_DB_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
-    firebase.initializeApp(config);
-    const db = firebase.database();
 
-    let master = [], selSt = null, selSro = "ALL SROs", selMo = 0, selVis = 1, query = "";
-    let systemDateString = "2026-01-18";
-    let unlockedSros = new Set();
-    let globalAdmin = false;
+    // ✅ PUT YOUR REAL NODE PATH HERE (example: "PLFS_2026/master")
+    const DB_PATH = "PLFS_2026/master";
 
-    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    // You wanted HP only
     const nsoZones = { "NORTH": ["HIMACHAL PRADESH"] };
 
-    function toggleMenu() {
-      document.getElementById('sidebar').classList.toggle('open');
-      document.getElementById('mask').classList.toggle('active');
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    /**********************
+     * 2) STATE
+     **********************/
+    let master = [];
+    let filtered = [];
+
+    let selSt = "";
+    let selSro = "ALL SROs";
+    let selMo = new Date().getMonth();
+
+    let auth = { user:"", role:"GUEST" };
+
+    const columns = [
+      { key:"state",  label:"State",    w:160 },
+      { key:"sro",    label:"SRO",      w:140 },
+      { key:"month",  label:"Month",    w:90  },
+      { key:"district", label:"District", w:160 },
+      { key:"unit",   label:"Unit",     w:140 },
+      { key:"target", label:"Target",   w:90,  num:true },
+      { key:"ach",    label:"Ach",      w:90,  num:true },
+      { key:"remarks",label:"Remarks",  w:240 }
+    ];
+
+    /**********************
+     * 3) NORMALIZERS (FIX)
+     **********************/
+    function normState(s){
+      return String(s||"").trim().toUpperCase().replace(/_/g," ").replace(/\s+/g," ");
     }
-    function toggleLoader(show, text = "PLEASE WAIT...") {
-      const l = document.getElementById('loadingOverlay');
-      document.getElementById('loadingText').innerText = text;
-      l.style.display = show ? 'flex' : 'none';
+    function normSro(s){
+      return String(s||"").trim().toUpperCase().replace(/\s+/g," ");
     }
-    function updateSysDate(val) { systemDateString = val; refresh(); }
-
-    function getStatus(targetDate, isComplete, currentObsDate) {
-        if (!targetDate || targetDate === "V1 Pending") return '<span class="status-badge badge-pending">Pending</span>';
-        if (isComplete) return '<span class="status-badge badge-done">Complete</span>';
-        if (targetDate <= currentObsDate) return '<span class="status-badge badge-late">Late</span>';
-        return '<span class="status-badge badge-future">Scheduled</span>';
+    function safeNum(v){
+      const n = Number(String(v||"").replace(/,/g,"").trim());
+      return isFinite(n) ? n : 0;
     }
 
-    function addDays(dateStr, days) {
-      if (!dateStr || dateStr === "V1 Pending") return null;
-      const r = new Date(dateStr);
-      r.setDate(r.getDate() + days);
-      return r.toISOString().split('T')[0];
+    /**********************
+     * 4) CACHE
+     **********************/
+    const CACHE_KEY = "PLFS_MASTER_CACHE_V1";
+    const CACHE_META = "PLFS_MASTER_CACHE_META_V1";
+
+    function setCache(data){
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data||[]));
+      localStorage.setItem(CACHE_META, JSON.stringify({ts: Date.now(), count: (data||[]).length}));
+      updateCacheBadge();
+    }
+    function getCache(){
+      try{ return JSON.parse(localStorage.getItem(CACHE_KEY) || "[]"); }
+      catch(e){ return []; }
+    }
+    function getCacheMeta(){
+      try{ return JSON.parse(localStorage.getItem(CACHE_META) || "{}"); }
+      catch(e){ return {}; }
+    }
+    function updateCacheBadge(){
+      const meta = getCacheMeta();
+      const el = document.getElementById("cacheStatus");
+      if(!meta.ts){ el.textContent = "No cache"; return; }
+      const dt = new Date(meta.ts);
+      el.textContent = `Saved (${meta.count||0}) @ ${dt.toLocaleString()}`;
     }
 
-    async function handleExcel(input) {
-        const file = input.files[0];
-        if(!file) return;
+    /**********************
+     * 5) FIREBASE
+     **********************/
+    let db = null;
+    function initFirebase(){
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }catch(e){ console.warn("Firebase init failed:", e); }
+    }
 
-        toggleLoader(true, "PROCESSING...");
-        try {
-            let stName = file.name.split('.')[0].split('_').pop().trim().toUpperCase();
-            const data = new Uint8Array(await file.arrayBuffer());
-            const wb = XLSX.read(data, {type:'array'});
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(ws, {header:1, range:7});
+    async function autoFetch(force=false){
+      initFirebase();
 
-            rows.slice(1).forEach(cols => {
-                let fsu = cols[4], mCode = cols[5], sro = String(cols[6]||'NSO'), loc = cols[10];
-                if(fsu) {
-                    const startM = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
-                    for(let i=0; i<4; i++){
-                      master.push({
-                        uid: `${stName}_${fsu}_V${i+1}`,
-                        fsu, state: stName, sro,
-                        monthIdx: (startM + i)%12,
-                        location: loc||"---",
-                        visitNum: i+1
-                      });
-                    }
-                }
-            });
-
-            renderNav();
-            alert("Data Processed.");
-        } finally {
-            toggleLoader(false);
-            input.value = "";
+      // show cache fast
+      if(!force){
+        const cached = getCache();
+        if(cached.length){
+          master = cached;
+          bootAfterDataLoad();
         }
+      }
+      if(!db) return;
+
+      try{
+        const snap = await db.ref(DB_PATH).once("value");
+        const val = snap.val();
+        const list = [];
+
+        if(val && typeof val === "object"){
+          for(const k of Object.keys(val)){
+            const row = val[k];
+            if(row && typeof row === "object") list.push(mapDbRow(row, k));
+          }
+        }
+        if(list.length){
+          master = list;
+          setCache(master);
+          document.getElementById("lastSync").textContent = `Last Sync: ${new Date().toLocaleString()}`;
+          bootAfterDataLoad();
+        }
+      }catch(err){
+        console.warn("Fetch error:", err);
+      }
     }
 
-    function refresh() {
-        const body = document.getElementById('dataBody');
-        const h1 = document.getElementById('btnV1'), h2 = document.getElementById('btnV2');
+    function mapDbRow(row, id){
+      return {
+        _id: id || row.id || "",
+        state: row.state ?? row.State ?? row.STATE ?? "HIMACHAL PRADESH",
+        sro: row.sro ?? row.SRO ?? row.office ?? "RO SHIMLA",
+        month: row.month ?? row.Month ?? row.mo ?? months[selMo],
+        district: row.district ?? row.District ?? "",
+        unit: row.unit ?? row.Unit ?? "",
+        target: row.target ?? row.Target ?? 0,
+        ach: row.ach ?? row.Ach ?? row.achievement ?? 0,
+        remarks: row.remarks ?? row.Remarks ?? ""
+      };
+    }
 
-        if(!selSt) {
-            body.innerHTML = "<tr><td colspan='7' style='text-align:center; padding:100px; opacity:0.3;'>SELECT A REGION</td></tr>";
-            document.getElementById('activeHeader').style.visibility='hidden';
-            return;
-        }
+    /**********************
+     * 6) NAV + FILTER
+     **********************/
+    function bootAfterDataLoad(){
+      if(!selSt){
+        const allStates = [...new Set(master.map(x => normState(x.state)))];
+        const hp = allStates.find(s => s === "HIMACHAL PRADESH");
+        selSt = hp ? "HIMACHAL PRADESH" : (allStates[0] || "HIMACHAL PRADESH");
+      }
+      renderNav();
+      refresh();
+      updateCacheBadge();
+    }
 
-        document.getElementById('activeHeader').style.visibility='visible';
-        document.getElementById('vSt').innerText = selSt;
-        document.getElementById('vSro').innerText = selSro;
+    function selectState(st){
+      selSt = st;
+      selSro = "ALL SROs";
+      renderNav();
+      refresh();
+    }
 
-        h1.className = selVis === 1 ? 'v-btn active-v1' : 'v-btn';
-        h2.className = selVis === 2 ? 'v-btn active-v2' : 'v-btn';
+    function selectSroWithAuth(sro){
+      if(auth.role !== "ADMIN" && sro !== "ALL SROs"){
+        alert("Only ADMIN can select specific SRO.\nLogin as ADMIN or use ALL SRO's.");
+        return;
+      }
+      selSro = sro;
+      renderNav();
+      refresh();
+    }
 
-        const filtered = master.filter(d => {
-            const matchSt = d.state === selSt;
-            const matchSro = selSro === "ALL SROs" ? true : d.sro === selSro;
-            const matchMo = d.monthIdx === selMo;
-            const matchVis = selVis === 1 ? d.visitNum === 1 : d.visitNum > 1;
-            const matchQuery = (String(d.fsu).includes(query) || String(d.location||"").toLowerCase().includes(query.toLowerCase()));
-            return matchSt && matchSro && matchMo && matchVis && matchQuery;
+    function renderNav(){
+      const container = document.getElementById("navScroll");
+      const selN = normState(selSt);
+
+      let html = "";
+      for(const [zone, states] of Object.entries(nsoZones)){
+        html += `<div class="zone-title">${zone}</div><div class="state-grid">`;
+
+        states.forEach(st=>{
+          const stN = normState(st);
+          const hasData = master.some(x => normState(x.state) === stN);
+
+          html += `
+            <div class="st-btn ${selN===stN?'active':''} ${hasData?'has-data':''}"
+                 onclick="selectState('${st.replace(/'/g,"\\'")}')">
+              <div>${st}</div>
+            </div>
+          `;
+
+          if(selN === stN){
+            const sros = [...new Set(
+              master
+                .filter(x => normState(x.state) === stN)
+                .map(x => normSro(x.sro))
+            )].sort();
+
+            html += `
+              <div class="sub-menu-container">
+                <div class="pill-grid">
+                  <div class="pill all-btn ${selSro==='ALL SROs'?'active':''}"
+                       onclick="event.stopPropagation(); selectSroWithAuth('ALL SROs');">
+                    🌍 ALL SRO's
+                  </div>
+                  ${sros.map(s=>`
+                    <div class="pill ${normSro(selSro)===s?'active':''}"
+                         onclick="event.stopPropagation(); selectSroWithAuth('${s.replace(/'/g,"\\'")}');">
+                      ${s}
+                    </div>
+                  `).join("")}
+                </div>
+
+                <div class="month-grid">
+                  ${months.map((m,i)=>`
+                    <div class="pill ${selMo===i?'active':''}"
+                         onclick="event.stopPropagation(); selMo=${i}; renderNav(); refresh();">
+                      ${m.substring(0,3)}
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            `;
+          }
         });
 
-        const total = filtered.length;
-        const done = filtered.filter(d => d.endDate && d.endDate <= systemDateString).length;
-        const perc = total > 0 ? Math.round((done / total) * 100) : 0;
-        document.getElementById('txtAllotted').innerText = total;
-        document.getElementById('txtCompleted').innerText = done;
-        document.getElementById('targetStatus').innerText = perc + '%';
-        document.getElementById('completedLine').style.width = perc + '%';
+        html += `</div>`;
+      }
 
-        if (selVis === 1)
-          document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Start</th><th>End</th>`;
-        else
-          document.getElementById('tableHeader').innerHTML = `<th>Status</th><th>FSU</th><th>Location</th><th>ENM ID</th><th>Worker</th><th>Visit</th><th>Suggested</th>`;
-
-        body.innerHTML = filtered.map(d => {
-            const v1Item = master.find(x => x.fsu === d.fsu && x.state === d.state && x.visitNum === 1) || {};
-            let suggestDateStr = (selVis > 1 && v1Item.endDate) ? addDays(v1Item.endDate, (d.visitNum - 1) * 30) : "V1 Pending";
-            let displayStatus = selVis === 1
-              ? getStatus(d.endDate, (d.endDate && d.endDate <= systemDateString), systemDateString)
-              : getStatus(suggestDateStr, (d.endDate && d.endDate <= systemDateString), systemDateString);
-
-            return `<tr>
-                <td>${displayStatus}</td>
-                <td><span class="fsu-badge">${d.fsu}</span></td>
-                <td><div style="width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${d.location||"---"}</div></td>
-                <td><input class="input-field" style="width:70px" value="${d.enmId || v1Item.enmId || ''}" onchange="upd('${d.uid}','eid',this.value)"></td>
-                <td><input class="input-field" style="width:120px" value="${d.enumerator || v1Item.enumerator || ''}" onchange="upd('${d.uid}','en',this.value)"></td>
-                ${selVis === 1 ? `
-                    <td><input type="date" class="input-field" value="${d.startDate||''}" onchange="upd('${d.uid}','sd',this.value)"></td>
-                    <td><input type="date" class="input-field" value="${d.endDate||''}" onchange="upd('${d.uid}','ed',this.value)"></td>
-                ` : `
-                    <td><b style="color:var(--accent)">V${d.visitNum}</b></td>
-                    <td style="color:var(--accent); font-weight:800;">${suggestDateStr}</td>
-                `}
-            </tr>`;
-        }).join('');
+      container.innerHTML = html;
     }
 
-    function upd(id, f, v) {
-      let item = master.find(x => x.uid === id);
-      if(item) {
-        if(f==='eid') item.enmId = v;
-        if(f==='en') item.enumerator = v;
-        if(f==='sd') item.startDate = v;
-        if(f==='ed') item.endDate = v;
+    function refresh(){
+      const stN = normState(selSt);
+      const sroN = normSro(selSro);
+      const moName = months[selMo];
+
+      filtered = master.filter(d=>{
+        const matchSt = normState(d.state) === stN;
+        const matchSro = (selSro === "ALL SROs") ? true : (normSro(d.sro) === sroN);
+        const matchMo = String(d.month||"").trim().toLowerCase().startsWith(moName.toLowerCase().slice(0,3));
+        return matchSt && matchSro && matchMo;
+      });
+
+      document.getElementById("chipState").textContent = selSt || "—";
+      document.getElementById("chipSro").textContent = selSro || "—";
+      document.getElementById("chipMonth").textContent = months[selMo];
+      document.getElementById("chipRole").textContent = auth.role || "GUEST";
+
+      let sumTarget = 0, sumAch = 0;
+      for(const r of filtered){ sumTarget += safeNum(r.target); sumAch += safeNum(r.ach); }
+      const pct = sumTarget > 0 ? (sumAch/sumTarget*100) : 0;
+
+      document.getElementById("kpiRecords").textContent = filtered.length;
+      document.getElementById("kpiTarget").textContent = fmt(sumTarget);
+      document.getElementById("kpiAch").textContent = fmt(sumAch);
+      document.getElementById("kpiPct").textContent = `${pct.toFixed(1)}%`;
+
+      document.getElementById("tableHint").textContent =
+        `Showing ${filtered.length} row(s) for ${selSt} | ${selSro} | ${months[selMo]}`;
+
+      renderTable(filtered);
+    }
+
+    function fmt(n){
+      try{ return Number(n||0).toLocaleString("en-IN"); }
+      catch(e){ return String(n||0); }
+    }
+
+    function escapeHtml(s){
+      return String(s||"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function renderTable(rows){
+      const thead = document.getElementById("thead");
+      const tbody = document.getElementById("tbody");
+
+      thead.innerHTML = `<tr>${columns.map(c=>`<th style="width:${c.w}px">${c.label}</th>`).join("")}</tr>`;
+
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td colspan="${columns.length}" class="center"
+          style="padding:18px;color:var(--muted);font-weight:800;">No data found for selected filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r=>`
+        <tr>
+          ${columns.map(c=>{
+            let v = r[c.key];
+            if(c.num) v = fmt(safeNum(v));
+            return `<td class="${c.num?'right':''}" title="${String(r[c.key]??'')}">${escapeHtml(String(v ?? ""))}</td>`;
+          }).join("")}
+        </tr>
+      `).join("");
+    }
+
+    /**********************
+     * 7) EXPORT
+     **********************/
+    function exportCSV(){
+      if(!filtered.length){ alert("No rows to export."); return; }
+      const header = columns.map(c=>c.label);
+      const data = filtered.map(r=>columns.map(c=>r[c.key]));
+      const csv = [header, ...data].map(row => row.map(cell=>{
+        const s = String(cell ?? "");
+        return `"${s.replaceAll('"','""')}"`;
+      }).join(",")).join("\n");
+      downloadBlob(csv, `PLFS_${normState(selSt)}_${selSro}_${months[selMo]}.csv`, "text/csv;charset=utf-8;");
+    }
+
+    function exportXLSX(){
+      if(!filtered.length){ alert("No rows to export."); return; }
+      const aoa = [columns.map(c=>c.label), ...filtered.map(r => columns.map(c => r[c.key]))];
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "PLFS");
+      XLSX.writeFile(wb, `PLFS_${normState(selSt)}_${selSro}_${months[selMo]}.xlsx`);
+    }
+
+    function downloadBlob(content, filename, type){
+      const blob = new Blob([content], {type});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    }
+
+    /**********************
+     * 8) IMPORT
+     **********************/
+    function openImport(){ document.getElementById("importBackdrop").style.display="flex"; }
+    function closeImport(){ document.getElementById("importBackdrop").style.display="none"; }
+
+    function importExcel(){
+      const file = document.getElementById("importFile").files[0];
+      if(!file){ alert("Select a file."); return; }
+
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:""});
+        master = rows.map(mapImportedRow);
+        setCache(master);
+        closeImport();
+        bootAfterDataLoad();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function mapImportedRow(r){
+      return {
+        _id: r.id || r.ID || "",
+        state: r.state || r.State || r.STATE || "HIMACHAL PRADESH",
+        sro: r.sro || r.SRO || r.Office || r.office || "RO SHIMLA",
+        month: r.month || r.Month || r.MO || months[selMo],
+        district: r.district || r.District || "",
+        unit: r.unit || r.Unit || "",
+        target: r.target || r.Target || 0,
+        ach: r.ach || r.Ach || r.ACH || 0,
+        remarks: r.remarks || r.Remarks || ""
+      };
+    }
+
+    /**********************
+     * 9) AUTH
+     **********************/
+    function openAuth(){ document.getElementById("authBackdrop").style.display="flex"; }
+    function closeAuth(){ document.getElementById("authBackdrop").style.display="none"; }
+
+    function doLogin(){
+      const user = document.getElementById("authUser").value.trim();
+      const pass = document.getElementById("authPass").value.trim();
+      const role = document.getElementById("authRole").value.trim().toUpperCase();
+
+      if(!user || !pass){ alert("Enter user + password."); return; }
+
+      auth.user = user;
+      auth.role = (role === "ADMIN") ? "ADMIN" : "USER";
+
+      localStorage.setItem("PLFS_AUTH_V1", JSON.stringify(auth));
+      closeAuth();
+      document.getElementById("chipRole").textContent = auth.role;
+    }
+
+    function loadAuth(){
+      try{
+        const a = JSON.parse(localStorage.getItem("PLFS_AUTH_V1") || "{}");
+        if(a && a.user) auth = a;
+      }catch(e){}
+      document.getElementById("chipRole").textContent = auth.role || "GUEST";
+    }
+
+    /**********************
+     * 10) RESET
+     **********************/
+    function hardReset(){
+      if(!confirm("Reset cache + filters?")) return;
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(CACHE_META);
+      master = [];
+      filtered = [];
+      selSt = "";
+      selSro = "ALL SROs";
+      selMo = new Date().getMonth();
+      renderNav();
+      refresh();
+      updateCacheBadge();
+    }
+
+    /**********************
+     * 11) BOOT
+     **********************/
+    window.addEventListener("load", ()=>{
+      loadAuth();
+      updateCacheBadge();
+      selMo = new Date().getMonth();
+
+      const cached = getCache();
+      if(cached.length){
+        master = cached;
+        bootAfterDataLoad();
+      }else{
+        selSt = "HIMACHAL PRADESH";
+        renderNav();
         refresh();
       }
-    }
 
-    async function syncToCloud() {
-      if(!selSt) return alert("Select a state first.");
-      toggleLoader(true, "SYNCING...");
-      try {
-        const data = {};
-        master.filter(m => m.state === selSt).forEach(m => data[m.uid] = m);
-        await db.ref(`plfs_roster/${selSt}`).set(data);
-        alert("Cloud Updated.");
-      } finally {
-        toggleLoader(false);
-      }
-    }
-
-    async function autoFetch() {
-      toggleLoader(true, "FETCHING...");
-      try {
-        const snap = await db.ref(`plfs_roster`).once('value');
-        master = [];
-        if(snap.exists()) snap.forEach(s => Object.values(s.val()).forEach(r => master.push(r)));
-        if(!selSt) selSt = 'HIMACHAL PRADESH';
-        renderNav(); refresh();
-      } finally { toggleLoader(false); }
-    }
-
-    function selectSroWithAuth(sroName) {
-        if (globalAdmin || unlockedSros.has(sroName)) { selSro = sroName; renderNav(); refresh(); return; }
-        if (sroName === "ALL SROs") { alert("Restricted to Global Admin."); return; }
-        const pass = prompt(`Enter Password for ${sroName}:`);
-        if (pass && pass.toUpperCase() === sroName.substring(0, 3).toUpperCase()) {
-          unlockedSros.add(sroName); selSro = sroName; renderNav(); refresh();
-        } else { alert("Incorrect Password."); }
-    }
-
-    function renderNav() {
-        const container = document.getElementById('navScroll');
-        let html = "";
-        for (const [zone, states] of Object.entries(nsoZones)) {
-            html += `<div class="zone-title">${zone}</div><div class="state-grid">`;
-            states.forEach(st => {
-                html += `<div class="st-btn ${selSt===st?'active':''} ${master.some(x=>x.state===st)?'has-data':''}" onclick="selectState('${st}')"><div>${st}</div></div>`;
-                if (selSt === st) {
-                    const sros = [...new Set(master.filter(x => x.state === st).map(x => x.sro))].sort();
-                    html += `<div class="sub-menu-container">
-                              <div class="pill-grid">
-                                <div class="pill all-btn ${selSro==='ALL SROs'?'active':''}" onclick="event.stopPropagation(); selectSroWithAuth('ALL SROs');">🌍 ALL SRO's</div>`;
-                    sros.forEach(s => html += `<div class="pill ${selSro===s?'active':''}" onclick="event.stopPropagation(); selectSroWithAuth('${s}');">${s}</div>`);
-                    html += `</div>
-                             <div class="month-grid">
-                               ${months.map((m, i) => `<div class="pill ${selMo===i?'active':''}" onclick="event.stopPropagation(); selMo=${i}; renderNav(); refresh();">${m.substring(0,3)}</div>`).join('')}
-                             </div>
-                           </div>`;
-                }
-            });
-            html += `</div>`;
-        }
-        container.innerHTML = html;
-    }
-
-    function selectState(st) { selSt = st; selSro = "ALL SROs"; renderNav(); refresh(); }
-    function setVisit(v) { selVis = v; refresh(); }
-    function doSearch(v) { query = v; refresh(); }
-
-    function verifyAdmin() {
-      if(document.getElementById('passInput').value==='123') {
-        globalAdmin = true;
-        document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='block');
-        document.getElementById('adminBtn').style.display='none';
-        document.getElementById('loginModal').style.display='none';
-        renderNav(); refresh();
-      } else {
-        alert("Wrong passcode.");
-      }
-    }
-
-    function lockSession() {
-      globalAdmin = false;
-      unlockedSros.clear();
-      selSt = null;
-      selSro = "ALL SROs";
-      document.querySelectorAll('.admin-locked').forEach(e=>e.style.display='none');
-      document.getElementById('adminBtn').style.display='block';
-      renderNav(); refresh();
-      alert("Locked.");
-    }
-
-    function exportCSV() {
-      const rows = Array.from(document.querySelectorAll("table tr"));
-      const csv = rows.map(r =>
-        Array.from(r.querySelectorAll("th, td")).map(c => {
-          const i = c.querySelector('input');
-          return `"${(i ? i.value : c.innerText).replace(/"/g, '""')}"`
-        }).join(",")
-      ).join("\n");
-
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-      a.download = `PLFS_EXPORT.csv`;
-      a.click();
-    }
-
-    window.onload = () => {
-      document.getElementById('sysCalendar').value = systemDateString;
-      autoFetch();
-    };
-</script>
+      autoFetch(false);
+    });
+  </script>
 </body>
 </html>
