@@ -512,37 +512,52 @@
 
         <div class="status" style="margin-top:14px;">
           ✅ Storage Path: <b>inspection_notes/{SRO}/sample_{SAMPLE}/SAMPLE_timestamp_filename.pdf</b><br/>
-          ✅ Notes RTDB Meta: <b>inspection_notes_meta/{SRO}/{noteId}</b> (stored in inspectionnote-default-rtdb)
+          ✅ Notes RTDB Meta: <b>inspection_notes_meta/{SRO}/{noteId}</b> (stored in inspection-notes-default-rtdb)
         </div>
       </div>
     </div>
   </div>
 
 <script>
+/* ===================== PDF.js worker (MANDATORY) ===================== */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
 /* ===================== NAV ===================== */
 function go(url){ window.location.href = url; }
 
 /* ===================== Firebase ===================== */
-/* PRIMARY (existing PLFS project) */
+/* PRIMARY (action-plan project) */
 const config = {
   apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
   authDomain: "action-plan-62fae.firebaseapp.com",
-  databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com/",
+  databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com/",  // ✅ fixed
   projectId: "action-plan-62fae",
   storageBucket: "action-plan-62fae.appspot.com"
 };
 firebase.initializeApp(config);
 const db = firebase.database();
 
-/* ✅ SECOND (Inspection Notes separate RTDB + separate Storage) */
+/* ✅ SECOND (Inspection Notes RTDB + Storage) — FULL & CORRECT from your screenshot */
 const notesConfig = {
-  databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com",
-projectId: "inspection-notes",
-storageBucket: "inspection-notes.appspot.com",
+  apiKey: "AIzaSyCsx7ZnXOGj9Q04LgV-SvP-8SOZUxuWdIA",
+  authDomain: "inspection-notes.firebaseapp.com",
+
+  // ✅ YOUR LINK GOES HERE (you gave this)
+  databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com/",
+
+  projectId: "inspection-notes",
+
+  // ✅ from your screenshot (IMPORTANT)
+  storageBucket: "inspection-notes.firebasestorage.app",
+
+  messagingSenderId: "633078446998",
+  appId: "1:633078446998:web:e612c945065754bf653bb7"
 };
+
 const notesApp = firebase.initializeApp(notesConfig, "notesApp");
 const notesDb  = firebase.database(notesApp);
-const notesStorage = firebase.storage(notesApp); // ✅ IMPORTANT: use notes storage for PDFs
+const notesStorage = firebase.storage(notesApp);
 
 /* ===================== SRO list (ONLY 4) ===================== */
 const ALLOWED_SROS = ["SRO SHIMLA","SRO HAMIRPUR","SRO DHARAMSHALA","SRO MANDI"];
@@ -1107,11 +1122,8 @@ window.onload = () => {
       setStatus(`✅ Detection done. Found Sample No in <b>${found}/${files.length}</b> file(s). Now click Upload.`, found? "ok" : "bad");
       setProgress(65);
 
-      // enable upload after detection (even if 0 found - still allow single file manual)
-      if(up){
-        if(files.length === 1) up.disabled = false;
-        else up.disabled = false; // multi allowed; files without sample will be skipped
-      }
+      // enable upload after detection
+      if(up) up.disabled = false;
     });
   }
 };
