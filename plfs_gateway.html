@@ -304,7 +304,6 @@
     .item a{ color:var(--accent); font-weight:900; text-decoration:none; font-size:12px; }
     .item a:hover{ text-decoration:underline; }
 
-    /* multi preview */
     .previewWrap{
       margin-top:12px;
       border:1px solid rgba(255,255,255,.10);
@@ -519,7 +518,7 @@
   </div>
 
 <script>
-/* ===================== PDF.js worker (MANDATORY) ===================== */
+/* ===================== PDF.js worker ===================== */
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -527,34 +526,30 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 function go(url){ window.location.href = url; }
 
 /* ===================== Firebase ===================== */
-/* PRIMARY (action-plan project) */
+/* ✅ PRIMARY (Action plan) — USING YOUR DATABASE URL */
 const config = {
   apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
   authDomain: "action-plan-62fae.firebaseapp.com",
-  databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com/",  // ✅ fixed
+
+  // ✅ from your screenshot
+  databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com/",
+
   projectId: "action-plan-62fae",
   storageBucket: "action-plan-62fae.appspot.com"
 };
 firebase.initializeApp(config);
 const db = firebase.database();
 
-/* ✅ SECOND (Inspection Notes RTDB + Storage) — FULL & CORRECT from your screenshot */
+/* ✅ SECOND (Inspection Notes) */
 const notesConfig = {
   apiKey: "AIzaSyCsx7ZnXOGj9Q04LgV-SvP-8SOZUxuWdIA",
   authDomain: "inspection-notes.firebaseapp.com",
-
-  // ✅ YOUR LINK GOES HERE (you gave this)
   databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com/",
-
   projectId: "inspection-notes",
-
-  // ✅ from your screenshot (IMPORTANT)
   storageBucket: "inspection-notes.firebasestorage.app",
-
   messagingSenderId: "633078446998",
   appId: "1:633078446998:web:e612c945065754bf653bb7"
 };
-
 const notesApp = firebase.initializeApp(notesConfig, "notesApp");
 const notesDb  = firebase.database(notesApp);
 const notesStorage = firebase.storage(notesApp);
@@ -585,7 +580,6 @@ function resetForm(){
   setStatus("Ready.");
   setProgress(0);
 
-  // upload default state
   const up = document.getElementById("uploadBtn");
   if(up) up.disabled = true;
 }
@@ -629,27 +623,24 @@ function renderPreview(files){
   }).join("");
 }
 
-/* ===================== Sample detection (PDF.js + OCR) ===================== */
+/* ===================== Sample detection ===================== */
 let __lastDetectedSample = "";
 let __lastDetectSource = "";
 let __lastDetectSnippet = "";
-let __multiDetected = []; // [{name,size,sample,source,snippet}]
+let __multiDetected = [];
 
 function extractSampleFromText(txt){
   const t = String(txt || "");
   const cleaned = t.replace(/\s+/g," ").trim();
 
-  // strong
   const p1 = /S\.?\s*No\.?\s*of\s*(the\s*)?sample\s*FSU\s*[:\-]?\s*([0-9]{4,10})/i;
   let m = cleaned.match(p1);
   if(m) return { sample: m[2], snippet: m[0] };
 
-  // generic
   const p2 = /(sample\s*(serial|s\.?no|no\.?|number|id)|serial\s*no\.?|s\.?\s*no\.?)\s*[:\-]?\s*([A-Z0-9\-\/]{2,30})/i;
   m = cleaned.match(p2);
   if(m) return { sample: m[3], snippet: m[0] };
 
-  // fsu near number
   const p3 = /FSU[^0-9]{0,24}([0-9]{4,10})/i;
   m = cleaned.match(p3);
   if(m) return { sample: m[1], snippet: m[0] };
@@ -663,7 +654,6 @@ async function detectSampleFromPdf_RETURN(file){
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     const page = await pdf.getPage(1);
 
-    // 1) text extraction
     let text = "";
     try{
       const tc = await page.getTextContent();
@@ -675,7 +665,6 @@ async function detectSampleFromPdf_RETURN(file){
       return { sample: String(found1.sample), source: "pdf-text", snippet: found1.snippet || "" };
     }
 
-    // 2) OCR (scanned)
     const viewport = page.getViewport({ scale: 2.0 });
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d", { willReadFrequently:true });
@@ -700,29 +689,7 @@ async function detectSampleFromPdf_RETURN(file){
   }
 }
 
-async function detectSampleFromPdf(file){
-  if(!file) return;
-  setStatus("🔎 Detecting Sample No from PDF cover…", "info");
-  setProgress(5);
-
-  const det = await detectSampleFromPdf_RETURN(file);
-  if(det && det.sample){
-    __lastDetectedSample = String(det.sample);
-    __lastDetectSource = det.source || "";
-    __lastDetectSnippet = det.snippet || "";
-    const inp = document.getElementById("sampleNo");
-    if(!inp.value.trim()) inp.value = __lastDetectedSample;
-    setStatus(`✅ Sample No detected: <b>${escapeHtml(__lastDetectedSample)}</b> (${escapeHtml(__lastDetectSource)})`, "ok");
-    setProgress(70);
-    return true;
-  }else{
-    setStatus("⚠️ Sample No not found on cover. Please type manually (single file only).", "bad");
-    setProgress(0);
-    return false;
-  }
-}
-
-/* ===================== Load SRO dropdown (ONLY 4) ===================== */
+/* ===================== Load SRO dropdown ===================== */
 function loadSroDropdownOnly4(){
   const sel = document.getElementById("sroSel");
   const prev = sel.value || "";
@@ -737,7 +704,7 @@ function loadSroDropdownOnly4(){
   if(sel.value) loadSroNotes();
 }
 
-/* ===================== Upload PDF(s): Notes Storage + Notes RTDB meta ===================== */
+/* ===================== Upload PDF(s) ===================== */
 async function uploadPdf(){
   const sro = document.getElementById("sroSel").value.trim();
   const insDate = document.getElementById("insDate").value || "";
@@ -763,7 +730,6 @@ async function uploadPdf(){
     const tsBase = Date.now();
     const manualSample = document.getElementById("sampleNo").value.trim();
 
-    // if multi file, ensure detection finished
     if(files.length > 1 && (!__multiDetected || __multiDetected.length !== files.length)){
       setStatus("⚠️ Please wait for detection to finish (or reselect files).", "bad");
       btn.disabled = false;
@@ -781,13 +747,7 @@ async function uploadPdf(){
       if(files.length === 1){
         if(manualSample){
           sample = manualSample; sampleAuto = false;
-        }else if(__lastDetectedSample){
-          sample = __lastDetectedSample;
-          detectSource = __lastDetectSource || "";
-          detectSnippet = __lastDetectSnippet || "";
-          sampleAuto = true;
         }else{
-          setStatus(`🔎 Detecting Sample No: <b>${escapeHtml(file.name)}</b>`, "info");
           const det = await detectSampleFromPdf_RETURN(file);
           sample = det.sample || "";
           detectSource = det.source || "";
@@ -814,7 +774,6 @@ async function uploadPdf(){
       const safeName = (file.name || "notes.pdf").replace(/[^\w.\-]/g,"_");
       const storagePath = `inspection_notes/${sroKey}/sample_${sampleKey}/${sampleKey}_${ts}_${safeName}`;
 
-      // ✅ IMPORTANT: upload to NOTES storage
       const ref = notesStorage.ref(storagePath);
       const task = ref.put(file, { contentType:"application/pdf" });
 
@@ -853,13 +812,9 @@ async function uploadPdf(){
     await loadSroNotes();
     await loadRecent();
 
-    // reset after upload
     fileEl.value = "";
     document.getElementById("sampleNo").value = "";
     __multiDetected = [];
-    __lastDetectedSample = "";
-    __lastDetectSource = "";
-    __lastDetectSnippet = "";
     renderPreview([]);
 
   }catch(err){
@@ -871,7 +826,7 @@ async function uploadPdf(){
   }
 }
 
-/* ===================== Load notes list for selected SRO (Notes RTDB) ===================== */
+/* ===================== Lists ===================== */
 async function loadSroNotes(){
   const sro = document.getElementById("sroSel").value.trim();
   const box = document.getElementById("sroList");
@@ -926,7 +881,6 @@ async function loadSroNotes(){
   }
 }
 
-/* ===================== Recent list (all SRO) Notes RTDB ===================== */
 async function loadRecent(){
   const recentBox = document.getElementById("recentList");
   recentBox.innerHTML = `<div class="status">Loading…</div>`;
@@ -1032,32 +986,12 @@ function draw(){
 }
 draw();
 
-/* ===================== hover tilt ===================== */
-document.querySelectorAll('.card').forEach(card=>{
-  let rect=null;
-  card.addEventListener('mousemove', (e)=>{
-    rect = rect || card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const cx = rect.width/2;
-    const cy = rect.height/2;
-    const rx = ((y - cy)/cy) * -5;
-    const ry = ((x - cx)/cx) * 6;
-    card.style.transform = `translateY(-6px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-  });
-  card.addEventListener('mouseleave', ()=>{
-    rect=null;
-    card.style.transform = '';
-  });
-});
-
 /* ===================== Boot ===================== */
 window.onload = () => {
   loadRecent();
   renderPreview([]);
   loadSroDropdownOnly4();
 
-  // by default: no file selected -> upload disabled
   const up = document.getElementById("uploadBtn");
   if(up) up.disabled = true;
 
@@ -1066,11 +1000,7 @@ window.onload = () => {
     f.addEventListener("change", async ()=>{
       const files = Array.from(f.files || []);
       __multiDetected = [];
-      __lastDetectedSample = "";
-      __lastDetectSource = "";
-      __lastDetectSnippet = "";
 
-      // disable upload while detecting
       if(up) up.disabled = true;
 
       if(!files.length){
@@ -1080,12 +1010,10 @@ window.onload = () => {
         return;
       }
 
-      // placeholder preview
       renderPreview(files.map(x=>({name:x.name, sample:"", source:""})));
       setStatus(`🔎 Detecting Sample No for ${files.length} PDF(s)…`, "info");
       setProgress(2);
 
-      // detect sequential for stability
       for(let i=0;i<files.length;i++){
         const file = files[i];
         setStatus(`🔎 Detecting (${i+1}/${files.length}) : <b>${escapeHtml(file.name)}</b>`, "info");
@@ -1105,24 +1033,10 @@ window.onload = () => {
         setProgress(Math.min(60, pct));
       }
 
-      // single file auto-fill
-      if(files.length === 1){
-        const one = __multiDetected[0];
-        if(one && one.sample && !document.getElementById("sampleNo").value.trim()){
-          document.getElementById("sampleNo").value = one.sample;
-          __lastDetectedSample = one.sample;
-          __lastDetectSource = one.source;
-          __lastDetectSnippet = one.snippet;
-        }else{
-          await detectSampleFromPdf(files[0]);
-        }
-      }
-
       const found = __multiDetected.filter(x=>x.sample).length;
       setStatus(`✅ Detection done. Found Sample No in <b>${found}/${files.length}</b> file(s). Now click Upload.`, found? "ok" : "bad");
       setProgress(65);
 
-      // enable upload after detection
       if(up) up.disabled = false;
     });
   }
