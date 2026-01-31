@@ -179,151 +179,195 @@
     background:#eef6ff;
   }
 
-  /* Compact headers (optional but helps fit) */
+  /* Compact headers */
   .colhead th{ padding-top:2px; padding-bottom:2px; }
   .grouphead{ padding:2px !important; }
 
-    /* ===== PRINT: A4 LANDSCAPE + ONE PAGE FIT ===== */
+  /* ===== PRINT: A4 LANDSCAPE + 80% SCALE ===== */
   @page{
     size: A4 landscape;
     margin: 6mm;
   }
 
   @media print{
-    html, body
+    html, body{
+      margin:0 !important;
+      padding:0 !important;
+      background:#fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Hide non-print */
+    .actionsbar,
+    .no-print,
+    .ranges,
+    .rate-badge{
+      display:none !important;
+    }
+
+    /* Remove card look */
+    .sheet{
+      max-width:none !important;
+      width:100% !important;
+      border:none !important;
+      box-shadow:none !important;
+      padding:0 !important;
+      margin:0 !important;
+    }
+
+    /* ---- 80% SHRINK WRAPPER ---- */
+    .print-scale{
+      transform: scale(0.80);
+      transform-origin: top left;
+      width: 125%;
+    }
+
+    /* denser print */
+    table{ font-size: 10px !important; }
+    th, td{ padding: 2px 2px !important; line-height: 1.05 !important; }
+    input, select{ font-size:10px !important; padding:0 !important; line-height: 1.05 !important; }
+
+    /* avoid page breaks */
+    table, tr, td, th{
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+  }
 </style>
 </head>
 
 <body>
 <div class="sheet">
 
-  <table id="tada">
-    <!-- ✅ Reduced column widths (compact) -->
-    <colgroup>
-      <col style="width:8%">
-      <col style="width:6%">
-      <col style="width:8%">
-      <col style="width:8%">
-      <col style="width:9%">
-      <col style="width:7%">
-      <col style="width:6%">
-      <col style="width:7%">
-      <col style="width:11%">
-    </colgroup>
+  <!-- ✅ Print scale wrapper (80%) -->
+  <div class="print-scale">
+    <table id="tada">
+      <colgroup>
+        <col style="width:8%">
+        <col style="width:6%">
+        <col style="width:8%">
+        <col style="width:8%">
+        <col style="width:9%">
+        <col style="width:7%">
+        <col style="width:6%">
+        <col style="width:7%">
+        <col style="width:11%">
+      </colgroup>
 
-    <!-- spacer (hidden in print) -->
-    <tr class="no-print"><td colspan="9" style="border:none; padding:4px;"></td></tr>
+      <tr class="no-print"><td colspan="9" style="border:none; padding:4px;"></td></tr>
 
-    <tr>
-      <td colspan="9" class="title">
-        दोरा भत्ता / दैनिक भत्ता गणना पत्र &nbsp;|&nbsp; TA/DA CALCULATION SHEET
-      </td>
-    </tr>
+      <tr>
+        <td colspan="9" class="title">
+          दोरा भत्ता / दैनिक भत्ता गणना पत्र &nbsp;|&nbsp; TA/DA CALCULATION SHEET
+        </td>
+      </tr>
 
-    <tr class="no-print"><td colspan="9" style="border:none; padding:6px;"></td></tr>
+      <tr class="no-print"><td colspan="9" style="border:none; padding:6px;"></td></tr>
 
-    <tr>
-      <td colspan="5" class="hdrline left">
-        नाम/Name :
-        <input id="name" class="left" placeholder="Enter Name" />
-      </td>
-      <td colspan="4" class="hdrline left">
-        पद-नाम/Designation :
-        <select id="desig" class="left" onchange="updateRates()">
-          <option value="">Select Designation</option>
-          <option value="ENUM">Enumerator</option>
-          <option value="SUP">Survey Supervisor</option>
-          <option value="SSO">Senior Statistical Officer</option>
-        </select>
-      </td>
-    </tr>
+      <tr>
+        <td colspan="5" class="hdrline left">
+          नाम/Name :
+          <input id="name" class="left" placeholder="Enter Name" />
+        </td>
+        <td colspan="4" class="hdrline left">
+          पद-नाम/Designation :
+          <select id="desig" class="left" onchange="updateRates()">
+            <option value="">Select Designation</option>
+            <option value="ENUM">Enumerator</option>
+            <option value="SUP">Survey Supervisor</option>
+            <option value="SSO">Senior Statistical Officer</option>
+          </select>
+        </td>
+      </tr>
 
-    <tr>
-      <td colspan="3" class="hdrline left">
-        स्थान /Place :
-        <input id="place" class="left" placeholder="Enter Place" />
-      </td>
-      <td colspan="3" class="hdrline left">
-        माह/Month :
-        <input id="month" class="left" type="month" />
-      </td>
-      <td colspan="3" class="hdrline left">
-        वर्ष /Year :
-        <input id="year" class="left" type="number" placeholder="2025" />
-      </td>
-    </tr>
+      <tr>
+        <td colspan="3" class="hdrline left">
+          स्थान /Place :
+          <input id="place" class="left" placeholder="Enter Place" />
+        </td>
+        <td colspan="3" class="hdrline left">
+          माह/Month :
+          <input id="month" class="left" type="month" />
+        </td>
+        <td colspan="3" class="hdrline left">
+          वर्ष /Year :
+          <input id="year" class="left" type="number" placeholder="2025" />
+        </td>
+      </tr>
 
-    <!-- Multi Range Controller (HIDE IN PRINT) -->
-    <tr class="no-print">
-      <td colspan="9" class="hdrline left">
-        <div class="mini">
-          <span><b>Tour Range:</b></span>
-          <span>From</span>
-          <input id="fromDate" type="date" />
-          <span>To</span>
-          <input id="toDate" type="date" />
-          <span>Total Days: <b id="tourDays">0</b></span>
-          <button type="button" class="btn-mini" onclick="addRange()">Add Range</button>
-          <button type="button" class="btn-mini gray" onclick="generateAllRanges()">Generate All Ranges</button>
-        </div>
+      <!-- Multi Range Controller (HIDE IN PRINT) -->
+      <tr class="no-print">
+        <td colspan="9" class="hdrline left">
+          <div class="mini">
+            <span><b>Tour Range:</b></span>
+            <span>From</span>
+            <input id="fromDate" type="date" />
+            <span>To</span>
+            <input id="toDate" type="date" />
+            <span>Total Days: <b id="tourDays">0</b></span>
+            <button type="button" class="btn-mini" onclick="addRange()">Add Range</button>
+            <button type="button" class="btn-mini gray" onclick="generateAllRanges()">Generate All Ranges</button>
+          </div>
 
-        <div class="ranges" id="rangesBox">
-          <h4>Saved Ranges (multiple allowed in month)</h4>
-          <div class="range-list" id="rangeList"></div>
-        </div>
-      </td>
-    </tr>
+          <div class="ranges" id="rangesBox">
+            <h4>Saved Ranges (multiple allowed in month)</h4>
+            <div class="range-list" id="rangeList"></div>
+          </div>
+        </td>
+      </tr>
 
-    <!-- Rates row (HIDE IN PRINT) -->
-    <tr class="no-print">
-      <td colspan="9" class="rate-badge">
-        Applied Rates:
-        <span id="rateText">DA ₹0 | Hotel ₹0</span>
-        <span style="margin-left:10px;">Tip:</span>
-        <span style="border-style:dashed;">Click row to select • “Add Journey Day” duplicates selected date • Double-tap Hotel cell toggles No-Hotel</span>
-      </td>
-    </tr>
+      <!-- Rates row (HIDE IN PRINT) -->
+      <tr class="no-print">
+        <td colspan="9" class="rate-badge">
+          Applied Rates:
+          <span id="rateText">DA ₹0 | Hotel ₹0</span>
+          <span style="margin-left:10px;">Tip:</span>
+          <span style="border-style:dashed;">Click row to select • “Add Journey Day” duplicates selected date • Double-tap Hotel cell toggles No-Hotel</span>
+        </td>
+      </tr>
 
-    <tr>
-      <td class="grouphead"></td>
-      <td colspan="4" class="grouphead">DA Details</td>
-      <td colspan="3" class="grouphead">Travelling Detail</td>
-      <td class="grouphead"></td>
-    </tr>
+      <tr>
+        <td class="grouphead"></td>
+        <td colspan="4" class="grouphead">DA Details</td>
+        <td colspan="3" class="grouphead">Travelling Detail</td>
+        <td class="grouphead"></td>
+      </tr>
 
-    <tr class="colhead">
-      <th>Date</th>
-      <th>No. of DA</th>
-      <th>DA Amount</th>
-      <th>Hotel Bill</th>
-      <th>Total DA (3+4)</th>
-      <th>Mode</th>
-      <th>K.M.</th>
-      <th>Total Fare</th>
-      <th>Total (5+8)</th>
-    </tr>
+      <tr class="colhead">
+        <th>Date</th>
+        <th>No. of DA</th>
+        <th>DA Amount</th>
+        <th>Hotel Bill</th>
+        <th>Total DA (3+4)</th>
+        <th>Mode</th>
+        <th>K.M.</th>
+        <th>Total Fare</th>
+        <th>Total (5+8)</th>
+      </tr>
 
-    <tbody id="rows"></tbody>
+      <tbody id="rows"></tbody>
 
-    <tr class="totalrow">
-      <td colspan="2" class="left">Grand Total</td>
-      <td id="gDA">0</td>
-      <td id="gHotel">0</td>
-      <td id="gTDA">0</td>
-      <td></td>
-      <td></td>
-      <td id="gFare">0</td>
-      <td id="gAll">0</td>
-    </tr>
+      <tr class="totalrow">
+        <td colspan="2" class="left">Grand Total</td>
+        <td id="gDA">0</td>
+        <td id="gHotel">0</td>
+        <td id="gTDA">0</td>
+        <td></td>
+        <td></td>
+        <td id="gFare">0</td>
+        <td id="gAll">0</td>
+      </tr>
 
-    <tr>
-      <td colspan="9" class="left" style="border-top:none; padding-top:12px;">
-        <span style="font-weight:700;">दिनांक:-</span>
-        <span style="display:inline-block; width:220px; border-bottom:1px solid #000; margin:0 14px 0 8px;"></span>
-        <span style="float:right; font-weight:700;">संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</span>
-      </td>
-    </tr>
-  </table>
+      <tr>
+        <td colspan="9" class="left" style="border-top:none; padding-top:12px;">
+          <span style="font-weight:700;">दिनांक:-</span>
+          <span style="display:inline-block; width:220px; border-bottom:1px solid #000; margin:0 14px 0 8px;"></span>
+          <span style="float:right; font-weight:700;">संबन्धित क्षेत्र कर्मचारी के हस्ताक्षर</span>
+        </td>
+      </tr>
+    </table>
+  </div><!-- /print-scale -->
 
   <!-- Buttons -->
   <div class="actionsbar">
