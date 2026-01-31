@@ -250,38 +250,46 @@
   }
 
   @media print{
-    html, body{
-      margin:0 !important;
-      padding:0 !important;
-      background:#fff !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    /* Hide screen wrapper look */
-    .stage, .screen-toolbar{ display:none !important; }
-    .paper{
-      border:none !important;
-      box-shadow:none !important;
-      border-radius:0 !important;
-      width:auto !important;
-      min-height:auto !important;
-    }
-    .sheet{ padding:0 !important; }
-
-    /* ✅ IMPORTANT: hide Range row + Rate/TA-DA info row + any spacer rows */
-    .no-print{ display:none !important; }
-
-    /* Dense print so it fits better */
-    table{ font-size:10.4px !important; }
-    th, td{ padding:1.9px 2px !important; line-height:1.04 !important; }
-    input, select{ font-size:10.4px !important; padding:0 !important; line-height:1.04 !important; }
-
-    table, tr, td, th{
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
-    }
+  html, body{
+    margin:0 !important;
+    padding:0 !important;
+    background:#fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
+  /* hide only buttons (NOT the content wrapper) */
+  .screen-toolbar{ display:none !important; }
+  .stage{ display:block !important; }
+
+  /* remove preview effects */
+  .paper{
+    border:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+    width:auto !important;
+    min-height:auto !important;
+  }
+  .sheet{ padding:0 !important; }
+
+  /* IMPORTANT: avoid blank print due to transforms */
+  .paper-scale, .paper, .sheet{
+    transform:none !important;
+  }
+
+  /* Hide Range row + Rate row + spacer rows */
+  .no-print{ display:none !important; }
+
+  /* dense print */
+  table{ font-size:10.4px !important; }
+  th, td{ padding:1.9px 2px !important; line-height:1.04 !important; }
+  input, select{ font-size:10.4px !important; padding:0 !important; line-height:1.04 !important; }
+
+  table, tr, td, th{
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
 </style>
 </head>
 
