@@ -10,7 +10,6 @@
   <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -387,7 +386,7 @@
     <div class="badge-row">
       <div class="pill">⚡ Quick Access</div>
       <div class="pill">📄 PDF Notes</div>
-      <div class="pill">☁️ Firebase Sync</div>
+      <div class="pill">☁️ Drive Drop Box</div>
       <div class="pill">🧠 SRO-wise Tracking</div>
     </div>
     <div class="spark"></div>
@@ -416,7 +415,7 @@
             <div class="ico notes">📝</div>
             <h3>Inspection Notes (PDF)</h3>
           </div>
-          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). PDFs go to Notes Storage, metadata to Notes RTDB.</p>
+          <p>Upload PDF SRO-wise + Sample No (Auto detect from cover). PDFs go to <b>Google Drive</b>, metadata to Notes RTDB.</p>
           <div class="btnrow">
             <button class="btn" type="button" onclick="event.stopPropagation(); openNotes()">⬆️ Upload Notes</button>
             <button class="btn secondary" type="button" onclick="event.stopPropagation(); loadRecent()">🔄 Refresh</button>
@@ -510,7 +509,7 @@
         </div>
 
         <div class="status" style="margin-top:14px;">
-          ✅ Storage Path: <b>inspection_notes/{SRO}/sample_{SAMPLE}/SAMPLE_timestamp_filename.pdf</b><br/>
+          ✅ Upload Target: <b>Google Drive (Apps Script Drop Box)</b><br/>
           ✅ Notes RTDB Meta: <b>inspection_notes_meta/{SRO}/{noteId}</b> (stored in inspection-notes-default-rtdb)
         </div>
       </div>
@@ -525,34 +524,44 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 /* ===================== NAV ===================== */
 function go(url){ window.location.href = url; }
 
+/* ===================== Google Drive Upload (Apps Script) ===================== */
+const DRIVE_UPLOAD_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbwG0VEtS1ILS4EKUpmQfSiZlBRnaLtlEpSuBSShDmLQW7o78iMZufECN9JCQT6SWRwG/exec";
+
+/*
+Expected Apps Script response (recommended):
+{
+  ok: true,
+  fileId: "...",
+  name: "....pdf",
+  url: "https://drive.google.com/file/d/FILEID/view?usp=sharing",
+  folderId: "...",
+  folderUrl: "https://drive.google.com/drive/folders/FOLDERID"
+}
+*/
+
 /* ===================== Firebase ===================== */
 /* ✅ PRIMARY (Action plan) — USING YOUR DATABASE URL */
 const config = {
   apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
   authDomain: "action-plan-62fae.firebaseapp.com",
-
-  // ✅ from your screenshot
   databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com/",
-
-  projectId: "action-plan-62fae",
-  storageBucket: "action-plan-62fae.appspot.com"
+  projectId: "action-plan-62fae"
 };
 firebase.initializeApp(config);
 const db = firebase.database();
 
-/* ✅ SECOND (Inspection Notes) */
+/* ✅ SECOND (Inspection Notes) — ONLY RTDB (NO STORAGE NOW) */
 const notesConfig = {
   apiKey: "AIzaSyCsx7ZnXOGj9Q04LgV-SvP-8SOZUxuWdIA",
   authDomain: "inspection-notes.firebaseapp.com",
   databaseURL: "https://inspection-notes-default-rtdb.firebaseio.com/",
   projectId: "inspection-notes",
-  storageBucket: "inspection-notes.firebasestorage.app",
   messagingSenderId: "633078446998",
   appId: "1:633078446998:web:e612c945065754bf653bb7"
 };
 const notesApp = firebase.initializeApp(notesConfig, "notesApp");
 const notesDb  = firebase.database(notesApp);
-const notesStorage = firebase.storage(notesApp);
 
 /* ===================== SRO list (ONLY 4) ===================== */
 const ALLOWED_SROS = ["SRO SHIMLA","SRO HAMIRPUR","SRO DHARAMSHALA","SRO MANDI"];
@@ -704,6 +713,54 @@ function loadSroDropdownOnly4(){
   if(sel.value) loadSroNotes();
 }
 
+/* ===================== Upload to Apps Script (with progress) ===================== */
+function uploadToDriveViaAppsScript({ file, sro, sampleNo, insDate, remarks, detectSource, detectSnippet, sampleAuto }, onProgress){
+  return new Promise((resolve, reject)=>{
+    const fd = new FormData();
+    fd.append("file", file, file.name);
+
+    // fields
+    fd.append("sro", sro);
+    fd.append("sampleNo", sampleNo);
+    fd.append("inspectionDate", insDate || "");
+    fd.append("remarks", remarks || "");
+
+    // optional extra info
+    fd.append("sampleAutoDetected", sampleAuto ? "true" : "false");
+    fd.append("sampleDetectSource", detectSource || "");
+    fd.append("sampleDetectSnippet", detectSnippet || "");
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", DRIVE_UPLOAD_ENDPOINT, true);
+
+    xhr.upload.onprogress = (evt)=>{
+      if(evt.lengthComputable && typeof onProgress === "function"){
+        const pct = (evt.loaded / evt.total) * 100;
+        onProgress(pct);
+      }
+    };
+
+    xhr.onreadystatechange = ()=>{
+      if(xhr.readyState !== 4) return;
+      if(xhr.status >= 200 && xhr.status < 300){
+        let data = null;
+        try{ data = JSON.parse(xhr.responseText); }catch(e){}
+        if(data && (data.ok === true || data.success === true || data.fileId || data.url)){
+          resolve(data);
+        }else{
+          // if script returns plain text / url
+          resolve({ ok:true, raw: xhr.responseText });
+        }
+      }else{
+        reject(new Error(`Apps Script upload failed (${xhr.status}): ${xhr.responseText || "No response"}`));
+      }
+    };
+
+    xhr.onerror = ()=> reject(new Error("Network error while uploading to Apps Script."));
+    xhr.send(fd);
+  });
+}
+
 /* ===================== Upload PDF(s) ===================== */
 async function uploadPdf(){
   const sro = document.getElementById("sroSel").value.trim();
@@ -768,24 +825,39 @@ async function uploadPdf(){
         continue;
       }
 
-      setStatus(`⬆️ Uploading (${i+1}/${files.length}): <b>${escapeHtml(file.name)}</b> | Sample: <b>${escapeHtml(sample)}</b>`, "info");
+      setStatus(`⬆️ Uploading to Drive (${i+1}/${files.length}): <b>${escapeHtml(file.name)}</b> | Sample: <b>${escapeHtml(sample)}</b>`, "info");
 
-      const sampleKey = safeSample(sample);
-      const safeName = (file.name || "notes.pdf").replace(/[^\w.\-]/g,"_");
-      const storagePath = `inspection_notes/${sroKey}/sample_${sampleKey}/${sampleKey}_${ts}_${safeName}`;
+      // progress mapping: each file gets a slice of the bar
+      const base = (i / files.length) * 100;
+      const slice = (100 / files.length);
 
-      const ref = notesStorage.ref(storagePath);
-      const task = ref.put(file, { contentType:"application/pdf" });
+      const uploadResp = await uploadToDriveViaAppsScript(
+        {
+          file,
+          sro,
+          sampleNo: sample,
+          insDate,
+          remarks,
+          detectSource,
+          detectSnippet,
+          sampleAuto
+        },
+        (pct)=>{
+          const mapped = base + (pct/100)*slice;
+          setProgress(Math.min(99, mapped));
+        }
+      );
 
-      await new Promise((resolve, reject)=>{
-        task.on("state_changed", (snap)=>{
-          const base = (i / files.length) * 100;
-          const local = (snap.bytesTransferred / snap.totalBytes) * (100 / files.length);
-          setProgress(Math.min(99, base + local));
-        }, reject, resolve);
-      });
+      // derive final URL
+      const url =
+        (uploadResp && uploadResp.url) ? uploadResp.url :
+        (uploadResp && uploadResp.fileId) ? `https://drive.google.com/file/d/${uploadResp.fileId}/view?usp=sharing` :
+        (uploadResp && typeof uploadResp.raw === "string" && uploadResp.raw.includes("http")) ? uploadResp.raw.trim() :
+        "";
 
-      const url = await ref.getDownloadURL();
+      const fileId = (uploadResp && uploadResp.fileId) ? uploadResp.fileId : "";
+      const folderId = (uploadResp && uploadResp.folderId) ? uploadResp.folderId : "";
+      const folderUrl = (uploadResp && uploadResp.folderUrl) ? uploadResp.folderUrl : "";
 
       const noteId = `${ts}_${Math.random().toString(16).slice(2)}`;
       const meta = {
@@ -797,8 +869,12 @@ async function uploadPdf(){
         inspectionDate: insDate,
         remarks,
         fileName: file.name,
-        storagePath,
-        url,
+
+        // Drive info
+        driveFileId: fileId,
+        driveFolderId: folderId,
+        driveFolderUrl: folderUrl,
+        url: url, // open link
         createdAt: ts
       };
 
@@ -858,6 +934,7 @@ async function loadSroNotes(){
       const sample = n.sampleNo || "—";
       const rmk = n.remarks ? n.remarks : "—";
       const badge = n.sampleAutoDetected ? "🧠 Auto" : "✍️ Manual";
+      const openUrl = n.url ? n.url : (n.driveFileId ? `https://drive.google.com/file/d/${n.driveFileId}/view?usp=sharing` : "");
 
       return `
         <div class="item">
@@ -870,7 +947,8 @@ async function loadSroNotes(){
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-            <a href="${n.url}" target="_blank" rel="noopener">Open PDF ↗</a>
+            ${openUrl ? `<a href="${openUrl}" target="_blank" rel="noopener">Open PDF ↗</a>` : `<span style="color:var(--muted);font-weight:900;font-size:12px;">No link</span>`}
+            ${n.driveFolderUrl ? `<a href="${n.driveFolderUrl}" target="_blank" rel="noopener">Folder ↗</a>` : ``}
           </div>
         </div>
       `;
@@ -911,6 +989,7 @@ async function loadRecent(){
 
     recentBox.innerHTML = top.map(n=>{
       const dt = new Date(n.createdAt).toLocaleString();
+      const openUrl = n.url ? n.url : (n.driveFileId ? `https://drive.google.com/file/d/${n.driveFileId}/view?usp=sharing` : "");
       return `
         <div class="item">
           <div class="meta">
@@ -918,7 +997,7 @@ async function loadRecent(){
             <div class="b">${escapeHtml(n.fileName || "PDF")}<br/>${escapeHtml(dt)}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-            <a href="${n.url}" target="_blank" rel="noopener">Open ↗</a>
+            ${openUrl ? `<a href="${openUrl}" target="_blank" rel="noopener">Open ↗</a>` : `<span style="color:var(--muted);font-weight:900;font-size:12px;">No link</span>`}
           </div>
         </div>
       `;
