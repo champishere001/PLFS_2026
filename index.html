@@ -20,6 +20,9 @@
       --pink:#fb7185;
       --violet:#a78bfa;
 
+      /* ✅ NEW: ASI color */
+      --cyan:#22d3ee;
+
       --text:#e5e7eb;
       --muted:#94a3b8;
 
@@ -102,6 +105,9 @@
     .left-rail a.weekly{ color:var(--green); }
     .left-rail a.monthly{ color:var(--green); }
     .left-rail a.tada{ color:var(--amber); }
+
+    /* ✅ NEW: ASI rail color */
+    .left-rail a.asi{ color: var(--cyan); }
 
     .wrap{
       max-width:1240px;
@@ -301,6 +307,9 @@
     .ico.arc{ background: rgba(148,163,184,.10); border-color: rgba(148,163,184,.26); }
     .ico.tp{ background: rgba(56,189,248,.10); border-color: rgba(56,189,248,.26); }
 
+    /* ✅ NEW: ASI icon style */
+    .ico.asi{ background: rgba(34,211,238,.10); border-color: rgba(34,211,238,.26); }
+
     .card h3{ margin:0; font-size:18px; font-weight:900; letter-spacing:.2px; }
     .card p{
       margin:6px 0 16px;
@@ -349,6 +358,9 @@
     .btn.violet{ background: var(--violet); color:#0b0620; box-shadow: 0 18px 35px rgba(167,139,250,.15); }
     .btn.amber{ background: var(--amber); color:#1b1100; box-shadow: 0 18px 35px rgba(245,158,11,.15); }
 
+    /* ✅ NEW: ASI button */
+    .btn.cyan{ background: var(--cyan); color:#001014; box-shadow: 0 18px 35px rgba(34,211,238,.15); }
+
     .foot{
       margin-top: 26px;
       color: rgba(148,163,184,.75);
@@ -370,6 +382,10 @@
     <a href="ufs_weekly.html" class="weekly">🗓️ Weekly</a>
     <a href="ufs_monthly.html" class="monthly">📅 Monthly</a>
     <a href="ufs_action.html" class="weekly">📈 Action</a>
+
+    <!-- ✅ NEW: ASI link -->
+    <a href="asi.html" class="asi">🧭 ASI</a>
+
     <a href="ta_da.html" class="tada">🧮 TA/DA</a>
   </nav>
 
@@ -406,7 +422,7 @@
     <div class="section">
       <div class="section-title">
         <div class="left"><span>📊</span><div>Schemes</div></div>
-        <div class="right">PLFS • UFS • ASUSE</div>
+        <div class="right">PLFS • UFS • ASUSE • ASI</div>
       </div>
       <div class="section-divider"></div>
 
@@ -438,6 +454,16 @@
             <a class="btn secondary" href="asuse.html#settings" onclick="event.stopPropagation()">⚙️ Settings</a>
           </div>
         </div>
+
+        <!-- ✅ NEW: ASI SCHEME CARD -->
+        <div class="card" onclick="go('asi.html')" role="button">
+          <div class="card-head"><div class="ico asi">🧭</div><h3>ASI</h3></div>
+          <p>ASI operations: quick access, monitoring, and field tools.</p>
+          <div class="btnrow">
+            <a class="btn cyan" href="asi.html" onclick="event.stopPropagation()">🚀 Open ASI</a>
+            <a class="btn secondary" href="asi.html#help" onclick="event.stopPropagation()">📌 Guide</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -448,7 +474,6 @@
       </div>
       <div class="section-divider"></div>
 
-      <!-- ✅ UPDATED: Added Tentative Program card -->
       <div class="grid">
         <div class="card" onclick="go('ta_da.html')" role="button">
           <div class="card-head"><div class="ico tada">🧮</div><h3>TA / DA Calculation</h3></div>
@@ -468,7 +493,6 @@
           </div>
         </div>
 
-        <!-- ✅ NEW: Tentative Program -->
         <div class="card" onclick="go('tentative_program.html')" role="button">
           <div class="card-head"><div class="ico tp">🗓️</div><h3>Tentative Program</h3></div>
           <p>Create / edit tentative program and print clean A4 format.</p>
