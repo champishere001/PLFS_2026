@@ -20,10 +20,7 @@
       --pink:#fb7185;
       --violet:#a78bfa;
 
-      /* ✅ NEW: ASI color */
       --cyan:#22d3ee;
-
-      /* ✅ NEW: Daily Diary color */
       --indigo:#60a5fa;
 
       --text:#e5e7eb;
@@ -108,11 +105,7 @@
     .left-rail a.weekly{ color:var(--green); }
     .left-rail a.monthly{ color:var(--green); }
     .left-rail a.tada{ color:var(--amber); }
-
-    /* ASI rail color */
     .left-rail a.asi{ color: var(--cyan); }
-
-    /* ✅ Daily Diary rail color */
     .left-rail a.diary{ color: var(--indigo); }
 
     .wrap{
@@ -376,6 +369,177 @@
       flex-wrap:wrap;
     }
     .foot b{ color:#dbeafe; }
+
+    /* =======================
+       ✅ UFS MENU (POPUP)
+    ======================== */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:99999;
+    }
+    .modal.show{ display:flex; }
+    .modal-backdrop{
+      position:absolute; inset:0;
+      background: rgba(2,6,23,.72);
+      backdrop-filter: blur(8px);
+    }
+    .modal-panel{
+      position:relative;
+      width:min(760px, 100%);
+      border-radius: 22px;
+      border:1px solid rgba(34,48,74,.95);
+      background: linear-gradient(180deg, rgba(17,28,51,.96), rgba(15,23,42,.96));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      animation: pop .18s ease-out;
+    }
+    @keyframes pop{
+      from{ transform: translateY(10px) scale(.985); opacity:.0; }
+      to{ transform: translateY(0) scale(1); opacity:1; }
+    }
+    .modal-panel::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(900px 320px at 18% 10%, rgba(16,185,129,.14), transparent 60%),
+        radial-gradient(700px 320px at 88% 18%, rgba(56,189,248,.14), transparent 60%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .modal-head{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 18px 10px;
+    }
+    .modal-title{
+      display:flex; align-items:center; gap:10px;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:#eaf6ff;
+      margin:0;
+      font-size:18px;
+    }
+    .modal-title .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:#dbeafe;
+      font-size:12px;
+      font-weight:900;
+    }
+    .modal-sub{
+      position:relative;
+      z-index:1;
+      padding:0 18px 12px;
+      margin:0;
+      color: rgba(148,163,184,.92);
+      font-weight:700;
+      font-size:12.5px;
+      line-height:1.45;
+    }
+    .modal-close{
+      appearance:none; border:none;
+      cursor:pointer;
+      width:40px; height:40px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:#e5e7eb;
+      font-weight:900;
+      display:grid; place-items:center;
+      transition:.15s ease;
+      position:relative;
+      z-index:1;
+    }
+    .modal-close:hover{ background: rgba(255,255,255,.10); transform: translateY(-1px); }
+
+    .modal-body{
+      position:relative;
+      z-index:1;
+      padding: 10px 18px 18px;
+    }
+    .ufs-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width: 620px){
+      .ufs-grid{ grid-template-columns: 1fr; }
+    }
+    .ufs-tile{
+      border-radius: 18px;
+      border:1px solid rgba(34,48,74,.9);
+      background: rgba(2,6,23,.40);
+      padding:14px 14px 12px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .ufs-tile:hover{
+      transform: translateY(-3px);
+      border-color: rgba(16,185,129,.55);
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+      background: rgba(2,6,23,.55);
+    }
+    .ufs-ico{
+      width:44px; height:44px;
+      border-radius:16px;
+      display:grid; place-items:center;
+      font-size:20px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.30);
+      flex:0 0 auto;
+    }
+    .ufs-ico.green{ background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.26); }
+    .ufs-ico.accent{ background: rgba(56,189,248,.12); border-color: rgba(56,189,248,.26); }
+    .ufs-ico.amber{ background: rgba(245,158,11,.10); border-color: rgba(245,158,11,.26); }
+
+    .ufs-tile h4{
+      margin:0;
+      font-size:14px;
+      font-weight:900;
+      color:#eaf6ff;
+      letter-spacing:.2px;
+    }
+    .ufs-tile p{
+      margin:6px 0 0;
+      color: rgba(148,163,184,.92);
+      font-weight:700;
+      font-size:12px;
+      line-height:1.35;
+    }
+    .hint{
+      margin-top:12px;
+      color: rgba(148,163,184,.75);
+      font-weight:800;
+      font-size:11px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .kbd{
+      font-weight:900;
+      color:#dbeafe;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      padding:4px 8px;
+      border-radius:10px;
+    }
   </style>
 </head>
 
@@ -387,8 +551,6 @@
     <a href="ufs_weekly.html" class="weekly">🗓️ Weekly</a>
     <a href="ufs_monthly.html" class="monthly">📅 Monthly</a>
     <a href="ufs_action.html" class="weekly">📈 Action</a>
-
-    <!-- ✅ NEW: UFS Block Description Locator -->
     <a href="ufs_block_locator.html" class="weekly">📍 Locator</a>
 
     <a href="asi.html" class="asi">🧭 ASI</a>
@@ -403,12 +565,74 @@
   <div class="blob b2"></div>
   <div class="blob b3"></div>
 
+  <!-- ✅ UFS POPUP MENU -->
+  <div class="modal" id="ufsModal" aria-hidden="true">
+    <div class="modal-backdrop" id="ufsBackdrop"></div>
+
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="ufsTitle">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="ufsTitle">
+            <span class="tag">🗓️ UFS Scheme</span>
+            <span style="opacity:.8;font-weight:900">Choose page</span>
+          </h2>
+        </div>
+        <button class="modal-close" id="ufsClose" title="Close (Esc)">✕</button>
+      </div>
+
+      <p class="modal-sub">
+        All UFS-related tools will open from here. Click any option below.
+      </p>
+
+      <div class="modal-body">
+        <div class="ufs-grid">
+          <div class="ufs-tile" onclick="go('ufs_weekly.html')">
+            <div class="ufs-ico green">📅</div>
+            <div>
+              <h4>Weekly Progress</h4>
+              <p>Weekly monitoring, updates, and progress entry.</p>
+            </div>
+          </div>
+
+          <div class="ufs-tile" onclick="go('ufs_monthly.html')">
+            <div class="ufs-ico green">🗓️</div>
+            <div>
+              <h4>Monthly Progress</h4>
+              <p>Monthly scheme dashboard and consolidated view.</p>
+            </div>
+          </div>
+
+          <div class="ufs-tile" onclick="go('ufs_action.html')">
+            <div class="ufs-ico amber">📈</div>
+            <div>
+              <h4>Action Plan</h4>
+              <p>Targets, daily action plans, and field execution plan.</p>
+            </div>
+          </div>
+
+          <div class="ufs-tile" onclick="go('ufs_block_locator.html')">
+            <div class="ufs-ico accent">📍</div>
+            <div>
+              <h4>Block Locator</h4>
+              <p>Boundary + device location + NSEW description & list.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint">
+          <div>Tip: You can also use left rail shortcuts anytime.</div>
+          <div><span class="kbd">Esc</span> to close</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="top">
       <div class="brand">
         <h1 class="title"><span class="a">NSO</span> <span class="b">SCHEME HUB 2026</span></h1>
         <p class="subtitle">
-          One dashboard to open <b>PLFS</b>, <b>UFS</b> (Weekly + Monthly), <b>ASUSE</b>, and <b>ASI</b>.
+          One dashboard to open <b>PLFS</b>, <b>UFS</b> (Weekly + Monthly + Action + Locator), <b>ASUSE</b>, and <b>ASI</b>.
           Fast navigation, premium UI, and clean access for field operations.
         </p>
         <div class="badge-row">
@@ -443,23 +667,13 @@
           </div>
         </div>
 
-        <div class="card" onclick="go('ufs_weekly.html')" role="button">
+        <!-- ✅ UPDATED: UFS card now opens UFS menu popup -->
+        <div class="card" onclick="openUfsMenu()" role="button" aria-label="Open UFS menu">
           <div class="card-head"><div class="ico ufs">🗓️</div><h3>UFS</h3></div>
-          <p>Open weekly and monthly progress tools in one place.</p>
+          <p>Click to open all UFS pages (Weekly, Monthly, Action, Locator).</p>
           <div class="btnrow">
-            <a class="btn green" href="ufs_weekly.html" onclick="event.stopPropagation()">📅 Weekly</a>
-            <a class="btn green" href="ufs_monthly.html" onclick="event.stopPropagation()">🗓️ Monthly</a>
-            <a class="btn secondary" href="ufs_action.html" onclick="event.stopPropagation()">📈 Action</a>
-          </div>
-        </div>
-
-        <!-- ✅ NEW CARD: UFS Block Description Locator -->
-        <div class="card" onclick="go('ufs_block_locator.html')" role="button">
-          <div class="card-head"><div class="ico ufs">📍</div><h3>UFS Block Locator</h3></div>
-          <p>Block boundary + device location + north/east/west/south description & list.</p>
-          <div class="btnrow">
-            <a class="btn green" href="ufs_block_locator.html" onclick="event.stopPropagation()">📍 Open Locator</a>
-            <a class="btn secondary" href="ufs_block_locator.html#help" onclick="event.stopPropagation()">📌 Guide</a>
+            <button class="btn green" type="button" onclick="event.stopPropagation(); openUfsMenu()">🧭 Open UFS Menu</button>
+            <button class="btn secondary" type="button" onclick="event.stopPropagation(); go('ufs_weekly.html')">⚡ Quick Weekly</button>
           </div>
         </div>
 
@@ -480,6 +694,15 @@
             <a class="btn secondary" href="asi.html#help" onclick="event.stopPropagation()">📌 Guide</a>
           </div>
         </div>
+
+        <div class="card" onclick="go('daily_diary.html')" role="button">
+          <div class="card-head"><div class="ico diary">📘</div><h3>Daily Diary</h3></div>
+          <p>Calendar-based daily diary with tours, office/holiday quick clicks, and print-ready output.</p>
+          <div class="btnrow">
+            <a class="btn indigo" href="daily_diary.html" onclick="event.stopPropagation()">📘 Open Diary</a>
+            <a class="btn secondary" href="daily_diary.html#help" onclick="event.stopPropagation()">📌 Guide</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -497,15 +720,6 @@
           <div class="btnrow">
             <a class="btn amber" href="ta_da.html" onclick="event.stopPropagation()">🧾 Open Sheet</a>
             <a class="btn secondary" href="ta_da.html#pdf" onclick="event.stopPropagation()">⬇️ PDF Export</a>
-          </div>
-        </div>
-
-        <div class="card" onclick="go('daily_diary.html')" role="button">
-          <div class="card-head"><div class="ico diary">📘</div><h3>Daily Diary</h3></div>
-          <p>Calendar-based daily diary with tours, office/holiday quick clicks, and print-ready output.</p>
-          <div class="btnrow">
-            <a class="btn indigo" href="daily_diary.html" onclick="event.stopPropagation()">📘 Open Diary</a>
-            <a class="btn secondary" href="daily_diary.html#help" onclick="event.stopPropagation()">📌 Guide</a>
           </div>
         </div>
 
@@ -546,6 +760,7 @@
   <script>
     function go(url){ window.location.href = url; }
 
+    // ===== Clock
     function pad(n){ return String(n).padStart(2,'0'); }
     function tick(){
       const d = new Date();
@@ -557,6 +772,7 @@
     }
     tick(); setInterval(tick, 1000);
 
+    // ===== Background particles
     const c = document.getElementById('fx');
     const ctx = c.getContext('2d');
     let W,H,particles=[];
@@ -612,6 +828,7 @@
     }
     draw();
 
+    // ===== Card tilt
     document.querySelectorAll('.card').forEach(card=>{
       let rect=null;
       card.addEventListener('mousemove', (e)=>{
@@ -629,6 +846,32 @@
         card.style.transform = '';
       });
     });
+
+    // ===== ✅ UFS menu logic
+    const ufsModal = document.getElementById('ufsModal');
+    const ufsBackdrop = document.getElementById('ufsBackdrop');
+    const ufsClose = document.getElementById('ufsClose');
+
+    function openUfsMenu(){
+      ufsModal.classList.add('show');
+      ufsModal.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeUfsMenu(){
+      ufsModal.classList.remove('show');
+      ufsModal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    ufsBackdrop.addEventListener('click', closeUfsMenu);
+    ufsClose.addEventListener('click', closeUfsMenu);
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && ufsModal.classList.contains('show')) closeUfsMenu();
+    });
+
+    // expose for inline onclick
+    window.openUfsMenu = openUfsMenu;
   </script>
 </body>
 </html>
