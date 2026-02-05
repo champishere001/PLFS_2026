@@ -312,10 +312,7 @@
     .ico.docs{ background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.26); }
     .ico.arc{ background: rgba(148,163,184,.10); border-color: rgba(148,163,184,.26); }
     .ico.tp{ background: rgba(56,189,248,.10); border-color: rgba(56,189,248,.26); }
-
     .ico.asi{ background: rgba(34,211,238,.10); border-color: rgba(34,211,238,.26); }
-
-    /* ✅ Daily Diary icon style */
     .ico.diary{ background: rgba(96,165,250,.10); border-color: rgba(96,165,250,.26); }
 
     .card h3{ margin:0; font-size:18px; font-weight:900; letter-spacing:.2px; }
@@ -366,8 +363,6 @@
     .btn.violet{ background: var(--violet); color:#0b0620; box-shadow: 0 18px 35px rgba(167,139,250,.15); }
     .btn.amber{ background: var(--amber); color:#1b1100; box-shadow: 0 18px 35px rgba(245,158,11,.15); }
     .btn.cyan{ background: var(--cyan); color:#001014; box-shadow: 0 18px 35px rgba(34,211,238,.15); }
-
-    /* ✅ Daily Diary button */
     .btn.indigo{ background: var(--indigo); color:#061125; box-shadow: 0 18px 35px rgba(96,165,250,.15); }
 
     .foot{
@@ -388,15 +383,16 @@
   <nav class="left-rail">
     <a href="index.html" class="hub">🏠 HUB</a>
     <a href="plfs_gateway.html">📊 PLFS</a>
+
     <a href="ufs_weekly.html" class="weekly">🗓️ Weekly</a>
     <a href="ufs_monthly.html" class="monthly">📅 Monthly</a>
     <a href="ufs_action.html" class="weekly">📈 Action</a>
 
+    <!-- ✅ NEW: UFS Block Description Locator -->
+    <a href="ufs_block_locator.html" class="weekly">📍 Locator</a>
+
     <a href="asi.html" class="asi">🧭 ASI</a>
-
-    <!-- ✅ NEW: Daily Diary link -->
     <a href="daily_diary.html" class="diary">📘 Diary</a>
-
     <a href="ta_da.html" class="tada">🧮 TA/DA</a>
   </nav>
 
@@ -457,6 +453,16 @@
           </div>
         </div>
 
+        <!-- ✅ NEW CARD: UFS Block Description Locator -->
+        <div class="card" onclick="go('ufs_block_locator.html')" role="button">
+          <div class="card-head"><div class="ico ufs">📍</div><h3>UFS Block Locator</h3></div>
+          <p>Block boundary + device location + north/east/west/south description & list.</p>
+          <div class="btnrow">
+            <a class="btn green" href="ufs_block_locator.html" onclick="event.stopPropagation()">📍 Open Locator</a>
+            <a class="btn secondary" href="ufs_block_locator.html#help" onclick="event.stopPropagation()">📌 Guide</a>
+          </div>
+        </div>
+
         <div class="card" onclick="go('asuse.html')" role="button">
           <div class="card-head"><div class="ico asuse">🧾</div><h3>ASUSE</h3></div>
           <p>ASUSE operations: roster, monitoring, and quick analytics access.</p>
@@ -493,7 +499,7 @@
             <a class="btn secondary" href="ta_da.html#pdf" onclick="event.stopPropagation()">⬇️ PDF Export</a>
           </div>
         </div>
-       <!-- ✅ NEW: DAILY DIARY TOOL CARD -->
+
         <div class="card" onclick="go('daily_diary.html')" role="button">
           <div class="card-head"><div class="ico diary">📘</div><h3>Daily Diary</h3></div>
           <p>Calendar-based daily diary with tours, office/holiday quick clicks, and print-ready output.</p>
@@ -502,6 +508,7 @@
             <a class="btn secondary" href="daily_diary.html#help" onclick="event.stopPropagation()">📌 Guide</a>
           </div>
         </div>
+
         <div class="card" onclick="go('tada_documents.html')" role="button">
           <div class="card-head"><div class="ico docs">📄</div><h3>Bill Documents</h3></div>
           <p>Upload / view TA bills, hotel bills, tickets, scanned PDFs, and supporting files.</p>
