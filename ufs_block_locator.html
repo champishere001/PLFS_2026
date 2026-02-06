@@ -148,7 +148,7 @@
       border-color: rgba(245,158,11,.35);
     }
 
-    .inp{
+    .inp, .sel{
       width:100%;
       padding: 11px 12px;
       border-radius: 12px;
@@ -158,7 +158,7 @@
       outline:none;
       font-weight: 700;
     }
-    .inp:focus{
+    .inp:focus, .sel:focus{
       border-color: rgba(56,189,248,.45);
       box-shadow: 0 0 0 4px rgba(56,189,248,.14);
     }
@@ -249,9 +249,7 @@
       line-height: 1.35;
     }
 
-    .fileRow{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    }
+    .fileRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     input[type="file"]{ display:none; }
     .pill{
       padding:7px 10px;
@@ -273,6 +271,15 @@
       user-select:none;
     }
     .chk input{ transform: scale(1.1); }
+
+    .selGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 720px){
+      .selGrid{ grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 
@@ -284,11 +291,14 @@
         <div class="badge" id="countBadge">0 boundaries</div>
       </div>
       <div class="sub">
-        Upload KML/ZIP → GPS location se boundary match → KML filename se Ward/Block read → Google Sheet se North/East/South/West description auto show.
+        Upload KML/ZIP → GPS location se boundary match → KML filename se Ward/Block read → Google Sheet se
+        <b>IV No + Town + North/East/South/West</b> auto show.
       </div>
     </div>
 
     <div class="grid">
+
+      <!-- Controls -->
       <div class="card">
         <div class="cardHead">
           <div class="h">⚙️ Controls</div>
@@ -300,10 +310,7 @@
 
         <div class="cardBody">
           <div class="row">
-            <!-- ✅ NEW: Proxy URL (required for Drive ZIP) -->
             <input class="inp" id="proxyUrl" placeholder="Paste Apps Script Proxy URL here (required for Drive ZIP)" />
-
-            <!-- ✅ Put your Drive ZIP link here -->
             <input class="inp" id="kmlUrl" value="https://drive.google.com/file/d/1I7SfE0fOOV-er-06U-q8dICbjmFMLZeK/view?usp=drivesdk" />
 
             <div class="controls">
@@ -312,6 +319,7 @@
               <button class="btn" id="restoreSavedBtn">Restore Saved KML</button>
               <button class="btn warn" id="clearSavedBtn">Clear Saved KML</button>
               <label class="chk"><input type="checkbox" id="saveOfflineChk" checked>Save Offline</label>
+              <label class="chk"><input type="checkbox" id="autoFetchChk">Auto-fetch Drive ZIP on open</label>
             </div>
 
             <input class="inp" id="sheetUrl" value="https://docs.google.com/spreadsheets/d/1MoKhZ2mzNtTgPvkM_xFk-TffpiYrkSRyNctOFQ5APBI/edit?usp=drivesdk" />
@@ -326,16 +334,43 @@
             </div>
 
             <div class="hint">
-              ✅ Sheet must be: Share → General access → <b>Anyone with the link</b> → Viewer. <br/>
+              ✅ Sheet must be public: Share → General access → <b>Anyone with the link</b> → Viewer. <br/>
               KML filename example: <b>b14w6iv1.kml</b> (Block=14, Ward=6) <br/>
               ZIP must contain .kml files. (folders inside ZIP OK) <br/>
-              ✅ Drive ZIP fetch works via Proxy URL only (Apps Script Web App).
+              ✅ Drive ZIP fetch works via Proxy URL only (Apps Script Web App). <br/>
+              ✅ One-time upload: KML saves offline (IndexedDB) + auto-restore on open.
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Selection Console -->
+      <div class="card">
+        <div class="cardHead">
+          <div class="h">🧾 Selection Console (Town / IV / Ward / Block)</div>
+          <div class="pill" id="selStatus">Ready</div>
+        </div>
+        <div class="cardBody">
+          <div class="selGrid">
+            <select class="sel" id="townSel"><option value="">Town (All)</option></select>
+            <select class="sel" id="ivSel"><option value="">IV No (All)</option></select>
+            <select class="sel" id="wardSel"><option value="">Ward No (All)</option></select>
+            <select class="sel" id="blockSel"><option value="">Block No (All)</option></select>
+          </div>
+
+          <div class="controls" style="margin-top:10px">
+            <button class="btn primary" id="showSelectedBtn">Show Selected</button>
+            <button class="btn" id="clearSelectionBtn">Clear Selection</button>
+          </div>
+
+          <div class="hint">
+            ✅ This console uses <b>Sheet data</b>. Boundary highlight uses <b>uploaded/offline KML</b> (Ward+Block match).
+          </div>
+        </div>
+      </div>
+
       <div class="two">
+        <!-- Map -->
         <div class="card">
           <div class="cardHead">
             <div class="h">🗺️ Map</div>
@@ -354,9 +389,10 @@
           </div>
         </div>
 
+        <!-- Detected Info -->
         <div class="card">
           <div class="cardHead">
-            <div class="h">📍 Detected Info</div>
+            <div class="h">📍 Detected / Selected Info</div>
             <div class="pill" id="sheetStatus">Sheet: NOT LOADED</div>
           </div>
           <div class="cardBody">
@@ -369,6 +405,16 @@
                 <div class="lab">Inside Boundary</div>
                 <div class="val" id="insideVal">—</div>
               </div>
+
+              <div class="box">
+                <div class="lab">Town (from Sheet col I)</div>
+                <div class="val" id="townVal">—</div>
+              </div>
+              <div class="box">
+                <div class="lab">IV No (from Sheet col B)</div>
+                <div class="val" id="ivVal">—</div>
+              </div>
+
               <div class="box">
                 <div class="lab">Ward / Block (from KML name)</div>
                 <div class="val" id="wbVal">—</div>
@@ -379,29 +425,18 @@
               </div>
             </div>
 
-            <div class="dirBox">
-              <div class="lab">North</div>
-              <div class="val" id="northVal">No entry</div>
-            </div>
-            <div class="dirBox">
-              <div class="lab">East</div>
-              <div class="val" id="eastVal">No entry</div>
-            </div>
-            <div class="dirBox">
-              <div class="lab">South</div>
-              <div class="val" id="southVal">No entry</div>
-            </div>
-            <div class="dirBox">
-              <div class="lab">West</div>
-              <div class="val" id="westVal">No entry</div>
-            </div>
+            <div class="dirBox"><div class="lab">North</div><div class="val" id="northVal">No entry</div></div>
+            <div class="dirBox"><div class="lab">East</div><div class="val" id="eastVal">No entry</div></div>
+            <div class="dirBox"><div class="lab">South</div><div class="val" id="southVal">No entry</div></div>
+            <div class="dirBox"><div class="lab">West</div><div class="val" id="westVal">No entry</div></div>
 
             <div class="hint" style="margin-top:10px">
-              If “No entry” shows, then either sheet not loaded/public, wrong tab gid, or key mismatch. This code matches: <b>Ward No</b> + <b>Block Number</b>.
+              Matching key: <b>Ward No + Block Number</b>. Now also shows <b>Town + IV No</b> from the Sheet row.
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -486,19 +521,13 @@ function parseCSV(text){
     const next = text[i+1];
 
     if(ch === '"'){
-      if(inQuotes && next === '"'){
-        cur += '"';
-        i++;
-      }else{
-        inQuotes = !inQuotes;
-      }
+      if(inQuotes && next === '"'){ cur += '"'; i++; }
+      else{ inQuotes = !inQuotes; }
     }else if(ch === ',' && !inQuotes){
-      row.push(cur.trim());
-      cur = "";
+      row.push(cur.trim()); cur = "";
     }else if((ch === '\n' || ch === '\r') && !inQuotes){
       if(ch === '\r' && next === '\n') i++;
-      row.push(cur.trim());
-      cur = "";
+      row.push(cur.trim()); cur = "";
       if(row.length > 1 || (row.length===1 && row[0]!== "")){
         rows.push(row.map(x => x.replace(/^"|"$/g,"")));
       }
@@ -516,16 +545,28 @@ function parseCSV(text){
 
 const numOnly = v => String(v||"").replace(/\D/g,"");
 const makeKey = (ward, block) => `w${numOnly(ward)}-b${numOnly(block)}`;
+const norm = s => String(s||"").trim();
 
 /* =========================
    Sheet load (CSV export)
 ========================= */
-let sheetMap = new Map();
+let sheetMap = new Map();     // key -> {north,east,south,west,town,iv}
+let sheetRows = [];           // rows for dropdowns
 let sheetLoaded = false;
 
 function sheetIdFromUrl(u){
   const m = String(u||"").match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   return m ? m[1] : null;
+}
+
+function findHeaderIndex(headers, wanted){
+  // wanted can be array of candidate strings
+  const low = headers.map(h => String(h||"").toLowerCase().trim());
+  for(const cand of wanted){
+    const idx = low.indexOf(cand.toLowerCase());
+    if(idx !== -1) return idx;
+  }
+  return -1;
 }
 
 async function loadSheet(gid=0){
@@ -563,42 +604,67 @@ async function loadSheet(gid=0){
     return;
   }
 
-  const headers = rows[0].map(h => String(h||"").toLowerCase().trim());
+  const headers = rows[0].map(h => String(h||"").trim());
+  const headersLow = headers.map(h => h.toLowerCase().trim());
+
+  // IMPORTANT: your sheet has "IV No" and "TOWN"
   const idx = {
-    ward: headers.indexOf("ward no"),
-    block: headers.indexOf("block number"),
-    north: headers.indexOf("north"),
-    east: headers.indexOf("east"),
-    south: headers.indexOf("south"),
-    west: headers.indexOf("west"),
+    iv:    findHeaderIndex(headers, ["IV No","IV NO","IVNo","IV"]),
+    ward:  findHeaderIndex(headers, ["Ward No","WARD NO","Ward"]),
+    block: findHeaderIndex(headers, ["Block Number","BLOCK NUMBER","Block"]),
+    north: findHeaderIndex(headers, ["North","NORTH"]),
+    east:  findHeaderIndex(headers, ["East","EAST"]),
+    south: findHeaderIndex(headers, ["South","SOUTH"]),
+    west:  findHeaderIndex(headers, ["West","WEST"]),
+    town:  findHeaderIndex(headers, ["Town","TOWN"]),
   };
 
-  if(Object.values(idx).some(v => v === -1)){
-    logAct("❌ Headers not found. Found headers: " + rows[0].join(" | "), "bad");
+  const required = ["iv","town","ward","block","north","east","south","west"];
+  const missing = required.filter(k => idx[k] === -1);
+  if(missing.length){
+    logAct("❌ Headers missing: " + missing.join(", ") + " | Found: " + headers.join(" | "), "bad");
     setSheetStatus(false, "Sheet: WRONG HEADERS");
     return;
   }
 
   const map2 = new Map();
+  const list = [];
+
   for(let i=1;i<rows.length;i++){
     const r = rows[i];
+
+    const iv = norm(r[idx.iv]);
+    const town = norm(r[idx.town]);
+
     const ward = numOnly(r[idx.ward]);
     const block = numOnly(r[idx.block]);
     if(!ward || !block) continue;
 
     const key = makeKey(ward, block);
-    map2.set(key, {
-      north: r[idx.north] || "",
-      east:  r[idx.east]  || "",
-      south: r[idx.south] || "",
-      west:  r[idx.west]  || "",
-    });
+    const item = {
+      key,
+      iv,
+      town,
+      ward,
+      block,
+      north: norm(r[idx.north]),
+      east:  norm(r[idx.east]),
+      south: norm(r[idx.south]),
+      west:  norm(r[idx.west]),
+    };
+
+    map2.set(key, item);
+    list.push(item);
   }
 
   sheetMap = map2;
+  sheetRows = list;
   sheetLoaded = true;
+
   logAct("✅ Sheet loaded. Keys: " + sheetMap.size, "ok");
   setSheetStatus(true, "Sheet: LOADED ("+sheetMap.size+")");
+
+  buildSelectionOptions();
 }
 
 function setSheetStatus(ok, label){
@@ -606,6 +672,78 @@ function setSheetStatus(ok, label){
   el.textContent = label;
   el.style.borderColor = ok ? "rgba(34,197,94,.35)" : "rgba(239,68,68,.35)";
   el.style.background = ok ? "rgba(34,197,94,.10)" : "rgba(239,68,68,.08)";
+}
+
+function setSelStatus(txt){
+  document.getElementById("selStatus").textContent = txt;
+}
+
+/* =========================
+   Selection Console (Town/IV/Ward/Block)
+========================= */
+function uniqueSorted(arr){
+  return Array.from(new Set(arr.filter(x => String(x||"").trim()!==""))).sort((a,b)=>String(a).localeCompare(String(b), undefined, {numeric:true}));
+}
+function fillSelect(sel, items, placeholder){
+  const cur = sel.value;
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = placeholder;
+  sel.appendChild(opt0);
+  for(const it of items){
+    const o = document.createElement("option");
+    o.value = it;
+    o.textContent = it;
+    sel.appendChild(o);
+  }
+  // keep selection if still available
+  if(Array.from(sel.options).some(o => o.value === cur)){
+    sel.value = cur;
+  }else{
+    sel.value = "";
+  }
+}
+
+function filteredSheetRows(){
+  const town = document.getElementById("townSel").value;
+  const iv = document.getElementById("ivSel").value;
+  const ward = document.getElementById("wardSel").value;
+  const block = document.getElementById("blockSel").value;
+
+  return sheetRows.filter(r => {
+    if(town && r.town !== town) return false;
+    if(iv && r.iv !== iv) return false;
+    if(ward && String(r.ward) !== String(ward)) return false;
+    if(block && String(r.block) !== String(block)) return false;
+    return true;
+  });
+}
+
+function buildSelectionOptions(){
+  // initial full options based on current filters (cascading)
+  const rows = filteredSheetRows();
+
+  // For cascading, we rebuild each dropdown from partially filtered views
+  // Step 1: Town from all rows
+  fillSelect(document.getElementById("townSel"), uniqueSorted(sheetRows.map(r=>r.town)), "Town (All)");
+
+  // Step 2: IV based on Town filter
+  const town = document.getElementById("townSel").value;
+  const rowsTown = sheetRows.filter(r => !town || r.town === town);
+  fillSelect(document.getElementById("ivSel"), uniqueSorted(rowsTown.map(r=>r.iv)), "IV No (All)");
+
+  // Step 3: Ward based on Town+IV
+  const iv = document.getElementById("ivSel").value;
+  const rowsTownIv = rowsTown.filter(r => !iv || r.iv === iv);
+  fillSelect(document.getElementById("wardSel"), uniqueSorted(rowsTownIv.map(r=>String(r.ward))).map(String), "Ward No (All)");
+
+  // Step 4: Block based on Town+IV+Ward
+  const ward = document.getElementById("wardSel").value;
+  const rowsTownIvWard = rowsTownIv.filter(r => !ward || String(r.ward) === String(ward));
+  fillSelect(document.getElementById("blockSel"), uniqueSorted(rowsTownIvWard.map(r=>String(r.block))).map(String), "Block No (All)");
+
+  setSelStatus(sheetLoaded ? `Filtered rows: ${filteredSheetRows().length}` : "Load Sheet first");
 }
 
 /* =========================
@@ -687,6 +825,10 @@ function setDirText(n,e,s,w){
   setText("southVal", s || "No entry");
   setText("westVal",  w || "No entry");
 }
+function setTownIv(town, iv){
+  setText("townVal", town || "—");
+  setText("ivVal", iv || "—");
+}
 
 function setGpsStatus(on){
   const el = document.getElementById("gpsStatus");
@@ -696,7 +838,39 @@ function setGpsStatus(on){
 }
 
 /* =========================
-   Detect boundary for current point
+   Highlight boundary by ward/block
+========================= */
+let highlightedLayer = null;
+function highlightByWardBlock(ward, block){
+  const w = String(ward||"");
+  const b = String(block||"");
+  const hit = kmlItems.find(it => String(it.ward||"")===w && String(it.block||"")===b);
+
+  if(highlightedLayer){
+    try{ highlightedLayer.setStyle({ weight: 2, opacity: 0.9, fillOpacity: 0.15 }); }catch(e){}
+    highlightedLayer = null;
+  }
+
+  if(!hit){
+    logAct(`⚠️ No KML found for w${w} b${b} (upload/restore KML)`, "warn");
+    return null;
+  }
+
+  // set strong style
+  try{ hit.layer.setStyle({ weight: 5, opacity: 1, fillOpacity: 0.25 }); }catch(e){}
+  highlightedLayer = hit.layer;
+
+  // zoom to it
+  try{
+    map.fitBounds(hit.layer.getBounds().pad(0.15));
+  }catch(e){}
+
+  logAct(`🎯 Highlighted boundary: ${hit.name} (w${w} b${b})`, "ok");
+  return hit;
+}
+
+/* =========================
+   Detect boundary for current point (GPS)
 ========================= */
 function detectForLatLng(lat, lng){
   if(!kmlItems.length){
@@ -726,13 +900,16 @@ function detectForLatLng(lat, lng){
             const key = makeKey(item.ward, item.block);
             const hit = sheetMap.get(key);
             if(hit){
+              setTownIv(hit.town, hit.iv);
               setDirText(hit.north || "—", hit.east || "—", hit.south || "—", hit.west || "—");
-              logAct(`🧾 Sheet matched: ${key}`, "ok");
+              logAct(`🧾 Sheet matched: ${key} (Town=${hit.town || "-"}, IV=${hit.iv || "-"})`, "ok");
             }else{
+              setTownIv("—","—");
               setDirText("No entry","No entry","No entry","No entry");
               logAct(`⚠️ Sheet no match for key: ${key}`, "warn");
             }
           }else{
+            setTownIv("—","—");
             setDirText("No entry","No entry","No entry","No entry");
             logAct("⚠️ Sheet not loaded yet (click Load Sheet)", "warn");
           }
@@ -747,6 +924,7 @@ function detectForLatLng(lat, lng){
   setText("insideVal", "Not inside any boundary");
   setText("wbVal", "—");
   setText("bboxVal", "—");
+  setTownIv("—","—");
   setDirText("No entry","No entry","No entry","No entry");
   logAct("ℹ️ Not inside any boundary", "info");
 }
@@ -825,7 +1003,7 @@ function base64ToU8(b64){
 }
 
 function looksLikeZip(u8){
-  return u8 && u8.length >= 2 && u8[0] === 0x50 && u8[1] === 0x4B; // PK
+  return u8 && u8.length >= 2 && u8[0] === 0x50 && u8[1] === 0x4B;
 }
 
 async function fetchFromDriveViaProxy(fileId){
@@ -1093,20 +1271,92 @@ function clearAll(){
   setText("insideVal", "—");
   setText("wbVal", "—");
   setText("bboxVal", "—");
+  setTownIv("—","—");
   setDirText("No entry","No entry","No entry","No entry");
 
   logAct("🧹 Cleared all boundaries (map only)", "warn");
 }
 
 /* =========================
-   Buttons
+   Selection Actions
+========================= */
+function showSelected(){
+  if(!sheetLoaded){
+    logAct("⚠️ Load Sheet first", "warn");
+    return;
+  }
+
+  const town = document.getElementById("townSel").value;
+  const iv = document.getElementById("ivSel").value;
+  const ward = document.getElementById("wardSel").value;
+  const block = document.getElementById("blockSel").value;
+
+  // Need ward+block for exact info
+  if(!ward || !block){
+    logAct("⚠️ Please select Ward and Block (Town/IV optional)", "warn");
+    return;
+  }
+
+  const key = makeKey(ward, block);
+  const row = sheetMap.get(key);
+
+  if(row){
+    setTownIv(row.town, row.iv);
+    setDirText(row.north, row.east, row.south, row.west);
+    setText("wbVal", `Ward w${row.ward} / Block b${row.block}`);
+    setText("insideVal", "Selected (not GPS)");
+    logAct(`🧾 Selected sheet row: ${key} (Town=${row.town||"-"}, IV=${row.iv||"-"})`, "ok");
+  }else{
+    setTownIv("—","—");
+    setDirText("No entry","No entry","No entry","No entry");
+    logAct(`⚠️ No sheet row for ${key}`, "warn");
+  }
+
+  const kmlHit = highlightByWardBlock(ward, block);
+  if(kmlHit && kmlHit.bbox){
+    const bb = kmlHit.bbox;
+    setText("bboxVal", `N ${bb.N.toFixed(6)} | S ${bb.S.toFixed(6)} | E ${bb.E.toFixed(6)} | W ${bb.W.toFixed(6)}`);
+  }else{
+    setText("bboxVal", "—");
+  }
+}
+
+function clearSelection(){
+  document.getElementById("townSel").value = "";
+  document.getElementById("ivSel").value = "";
+  document.getElementById("wardSel").value = "";
+  document.getElementById("blockSel").value = "";
+  buildSelectionOptions();
+  logAct("Selection cleared", "info");
+}
+
+/* =========================
+   Persist inputs (proxy + drive link + autoFetch)
+========================= */
+const LS_PROXY="ufs_proxyUrl", LS_DRIVE="ufs_driveUrl", LS_AUTOFETCH="ufs_autoFetch";
+function loadPrefs(){
+  const p = localStorage.getItem(LS_PROXY); if(p) document.getElementById("proxyUrl").value = p;
+  const d = localStorage.getItem(LS_DRIVE); if(d) document.getElementById("kmlUrl").value = d;
+  const a = localStorage.getItem(LS_AUTOFETCH); if(a) document.getElementById("autoFetchChk").checked = (a==="1");
+}
+function savePrefs(){
+  localStorage.setItem(LS_PROXY, document.getElementById("proxyUrl").value.trim());
+  localStorage.setItem(LS_DRIVE, document.getElementById("kmlUrl").value.trim());
+  localStorage.setItem(LS_AUTOFETCH, document.getElementById("autoFetchChk").checked ? "1":"0");
+}
+
+/* =========================
+   Buttons + events
 ========================= */
 document.getElementById("kmlInput").addEventListener("change", async (e) => {
   await handleKmlOrZipFiles(e.target.files);
   e.target.value = "";
 });
 
-document.getElementById("fetchDriveBtn").addEventListener("click", fetchDriveZip);
+document.getElementById("fetchDriveBtn").addEventListener("click", async () => {
+  savePrefs();
+  await fetchDriveZip();
+});
 document.getElementById("loadKmlUrlBtn").addEventListener("click", loadNonDriveUrl);
 
 document.getElementById("restoreSavedBtn").addEventListener("click", restoreSaved);
@@ -1132,15 +1382,48 @@ document.getElementById("fitAllBtn").addEventListener("click", fitAll);
 document.getElementById("clearBtn").addEventListener("click", clearAll);
 document.getElementById("clearLogBtn").addEventListener("click", clearActivity);
 
+document.getElementById("showSelectedBtn").addEventListener("click", showSelected);
+document.getElementById("clearSelectionBtn").addEventListener("click", clearSelection);
+
+["proxyUrl","kmlUrl","autoFetchChk"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", savePrefs);
+});
+
+["townSel","ivSel","wardSel","blockSel"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", () => {
+    buildSelectionOptions();
+  });
+});
+
 /* =========================
    Initial
 ========================= */
-setGpsStatus(false);
-setSheetStatus(false, "Sheet: NOT LOADED");
-logAct("Ready. 1) Upload KML/ZIP  2) Load Sheet  3) Start GPS", "info");
+function setInit(){
+  setGpsStatus(false);
+  setSheetStatus(false, "Sheet: NOT LOADED");
+  setSelStatus("Load Sheet first");
+  logAct("Ready. 1) Restore/Upload KML/ZIP  2) Load Sheet  3) Start GPS or use Selection Console", "info");
+}
+setInit();
+
+loadPrefs();
 
 // Auto-restore saved KML on page open
 restoreSaved();
+
+// Optional: auto-fetch drive ZIP on open (ONLY if checked)
+(async () => {
+  if(document.getElementById("autoFetchChk").checked){
+    const link = document.getElementById("kmlUrl").value.trim();
+    const proxy = document.getElementById("proxyUrl").value.trim();
+    if(link && proxy){
+      logAct("🧩 Auto-fetch enabled → fetching Drive ZIP...", "info");
+      try{ await fetchDriveZip(); }catch(e){ logAct("Auto-fetch failed: "+e.message, "bad"); }
+    }else{
+      logAct("⚠️ Auto-fetch checked but Proxy/Drive link missing", "warn");
+    }
+  }
+})();
 </script>
 </body>
 </html>
