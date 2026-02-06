@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>NSO RO Shimla — Premium Hub (Live Background)</title>
+<title>NSO Scheme Hub 2026</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
   :root{
-    --bg0:#050a14;
-    --bg1:#050b18;
+    --bg0:#040913;
+    --bg1:#060a18;
 
-    --cardA: rgba(16, 28, 52, .62);
-    --cardB: rgba(10, 18, 35, .55);
+    --panelA: rgba(13, 24, 44, .72);
+    --panelB: rgba(10, 18, 35, .58);
     --border: rgba(255,255,255,.10);
 
     --text:#eaf2ff;
@@ -25,10 +25,11 @@
     --amber:#f59e0b;
     --pink:#fb7185;
 
-    --shadow: 0 28px 90px rgba(0,0,0,.62);
-    --shadow2: 0 18px 60px rgba(0,0,0,.40);
+    --shadow: 0 30px 95px rgba(0,0,0,.62);
+    --shadow2: 0 18px 60px rgba(0,0,0,.45);
 
-    --r:28px;
+    --r:26px;
+    --sideW: 92px;
   }
 
   *{box-sizing:border-box}
@@ -38,315 +39,270 @@
     font-family:"Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:var(--text);
     background:
-      radial-gradient(1000px 700px at 10% 10%, rgba(56,189,248,.12), transparent 60%),
-      radial-gradient(1000px 700px at 90% 10%, rgba(167,139,250,.12), transparent 60%),
-      radial-gradient(1200px 900px at 70% 90%, rgba(34,197,94,.10), transparent 60%),
+      radial-gradient(1000px 700px at 15% 10%, rgba(56,189,248,.11), transparent 62%),
+      radial-gradient(1000px 700px at 85% 20%, rgba(167,139,250,.10), transparent 62%),
+      radial-gradient(1200px 900px at 70% 90%, rgba(34,197,94,.10), transparent 62%),
       linear-gradient(180deg, var(--bg0), var(--bg1));
     overflow-x:hidden;
   }
 
-  /* ===== Live Visualization Background (Canvas) ===== */
+  /* ===== Live background canvas ===== */
   #livebg{
-    position:fixed;
-    inset:0;
-    width:100%;
-    height:100%;
+    position:fixed; inset:0;
+    width:100%; height:100%;
     z-index:0;
     pointer-events:none;
-    opacity:.95;
+    opacity:.90;
   }
-
-  /* subtle vignette + depth */
   .vignette{
     position:fixed; inset:0; z-index:0;
     pointer-events:none;
     background:
       radial-gradient(900px 520px at 50% 0%, rgba(255,255,255,.06), transparent 60%),
-      radial-gradient(1200px 700px at 50% 110%, rgba(0,0,0,.55), transparent 60%),
-      linear-gradient(180deg, rgba(2,6,23,.10), rgba(2,6,23,.45));
+      radial-gradient(1300px 750px at 50% 110%, rgba(0,0,0,.55), transparent 60%),
+      linear-gradient(180deg, rgba(2,6,23,.05), rgba(2,6,23,.45));
   }
 
-  .wrap{
+  /* ===== App layout ===== */
+  .app{
     position:relative;
     z-index:1;
-    max-width:1400px;
-    margin:0 auto;
-    padding:26px 22px 30px;
+    display:grid;
+    grid-template-columns: var(--sideW) 1fr;
+    min-height:100vh;
   }
 
-  /* ===== Top Bar ===== */
-  .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:14px;
-    flex-wrap:wrap;
-    margin-bottom:18px;
+  /* ===== Sidebar ===== */
+  .sidebar{
+    position:sticky;
+    top:0;
+    height:100vh;
+    padding:14px 10px;
+    border-right:1px solid rgba(255,255,255,.08);
+    background: linear-gradient(180deg, rgba(2,6,23,.62), rgba(2,6,23,.38));
+    backdrop-filter: blur(10px);
   }
 
-  .brand{
+  .sideBrand{
     display:flex;
     align-items:center;
-    gap:14px;
-    padding:14px 14px;
-    border-radius:22px;
-    background: linear-gradient(180deg, rgba(15,23,42,.58), rgba(10,16,32,.45));
+    justify-content:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .homeDot{
+    width:44px; height:44px;
+    border-radius:16px;
+    display:grid;
+    place-items:center;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    font-weight:1000;
+    color: rgba(234,242,255,.92);
+  }
+
+  .nav{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:8px;
+  }
+  .nav a{
+    text-decoration:none;
+    color: rgba(234,242,255,.90);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:10px 6px;
+    border-radius:18px;
     border:1px solid rgba(255,255,255,.08);
-    box-shadow: var(--shadow2);
-    backdrop-filter: blur(10px);
-  }
-  .logo{
-    width:48px; height:48px; border-radius:18px;
-    background:
-      radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.42), transparent 62%),
-      linear-gradient(135deg, rgba(56,189,248,.95), rgba(167,139,250,.92));
-    border:1px solid rgba(255,255,255,.14);
-    box-shadow: 0 22px 65px rgba(56,189,248,.16);
-  }
-  .brand h1{
-    margin:0;
-    font-size:18px;
-    line-height:1.05;
-    letter-spacing:.2px;
-    font-weight:1000;
-  }
-  .brand small{
-    display:block;
-    margin-top:4px;
-    color:var(--muted);
-    font-weight:800;
-    font-size:12px;
-  }
-
-  .right{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-
-  .search{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:12px 14px;
-    border-radius:18px;
-    background: rgba(15,23,42,.42);
-    border:1px solid rgba(255,255,255,.10);
-    box-shadow: var(--shadow2);
-    backdrop-filter: blur(10px);
-    min-width:280px;
-    flex:1;
-  }
-  .search input{
-    width:100%;
-    border:none;
-    outline:none;
-    background:transparent;
-    color:var(--text);
-    font-weight:900;
-    font-size:13px;
-  }
-  .kbd{
-    font-size:11px;
-    color:rgba(159,179,200,.95);
-    border:1px solid rgba(255,255,255,.10);
     background: rgba(2,6,23,.25);
-    padding:4px 8px;
-    border-radius:12px;
-    font-weight:1000;
-    white-space:nowrap;
+    transition:.18s ease;
+    user-select:none;
   }
-
-  .clock{
-    padding:12px 14px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,.10);
-    background: rgba(15,23,42,.38);
-    box-shadow: var(--shadow2);
-    backdrop-filter: blur(10px);
-    font-weight:1000;
-    color:rgba(234,242,255,.95);
-    display:flex;
-    align-items:center;
-    gap:10px;
+  .nav a:hover{
+    transform: translateY(-2px);
+    border-color: rgba(56,189,248,.32);
+    box-shadow: 0 18px 60px rgba(0,0,0,.35);
   }
-  .badge{
-    padding:6px 10px;
-    border-radius:999px;
+  .nav .ico{
+    width:42px; height:42px;
+    border-radius:16px;
+    display:grid; place-items:center;
+    font-size:18px;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .nav small{
     font-size:11px;
     font-weight:1000;
-    background: rgba(2,6,23,.30);
-    border:1px solid rgba(255,255,255,.10);
-    color: var(--muted);
+    color: rgba(159,179,200,.95);
+  }
+  .nav a.active{
+    background: linear-gradient(180deg, rgba(56,189,248,.14), rgba(2,6,23,.22));
+    border-color: rgba(56,189,248,.30);
   }
 
-  /* ===== Sections ===== */
+  /* ===== Main ===== */
+  .main{
+    padding:26px 26px 30px;
+  }
+
+  /* ===== Header / hero ===== */
   .hero{
-    margin:10px 0 18px;
-    padding:18px 18px;
-    border-radius: var(--r);
-    background: linear-gradient(180deg, rgba(17,28,51,.70), rgba(15,23,42,.35));
-    border:1px solid rgba(255,255,255,.10);
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(12px);
-    position:relative;
-    overflow:hidden;
-  }
-  .hero:before{
-    content:"";
-    position:absolute; inset:-1px;
-    background: radial-gradient(900px 260px at 22% 0%, rgba(56,189,248,.16), transparent 66%);
-    pointer-events:none;
-  }
-  .hero h2{
-    margin:0;
-    font-size:18px;
-    font-weight:1000;
-    letter-spacing:.2px;
-  }
-  .hero p{
-    margin:8px 0 0;
-    font-size:13px;
-    color:var(--muted);
-    font-weight:800;
-    max-width:980px;
-    line-height:1.45;
-  }
-
-  .section{
-    margin-top:18px;
-  }
-  .sectionHead{
     display:flex;
-    align-items:flex-end;
+    align-items:flex-start;
     justify-content:space-between;
-    gap:12px;
+    gap:16px;
     flex-wrap:wrap;
-    margin:0 0 12px;
+    margin-bottom:14px;
   }
-  .sectionHead h3{
+  .heroLeft h1{
     margin:0;
-    font-size:14px;
+    font-size:44px;
+    letter-spacing:.8px;
     font-weight:1000;
-    letter-spacing:.2px;
   }
-  .sectionHead small{
-    display:block;
-    margin-top:6px;
-    font-weight:900;
-    color:var(--muted);
-    font-size:12px;
-  }
-  .line{
-    height:2px;
-    width:100%;
-    border-radius:999px;
-    margin-top:10px;
-    background: linear-gradient(90deg, rgba(56,189,248,.60), transparent 70%);
+  .heroLeft p{
+    margin:6px 0 0;
+    color: var(--muted);
+    font-weight:800;
+    line-height:1.45;
+    max-width:760px;
   }
 
-  /* ===== Grid + Cards ===== */
+  .heroRight{
+    text-align:right;
+    margin-top:6px;
+    min-width:180px;
+  }
+  .time{
+    font-weight:1000;
+    font-size:14px;
+    color: rgba(234,242,255,.95);
+  }
+  .date{
+    margin-top:4px;
+    font-weight:900;
+    font-size:12px;
+    color: rgba(159,179,200,.95);
+  }
+
+  /* ===== Pills row ===== */
+  .pills{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:12px 0 18px;
+  }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(2,6,23,.28);
+    box-shadow: var(--shadow2);
+    font-weight:1000;
+    color: rgba(234,242,255,.92);
+    user-select:none;
+  }
+  .pill .miniIco{
+    width:28px; height:28px;
+    border-radius:12px;
+    display:grid; place-items:center;
+    background: rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.10);
+    font-size:13px;
+  }
+
+  /* ===== Cards grid ===== */
   .grid{
     display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap:18px;
+    grid-template-columns: repeat(3, minmax(290px, 1fr));
+    gap:22px;
+    margin-top:6px;
+  }
+  @media (max-width:1200px){
+    .grid{ grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+  }
+  @media (max-width:780px){
+    .main{ padding:18px 14px 24px; }
+    .heroLeft h1{ font-size:34px; }
+    .grid{ grid-template-columns: 1fr; }
+    :root{ --sideW: 86px; }
   }
 
   .card{
     position:relative;
     border-radius: var(--r);
     border:1px solid rgba(255,255,255,.10);
-    background: linear-gradient(180deg, rgba(16,28,52,.66), rgba(10,18,35,.55));
+    background: linear-gradient(180deg, var(--panelA), var(--panelB));
     box-shadow: var(--shadow2);
     backdrop-filter: blur(12px);
     overflow:hidden;
     padding:22px;
-    min-height:190px;
-    cursor:pointer;
-    transition:.22s ease;
+    min-height:176px;
   }
   .card::before{
     content:"";
     position:absolute; inset:-1px;
-    background: radial-gradient(520px 220px at var(--mx,30%) var(--my,10%),
-      rgba(56,189,248,.18), transparent 62%);
-    opacity:0;
-    transition:.22s ease;
+    background: radial-gradient(560px 260px at 18% 0%, rgba(56,189,248,.14), transparent 66%);
     pointer-events:none;
   }
   .card:hover{
-    transform: translateY(-8px);
-    box-shadow: 0 38px 120px rgba(0,0,0,.65);
-    border-color: rgba(56,189,248,.35);
+    box-shadow: 0 42px 120px rgba(0,0,0,.66);
+    border-color: rgba(56,189,248,.26);
   }
-  .card:hover::before{ opacity:1; }
 
-  .rowTop{
+  .cardTop{
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:12px;
+    gap:14px;
   }
-
-  .icon{
-    width:46px;height:46px;border-radius:18px;
-    display:grid;place-items:center;
+  .appIcon{
+    width:56px; height:56px;
+    border-radius:22px;
+    display:grid;
+    place-items:center;
+    font-size:24px;
     background: rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.10);
-    box-shadow: 0 18px 50px rgba(0,0,0,.30);
+    box-shadow: 0 18px 65px rgba(0,0,0,.35);
+  }
+  .card h3{
+    margin:0;
     font-size:22px;
-  }
-
-  .tag{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 12px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:1000;
-    background: rgba(2,6,23,.26);
-    border:1px solid rgba(255,255,255,.10);
-    color: rgba(234,242,255,.95);
-    user-select:none;
-  }
-  .tag i{
-    width:10px;height:10px;border-radius:50%;
-    background: var(--t);
-    box-shadow: 0 0 0 5px rgba(255,255,255,.06);
-  }
-
-  .card h4{
-    margin:14px 0 8px;
-    font-size:18px;
     font-weight:1000;
     letter-spacing:.2px;
   }
   .card p{
-    margin:0 0 16px;
-    color:var(--muted);
+    margin:10px 0 16px;
+    color: var(--muted);
     font-weight:800;
-    font-size:13px;
     line-height:1.45;
+    font-size:13px;
+    max-width:520px;
   }
 
   .actions{
     display:flex;
-    flex-wrap:wrap;
     gap:10px;
+    flex-wrap:wrap;
   }
-
   .btn{
     border:none;
-    border-radius: 999px;
+    border-radius: 14px;
     padding:10px 14px;
     font-weight:1000;
     cursor:pointer;
     font-size:13px;
     display:inline-flex;
-    gap:8px;
     align-items:center;
+    gap:8px;
     transition:.18s ease;
     user-select:none;
   }
@@ -364,26 +320,24 @@
   }
   .btn:hover{ filter:brightness(1.06); }
 
-  .foot{
-    margin-top:22px;
-    padding:14px 8px;
-    text-align:center;
-    color:#8aa0b8;
+  /* ===== Footer ===== */
+  .footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:18px;
+    padding:10px 2px 0;
+    color: rgba(159,179,200,.80);
     font-weight:900;
     font-size:12px;
-    border-top:1px solid rgba(255,255,255,.08);
   }
+  .tip{ opacity:.85; }
 
-  /* Mobile tweaks */
-  @media (max-width:820px){
-    .wrap{ padding:18px 14px 26px; }
-    .grid{ grid-template-columns: 1fr; }
-    .search{ min-width: 220px; }
-  }
-
+  /* Reduced motion */
   @media (prefers-reduced-motion: reduce){
     #livebg{ display:none; }
-    *{ scroll-behavior:auto !important; }
   }
 </style>
 </head>
@@ -392,228 +346,190 @@
 <canvas id="livebg"></canvas>
 <div class="vignette"></div>
 
-<div class="wrap">
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo"></div>
-      <div>
-        <h1>NSO RO Shimla — Operations Hub</h1>
-        <small>Premium dashboard • Live visualization background</small>
-      </div>
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sideBrand">
+      <div class="homeDot" title="Hub">🏠</div>
     </div>
 
-    <div class="right">
-      <div class="search" title="Search cards (Ctrl+K)">
-        <span style="font-weight:1000;color:rgba(56,189,248,.95)">🔎</span>
-        <input id="q" placeholder="Search… (PLFS, UFS, ASUSE, TA/DA, Diary, KML)" autocomplete="off" />
-        <span class="kbd">CTRL K</span>
-      </div>
+    <nav class="nav">
+      <a class="active" href="index.html" title="Hub">
+        <div class="ico">🏠</div>
+        <small>HUB</small>
+      </a>
 
-      <div class="clock">
-        <span class="badge">LIVE</span>
-        <span id="timeTxt"></span>
-      </div>
-    </div>
-  </div>
+      <a href="plfs.html" title="PLFS">
+        <div class="ico">📊</div>
+        <small>PLFS</small>
+      </a>
 
-  <section class="hero">
-    <h2>✨ One Hub. All Pages. Super Fast.</h2>
-    <p>
-      PLFS pages under <b style="color:var(--blue)">PLFS</b>, UFS pages under <b style="color:var(--green)">UFS</b>,
-      and Diary / TA-DA / Converters under <b style="color:var(--violet)">Tools</b>. Click any card button to open.
-    </p>
-  </section>
+      <a href="ufs_weekly.html" title="UFS Weekly">
+        <div class="ico">📆</div>
+        <small>Weekly</small>
+      </a>
 
-  <!-- ===== MAIN GRID (matches your screenshot layout) ===== -->
-  <div class="grid" id="cards">
+      <a href="ufs_monthly.html" title="UFS Monthly">
+        <div class="ico">🗓</div>
+        <small>Monthly</small>
+      </a>
 
-    <!-- PLFS -->
-    <div class="card" data-key="plfs dashboard monitoring visits" data-open="plfs.html">
-      <div class="rowTop">
-        <div class="icon">📊</div>
-        <span class="tag"><i style="--t:var(--blue)"></i> PLFS</span>
-      </div>
-      <h4>PLFS</h4>
-      <p>Command dashboard for sample tracking, visits, and field monitoring.</p>
-      <div class="actions">
-        <button class="btn blue" onclick="go('plfs.html')">🚀 Open PLFS</button>
-        <button class="btn ghost" onclick="toast('Guide coming soon')">📌 Guide</button>
-      </div>
-    </div>
+      <a href="ta_da.html" title="TA/DA">
+        <div class="ico">🧾</div>
+        <small>TA/DA</small>
+      </a>
+    </nav>
+  </aside>
 
-    <!-- UFS -->
-    <div class="card" data-key="ufs weekly monthly reports progress" data-open="ufs_weekly.html">
-      <div class="rowTop">
-        <div class="icon">📅</div>
-        <span class="tag"><i style="--t:var(--green)"></i> UFS</span>
+  <!-- ===== Main ===== -->
+  <main class="main">
+    <header class="hero">
+      <div class="heroLeft">
+        <h1>NSO SCHEME HUB 2026</h1>
+        <p>
+          One dashboard to open PLFS, UFS (Weekly + Monthly), and ASUSE.
+          Fast navigation, premium UI, and clean access for field operations.
+        </p>
       </div>
-      <h4>UFS</h4>
-      <p>Open weekly and monthly progress tools in one place.</p>
-      <div class="actions">
-        <button class="btn green" onclick="go('ufs_weekly.html')">📆 Weekly</button>
-        <button class="btn green" onclick="go('ufs_monthly.html')">🗓 Monthly</button>
-        <button class="btn ghost" onclick="toast('Reports connected later')">📈 Reports</button>
+      <div class="heroRight">
+        <div class="time" id="timeTxt">--:--</div>
+        <div class="date" id="dateTxt">---</div>
       </div>
+    </header>
+
+    <div class="pills">
+      <div class="pill"><span class="miniIco">⚡</span> Quick Launch</div>
+      <div class="pill"><span class="miniIco">🛰</span> Live Tools</div>
+      <div class="pill"><span class="miniIco">🧠</span> Smart Workflow</div>
+      <div class="pill"><span class="miniIco">🔒</span> Secure Access</div>
     </div>
 
-    <!-- ASUSE -->
-    <div class="card" data-key="asuse operations roster monitoring analytics" data-open="asuse.html">
-      <div class="rowTop">
-        <div class="icon">🧾</div>
-        <span class="tag"><i style="--t:var(--violet)"></i> ASUSE</span>
-      </div>
-      <h4>ASUSE</h4>
-      <p>ASUSE operations: roster, monitoring, and quick analytics access.</p>
-      <div class="actions">
-        <!-- If your file name is different, replace asuse.html below with correct file -->
-        <button class="btn violet" onclick="go('asuse.html')">✨ Open ASUSE</button>
-        <button class="btn ghost" onclick="toast('Settings coming soon')">⚙ Settings</button>
-      </div>
+    <section class="grid">
+
+      <!-- PLFS -->
+      <article class="card">
+        <div class="cardTop">
+          <div class="appIcon">📊</div>
+          <div>
+            <h3>PLFS</h3>
+            <p style="margin:6px 0 0">Command dashboard for sample tracking, visits, and field monitoring.</p>
+          </div>
+        </div>
+        <p></p>
+        <div class="actions">
+          <button class="btn blue" onclick="go('plfs.html')">🚀 Open PLFS</button>
+          <button class="btn ghost" onclick="toast('Guide coming soon')">📌 Guide</button>
+        </div>
+      </article>
+
+      <!-- UFS -->
+      <article class="card">
+        <div class="cardTop">
+          <div class="appIcon">📅</div>
+          <div>
+            <h3>UFS</h3>
+            <p style="margin:6px 0 0">Open weekly and monthly progress tools in one place.</p>
+          </div>
+        </div>
+        <p></p>
+        <div class="actions">
+          <button class="btn green" onclick="go('ufs_weekly.html')">📆 Weekly</button>
+          <button class="btn green" onclick="go('ufs_monthly.html')">🗓 Monthly</button>
+          <button class="btn ghost" onclick="toast('Reports can be connected')">📈 Reports</button>
+        </div>
+      </article>
+
+      <!-- ASUSE -->
+      <article class="card">
+        <div class="cardTop">
+          <div class="appIcon">🧾</div>
+          <div>
+            <h3>ASUSE</h3>
+            <p style="margin:6px 0 0">ASUSE operations: roster, monitoring, and quick analytics access.</p>
+          </div>
+        </div>
+        <p></p>
+        <div class="actions">
+          <!-- Rename file if needed: Asuse.html / asuse.html -->
+          <button class="btn violet" onclick="go('asuse.html')">✨ Open ASUSE</button>
+          <button class="btn ghost" onclick="toast('Settings coming soon')">⚙ Settings</button>
+        </div>
+      </article>
+
+      <!-- TA/DA -->
+      <article class="card" style="grid-column: span 1;">
+        <div class="cardTop">
+          <div class="appIcon">🧾</div>
+          <div>
+            <h3>TA / DA</h3>
+            <p style="margin:6px 0 0">Excel-like TA/DA calculation sheet with designation-wise rates and auto totals.</p>
+          </div>
+        </div>
+        <p></p>
+        <div class="actions">
+          <button class="btn amber" onclick="go('ta_da.html')">🧮 Open Sheet</button>
+          <button class="btn ghost" onclick="window.print()">🖨 Print</button>
+        </div>
+      </article>
+
+    </section>
+
+    <div class="footer">
+      <div>Made for <b>NSO Field Operations</b> • 2026</div>
+      <div class="tip">Tip: Hover cards for glow ✨</div>
     </div>
-
-    <!-- TA/DA Bills & Documents -->
-    <div class="card" data-key="ta da bills documents upload summary sheet" data-open="ta_da.html">
-      <div class="rowTop">
-        <div class="icon">💼</div>
-        <span class="tag"><i style="--t:var(--amber)"></i> Tools</span>
-      </div>
-      <h4>TA/DA Bills & Documents</h4>
-      <p>TA/DA calculation with export, upload bills, and claim summary.</p>
-      <div class="actions">
-        <button class="btn amber" onclick="go('ta_da.html')">📄 Open Sheet</button>
-        <button class="btn ghost" onclick="toast('Upload module can be added')">⬆ Upload</button>
-        <button class="btn pink" onclick="toast('Summary module can be added')">📊 Summary</button>
-      </div>
-    </div>
-
-    <!-- Daily Diary (Tools) -->
-    <div class="card" data-key="daily diary calendar tour entry" data-open="daily_diary.html">
-      <div class="rowTop">
-        <div class="icon">🗓</div>
-        <span class="tag"><i style="--t:var(--violet)"></i> Tools</span>
-      </div>
-      <h4>Daily Diary</h4>
-      <p>Calendar based daily entry, tour diary, and printable records.</p>
-      <div class="actions">
-        <button class="btn violet" onclick="go('daily_diary.html')">📝 Open Diary</button>
-        <button class="btn ghost" onclick="toast('Print/export can be added')">🖨 Export</button>
-      </div>
-    </div>
-
-    <!-- Project -> KML (Tools) -->
-    <div class="card" data-key="project to kml qgis qgz convert tools" data-open="project_to_kml.html">
-      <div class="rowTop">
-        <div class="icon">🗺️</div>
-        <span class="tag"><i style="--t:var(--violet)"></i> Tools</span>
-      </div>
-      <h4>Project → KML</h4>
-      <p>Convert QGIS project layers / extracted data into KML outputs.</p>
-      <div class="actions">
-        <button class="btn violet" onclick="go('project_to_kml.html')">🧩 Open Tool</button>
-        <button class="btn ghost" onclick="toast('KML export options in tool')">⚡ Options</button>
-      </div>
-    </div>
-
-    <!-- Tentative Program (Tools) -->
-    <div class="card" data-key="tentative program tour schedule planning" data-open="tentative_program.html">
-      <div class="rowTop">
-        <div class="icon">🧩</div>
-        <span class="tag"><i style="--t:var(--violet)"></i> Tools</span>
-      </div>
-      <h4>Tentative Program</h4>
-      <p>Tour schedule / plan preparation with editable layout.</p>
-      <div class="actions">
-        <button class="btn violet" onclick="go('tentative_program.html')">📌 Open Plan</button>
-        <button class="btn ghost" onclick="toast('PDF export can be added')">📄 Export</button>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="foot">
-    Made for NSO Field Operations • Live background • GitHub Pages ready • 2026
-  </div>
+  </main>
 </div>
 
 <script>
-  // ===== navigation helper
   function go(url){ window.location.href = url; }
 
-  // ===== toast
-  let toastTimer = null;
+  // ===== toast helper
+  let toastTimer=null;
   function toast(msg){
     clearTimeout(toastTimer);
-    let el = document.getElementById('toast');
+    let el=document.getElementById('toast');
     if(!el){
-      el = document.createElement('div');
-      el.id = 'toast';
-      el.style.position = 'fixed';
-      el.style.left = '50%';
-      el.style.bottom = '26px';
-      el.style.transform = 'translateX(-50%)';
-      el.style.padding = '12px 14px';
-      el.style.borderRadius = '999px';
-      el.style.background = 'rgba(15,23,42,.75)';
-      el.style.border = '1px solid rgba(255,255,255,.12)';
-      el.style.color = 'rgba(234,242,255,.95)';
-      el.style.fontWeight = '900';
-      el.style.fontSize = '12px';
-      el.style.boxShadow = '0 20px 70px rgba(0,0,0,.55)';
-      el.style.backdropFilter = 'blur(10px)';
-      el.style.zIndex = '99';
+      el=document.createElement('div');
+      el.id='toast';
+      el.style.position='fixed';
+      el.style.left='50%';
+      el.style.bottom='26px';
+      el.style.transform='translateX(-50%)';
+      el.style.padding='12px 14px';
+      el.style.borderRadius='999px';
+      el.style.background='rgba(15,23,42,.75)';
+      el.style.border='1px solid rgba(255,255,255,.12)';
+      el.style.color='rgba(234,242,255,.95)';
+      el.style.fontWeight='900';
+      el.style.fontSize='12px';
+      el.style.boxShadow='0 20px 70px rgba(0,0,0,.55)';
+      el.style.backdropFilter='blur(10px)';
+      el.style.zIndex='99';
       document.body.appendChild(el);
     }
-    el.textContent = msg;
-    el.style.opacity = '1';
-    toastTimer = setTimeout(()=>{ el.style.opacity = '0'; }, 2200);
+    el.textContent=msg;
+    el.style.opacity='1';
+    toastTimer=setTimeout(()=>{ el.style.opacity='0'; }, 2200);
   }
 
-  // ===== time badge
-  const timeTxt = document.getElementById('timeTxt');
+  // ===== live time/date
+  const timeTxt=document.getElementById('timeTxt');
+  const dateTxt=document.getElementById('dateTxt');
+
+  function pad(n){ return String(n).padStart(2,'0'); }
   function tick(){
-    const d = new Date();
-    timeTxt.textContent = d.toLocaleString();
+    const d=new Date();
+    timeTxt.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const opts={ weekday:'long', year:'numeric', month:'short', day:'2-digit' };
+    dateTxt.textContent = d.toLocaleDateString(undefined, opts);
   }
   tick(); setInterval(tick, 1000);
 
-  // ===== card glow tracking
-  document.querySelectorAll('.card').forEach(card=>{
-    card.addEventListener('mousemove', (e)=>{
-      const r = card.getBoundingClientRect();
-      const mx = ((e.clientX - r.left) / r.width) * 100;
-      const my = ((e.clientY - r.top) / r.height) * 100;
-      card.style.setProperty('--mx', mx + '%');
-      card.style.setProperty('--my', my + '%');
-    });
-  });
-
-  // ===== search filter
-  const q = document.getElementById('q');
-  const cards = [...document.querySelectorAll('.card')];
-  function applySearch(){
-    const term = (q.value || '').trim().toLowerCase();
-    cards.forEach(c=>{
-      const key = (c.dataset.key || '').toLowerCase();
-      c.style.display = (!term || key.includes(term)) ? '' : 'none';
-    });
-  }
-  q.addEventListener('input', applySearch);
-
-  // Ctrl+K focus search, Esc clear
-  window.addEventListener('keydown', (e)=>{
-    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='k'){
-      e.preventDefault(); q.focus();
-    }
-    if(e.key === 'Escape'){
-      q.value=''; applySearch(); q.blur();
-    }
-  });
-
   /* ==========================================================
-     LIVE VISUALIZATION BACKGROUND (Canvas)
-     - constellation lines + glowing orbs
-     - pointer reactive (mouse/touch)
-     - mobile-friendly
+     LIVE BACKGROUND: Constellation + Glowing Orbs
+     - pointer reactive
+     - mobile friendly
   ========================================================== */
   const canvas = document.getElementById('livebg');
   const ctx = canvas.getContext('2d', { alpha: true });
@@ -621,16 +537,17 @@
   let W=0,H=0,DPR=1;
   function resize(){
     DPR = Math.min(2, window.devicePixelRatio || 1);
-    W = canvas.width  = Math.floor(innerWidth * DPR);
-    H = canvas.height = Math.floor(innerHeight * DPR);
+    canvas.width  = Math.floor(innerWidth * DPR);
+    canvas.height = Math.floor(innerHeight * DPR);
     canvas.style.width = innerWidth + 'px';
     canvas.style.height = innerHeight + 'px';
     ctx.setTransform(DPR,0,0,DPR,0,0);
+    W = innerWidth; H = innerHeight;
   }
   window.addEventListener('resize', resize, {passive:true});
   resize();
 
-  const pointer = { x: innerWidth*0.5, y: innerHeight*0.35, active:false };
+  const pointer = { x: W*0.5, y: H*0.35, active:false };
   window.addEventListener('mousemove', (e)=>{ pointer.x=e.clientX; pointer.y=e.clientY; pointer.active=true; }, {passive:true});
   window.addEventListener('mouseleave', ()=>{ pointer.active=false; }, {passive:true});
   window.addEventListener('touchmove', (e)=>{
@@ -649,18 +566,16 @@
   ];
 
   const dots=[];
-  function rnd(a,b){ return a + Math.random()*(b-a); }
+  const rnd=(a,b)=>a+Math.random()*(b-a);
 
   function seed(){
     dots.length = 0;
-    const count = Math.max(90, Math.min(150, Math.floor((innerWidth*innerHeight)/13000)));
+    const count = Math.max(85, Math.min(150, Math.floor((W*H)/14000)));
     for(let i=0;i<count;i++){
       const c = palette[i % palette.length];
       dots.push({
-        x: rnd(0, innerWidth),
-        y: rnd(0, innerHeight),
-        vx: rnd(-.35,.35),
-        vy: rnd(-.35,.35),
+        x: rnd(0,W), y: rnd(0,H),
+        vx: rnd(-.35,.35), vy: rnd(-.35,.35),
         r: rnd(1.2,2.6),
         glow: rnd(10,28),
         cr:c.r,cg:c.g,cb:c.b,
@@ -686,8 +601,8 @@
     lastT=t;
 
     // fade layer
-    ctx.fillStyle = "rgba(5,10,20,0.22)";
-    ctx.fillRect(0,0,innerWidth,innerHeight);
+    ctx.fillStyle = "rgba(4,9,19,0.20)";
+    ctx.fillRect(0,0,W,H);
 
     // move dots
     for(const p of dots){
@@ -695,16 +610,16 @@
       p.y += p.vy * (60*dt);
 
       // wrap
-      if(p.x < -30) p.x = innerWidth + 30;
-      if(p.x > innerWidth + 30) p.x = -30;
-      if(p.y < -30) p.y = innerHeight + 30;
-      if(p.y > innerHeight + 30) p.y = -30;
+      if(p.x < -30) p.x = W + 30;
+      if(p.x > W + 30) p.x = -30;
+      if(p.y < -30) p.y = H + 30;
+      if(p.y > H + 30) p.y = -30;
 
       // pointer swirl
       const dx = p.x - pointer.x;
       const dy = p.y - pointer.y;
       const dist = Math.sqrt(dx*dx + dy*dy) + 0.0001;
-      const influence = pointer.active ? Math.max(0, 1 - dist/300) : 0;
+      const influence = pointer.active ? Math.max(0, 1 - dist/320) : 0;
 
       if(influence > 0){
         const ax = (-dy/dist) * influence * 0.55;
@@ -731,7 +646,7 @@
         const maxD = 150;
         if(d2 < maxD*maxD){
           const d = Math.sqrt(d2);
-          const alpha = (1 - d/maxD) * 0.18;
+          const alpha = (1 - d/maxD) * 0.16;
           const r = (a.cr + b.cr) / 2 | 0;
           const g = (a.cg + b.cg) / 2 | 0;
           const bl = (a.cb + b.cb) / 2 | 0;
@@ -746,7 +661,7 @@
 
       // glow
       const grad = ctx.createRadialGradient(p.x,p.y,0, p.x,p.y, p.glow);
-      grad.addColorStop(0, `rgba(${p.cr},${p.cg},${p.cb},${0.20*pulse})`);
+      grad.addColorStop(0, `rgba(${p.cr},${p.cg},${p.cb},${0.18*pulse})`);
       grad.addColorStop(1, `rgba(${p.cr},${p.cg},${p.cb},0)`);
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -754,7 +669,7 @@
       ctx.fill();
 
       // core
-      ctx.fillStyle = `rgba(${p.cr},${p.cg},${p.cb},0.85)`;
+      ctx.fillStyle = `rgba(${p.cr},${p.cg},${p.cb},0.82)`;
       ctx.beginPath();
       ctx.arc(p.x,p.y, p.r*(0.9+0.35*pulse), 0, Math.PI*2);
       ctx.fill();
